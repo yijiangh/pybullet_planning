@@ -24,25 +24,23 @@ TAN = (0.824, 0.706, 0.549, 1)
 GREY = (0.5, 0.5, 0.5, 1)
 YELLOW = (1, 1, 0, 1)
 
-COLOR_FROM_NAME = {
-    'red': RED,
-    'green': GREEN,
-    'blue': BLUE,
-    'white': WHITE,
-    'grey': GREY,
-    'black': BLACK,
-}
-
 GRAVITY = 9.8
 
 # links
 BASE_LINK = -1
 STATIC_MASS = 0
 
-
+# geometry
 DEFAULT_MESH = ''
 DEFAULT_EXTENTS = [1, 1, 1]
 DEFAULT_RADIUS = 0.5
 DEFAULT_HEIGHT = 1
 DEFAULT_SCALE = [1, 1, 1]
 DEFAULT_NORMAL = [0, 0, 1]
+
+# planning
+DEFAULT_RESOLUTION = 0.05
+
+# Collision
+#MAX_DISTANCE = 1e-3
+MAX_DISTANCE = 0.

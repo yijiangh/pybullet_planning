@@ -1,4 +1,9 @@
+import math
+import numpy as np
+from collections import namedtuple
+import pybullet as p
 
+from pybullet_planning.utils import CLIENT
 
 CameraInfo = namedtuple('CameraInfo', ['width', 'height', 'viewMatrix', 'projectionMatrix', 'cameraUp', 'cameraForward',
                                        'horizontal', 'vertical', 'yaw', 'pitch', 'dist', 'target'])
@@ -48,7 +53,7 @@ def demask_pixel(pixel):
     return body, link
 
 def save_image(filename, rgba):
-    import scipy.misc
+    import scipy
     if filename.endswith('.jpg'):
         scipy.misc.imsave(filename, rgba[:, :, :3])
     elif filename.endswith('.png'):

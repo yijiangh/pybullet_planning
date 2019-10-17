@@ -20,8 +20,8 @@ Describe typical classes found in project
 
 """
 
-from .transformation import *
-from .utilities import *
+from .utils import *
+from .interface import *
 from .motion_planners import *
 
 __all__ = [name for name in dir() if not name.startswith('_')]

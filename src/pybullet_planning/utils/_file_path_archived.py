@@ -1,3 +1,5 @@
+import os
+
 #####################################
 # TODO: clean up these data paths
 

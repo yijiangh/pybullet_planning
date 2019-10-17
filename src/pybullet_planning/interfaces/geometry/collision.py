@@ -1,9 +1,13 @@
+from collections import namedtuple
+from itertools import product
+import numpy as np
+import pybullet as p
+
+from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE
+from pybullet_planning.interfaces.env_manager import step_simulation
+from pybullet_planning.interfaces.robots import get_all_links, get_bodies
+
 #####################################
-
-# Collision
-
-#MAX_DISTANCE = 1e-3
-MAX_DISTANCE = 0.
 
 def contact_collision():
     step_simulation()

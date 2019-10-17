@@ -5,11 +5,7 @@ file I/O
 import os, platform
 import pickle
 import json
-import random
 import datetime
-import numpy as np
-
-from pybullet_planning.utilities import INF
 
 SEPARATOR = '\n' + 50*'-' + '\n'
 
@@ -64,31 +60,6 @@ def ensure_dir(f):
 def safe_zip(sequence1, sequence2):
     assert len(sequence1) == len(sequence2)
     return zip(sequence1, sequence2)
-
-def clip(value, min_value=-INF, max_value=+INF):
-    return min(max(min_value, value), max_value)
-
-def randomize(sequence): # TODO: bisect
-    indices = range(len(sequence))
-    random.shuffle(indices)
-    for i in indices:
-        yield sequence[i]
-
-def get_random_seed():
-    return random.getstate()[1][0]
-
-def get_numpy_seed():
-    return np.random.get_state()[1][0]
-
-def set_random_seed(seed):
-    if seed is not None:
-        random.seed(seed)
-
-def set_numpy_seed(seed):
-    # These generators are different and independent
-    if seed is not None:
-        np.random.seed(seed % (2**32))
-        #print('Seed:', seed)
 
 def get_date():
     return datetime.datetime.now().strftime('%y-%m-%d_%H-%M-%S')

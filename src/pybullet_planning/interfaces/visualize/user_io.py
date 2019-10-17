@@ -4,7 +4,10 @@ import time
 import numpy as np
 import pybullet as p
 from collections import namedtuple
-from pybullet_planning.utilities import INF, CLIENT
+
+from pybullet_planning.utils import INF, CLIENT, CLIENTS
+from pybullet_planning.utils import is_darwin
+from pybullet_planning.interfaces.env_manager import step_simulation, threaded_input
 
 # from future_builtins import map, filter
 # from builtins import input # TODO - use future

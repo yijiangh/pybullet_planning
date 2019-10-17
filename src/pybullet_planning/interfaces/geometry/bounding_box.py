@@ -1,6 +1,12 @@
-#####################################
+import numpy as np
+from collections import namedtuple
 
+from pybullet_planning.utils import CLIENT, BASE_LINK
+
+#####################################
 # Bounding box
+
+AABB = namedtuple('AABB', ['lower', 'upper'])
 
 def aabb_from_points(points):
     return AABB(np.min(points, axis=0), np.max(points, axis=0))
