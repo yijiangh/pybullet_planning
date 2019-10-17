@@ -1,3 +1,17 @@
+import random
+import numpy as np
+from itertools import combinations, product
+
+from pybullet_planning.utils import CIRCULAR_LIMITS, DEFAULT_RESOLUTION, MAX_DISTANCE
+from pybullet_planning.interfaces.robots import get_custom_limits, is_circular, get_joint_positions, \
+    child_link_from_joint, get_link_subtree, get_joint_ancestors, get_links, get_joint_ancestors, \
+    are_links_adjacent, set_joint_positions
+from pybullet_planning.interfaces.geometry import circular_difference, get_unit_vector, all_between, \
+    pairwise_collision, pairwise_link_collision
+from pybullet_planning.motion_planners import birrt, lazy_prm
+from pybullet_planning.interfaces.visualize import wait_for_user
+from pybullet_planning.interfaces.env_manager import add_line
+
 #####################################
 
 # Joint motion planning
@@ -232,7 +246,6 @@ def check_initial_end(start_conf, end_conf, collision_fn):
 def plan_joint_motion(body, joints, end_conf, obstacles=[], attachments=[],
                       self_collisions=True, disabled_collisions=set(),
                       weights=None, resolutions=None, max_distance=MAX_DISTANCE, custom_limits={}, **kwargs):
-
     assert len(joints) == len(end_conf)
     sample_fn = get_sample_fn(body, joints, custom_limits=custom_limits)
     distance_fn = get_distance_fn(body, joints, weights=weights)
@@ -249,7 +262,6 @@ def plan_joint_motion(body, joints, end_conf, obstacles=[], attachments=[],
 
 def plan_lazy_prm(start_conf, end_conf, sample_fn, extend_fn, collision_fn, **kwargs):
     # TODO: cost metric based on total robot movement (encouraging greater distances possibly)
-    from motion_planners.lazy_prm import lazy_prm
     path, samples, edges, colliding_vertices, colliding_edges = lazy_prm(
         start_conf, end_conf, sample_fn, extend_fn, collision_fn, num_samples=200, **kwargs)
     if path is None:

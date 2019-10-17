@@ -1,3 +1,9 @@
+import pybullet as p
+
+from pybullet_planning.utils import CLIENT, DEFAULT_EXTENTS, DEFAULT_HEIGHT, DEFAULT_RADIUS, \
+    DEFAULT_MESH, DEFAULT_SCALE, DEFAULT_NORMAL, BASE_LINK
+from .shape import CollisionShapeData, SHAPE_TYPES
+
 #####################################
 
 def get_collision_data(body, link=BASE_LINK):

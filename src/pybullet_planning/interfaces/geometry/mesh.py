@@ -1,6 +1,28 @@
-#####################################
+import os
+from collections import defaultdict, namedtuple, deque
+from itertools import count
+import numpy as np
 
+from pybullet_planning.utils import TEMP_DIR, PI
+from pybullet_planning.utils import ensure_dir, write, read, safe_zip
+from .shape import create_obj
+from .pose_transformation import unit_from_theta, apply_affine
+
+#####################################
 # Mesh Files
+
+Mesh = namedtuple('Mesh', ['vertices', 'faces'])
+mesh_count = count()
+
+def create_mesh(mesh, under=True, **kwargs):
+    # http://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
+    # TODO: read OFF / WRL / OBJ files
+    # TODO: maintain dict to file
+    ensure_dir(TEMP_DIR)
+    path = os.path.join(TEMP_DIR, 'mesh{}.obj'.format(next(mesh_count)))
+    write(path, obj_file_from_mesh(mesh, under=under))
+    return create_obj(path, **kwargs)
+    #safe_remove(path) # TODO: removing might delete mesh?
 
 def obj_file_from_mesh(mesh, under=True):
     """

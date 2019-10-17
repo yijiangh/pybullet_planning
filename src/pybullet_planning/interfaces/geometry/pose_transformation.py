@@ -154,3 +154,9 @@ def all_between(lower_limits, values, upper_limits):
     assert len(values) == len(upper_limits)
     return np.less_equal(lower_limits, values).all() and \
            np.less_equal(values, upper_limits).all()
+
+def tform_point(affine, point):
+    return point_from_pose(multiply(affine, Pose(point=point)))
+
+def apply_affine(affine, points):
+    return [tform_point(affine, p) for p in points]

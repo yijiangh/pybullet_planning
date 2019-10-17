@@ -4,8 +4,10 @@ import pybullet as p
 from itertools import product, combinations
 
 from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED
-from pybullet_planning.interfaces.robots import get_name, set_pose, get_link_name
-from pybullet_planning.interfaces.geometry import unit_pose, get_aabb, tform_point, unit_from_theta
+from pybullet_planning.interfaces.robots.body import get_name, set_pose
+from pybullet_planning.interfaces.robots.link import get_link_name
+from pybullet_planning.interfaces.geometry.pose_transformation import unit_pose, tform_point, unit_from_theta
+from pybullet_planning.interfaces.geometry.bounding_box import get_aabb
 from .savers import PoseSaver
 
 def get_lifetime(lifetime):
@@ -87,11 +89,6 @@ def draw_circle(center, radius, n=24, **kwargs):
       unit = np.append(unit_from_theta(theta), [0])
       vertices.append(center+radius*unit)
   return add_segments(vertices, closed=True, **kwargs)
-
-def get_aabb_vertices(aabb):
-    d = len(aabb[0])
-    return [tuple(aabb[i[k]][k] for k in range(d))
-            for i in product(range(len(aabb)), repeat=d)]
 
 def draw_aabb(aabb, **kwargs):
     d = len(aabb[0])

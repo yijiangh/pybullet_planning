@@ -44,3 +44,9 @@ DEFAULT_RESOLUTION = 0.05
 # Collision
 #MAX_DISTANCE = 1e-3
 MAX_DISTANCE = 0.
+
+UNKNOWN_FILE = 'unknown_file'
+NULL_ID = -1
+TEMP_DIR = 'temp/'
+
+OBJ_MESH_CACHE = {}

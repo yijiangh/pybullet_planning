@@ -21,7 +21,7 @@ Describe typical classes found in project
 """
 
 from .utils import *
-from .interface import *
+from .interfaces import *
 from .motion_planners import *
 
 __all__ = [name for name in dir() if not name.startswith('_')]

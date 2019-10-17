@@ -1,5 +1,19 @@
-#####################################
+import os
+import numpy as np
+import pybullet as p
+from collections import defaultdict, namedtuple
+from itertools import count
 
+from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, UNKNOWN_FILE, BASE_LINK, NULL_ID
+from pybullet_planning.interfaces.env_manager import get_client, ModelInfo
+from pybullet_planning.interfaces.robots import get_joint_inertial_pose
+from .pose_transformation import unit_pose, multiply
+from .get_data import get_collision_data, get_data_radius, get_data_extents, get_data_height, \
+    get_data_scale, get_data_normal, get_data_pose, get_default_geometry
+from .mesh import obj_file_from_mesh
+
+
+#####################################
 # Shapes
 
 SHAPE_TYPES = {
@@ -52,8 +66,6 @@ def get_mesh_geometry(path, scale=1.):
         'fileName': path,
         'meshScale': scale*np.ones(3),
     }
-
-NULL_ID = -1
 
 def create_collision_shape(geometry, pose=unit_pose()):
     point, quat = pose
@@ -164,29 +176,12 @@ def create_obj(path, scale=1., mass=STATIC_MASS, collision=True, color=(0.5, 0.5
     INFO_FROM_BODY[CLIENT, body] = ModelInfo(None, path, fixed_base, scale) # TODO: store geometry info instead?
     return body
 
-
-Mesh = namedtuple('Mesh', ['vertices', 'faces'])
-mesh_count = count()
-TEMP_DIR = 'temp/'
-
-def create_mesh(mesh, under=True, **kwargs):
-    # http://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
-    # TODO: read OFF / WRL / OBJ files
-    # TODO: maintain dict to file
-    ensure_dir(TEMP_DIR)
-    path = os.path.join(TEMP_DIR, 'mesh{}.obj'.format(next(mesh_count)))
-    write(path, obj_file_from_mesh(mesh, under=under))
-    return create_obj(path, **kwargs)
-    #safe_remove(path) # TODO: removing might delete mesh?
-
 #####################################
 
 VisualShapeData = namedtuple('VisualShapeData', ['objectUniqueId', 'linkIndex',
                                                  'visualGeometryType', 'dimensions', 'meshAssetFileName',
                                                  'localVisualFrame_position', 'localVisualFrame_orientation',
                                                  'rgbaColor']) # 'textureUniqueId'
-
-UNKNOWN_FILE = 'unknown_file'
 
 def visual_shape_from_data(data, client=None):
     client = get_client(client)

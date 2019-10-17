@@ -7,9 +7,9 @@ from pybullet_planning.utils import CLIENT, CLIENTS, GRAVITY, INFO_FROM_BODY, ST
 from pybullet_planning.utils import is_darwin
 
 from .savers import Saver
-from pybullet_planning.interfaces.geometry import create_obj
+from pybullet_planning.interfaces.geometry.shape import create_obj
 from pybullet_planning.interfaces.visualize import HideOutput, update_viewer, user_input
-from pybullet_planning.interfaces.robots import set_pose
+from pybullet_planning.interfaces.robots.body import set_pose
 
 #####################################
 

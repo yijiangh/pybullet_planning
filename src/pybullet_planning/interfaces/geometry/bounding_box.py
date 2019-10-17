@@ -1,7 +1,17 @@
 import numpy as np
 from collections import namedtuple
+from itertools import product
+import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK
+from pybullet_planning.utils import CLIENT, BASE_LINK, UNKNOWN_FILE, OBJ_MESH_CACHE
+from pybullet_planning.utils import implies
+from pybullet_planning.interfaces.robots.link import get_link_subtree, get_all_links, get_num_links
+from pybullet_planning.interfaces.env_manager import get_model_info
+
+from .get_data import get_data_type, get_data_extents, get_data_radius, get_data_height, \
+    get_data_filename, get_data_scale, get_collision_data, get_data_pose
+from .mesh import read_obj
+from .pose_transformation import unit_pose, apply_affine
 
 #####################################
 # Bounding box
@@ -83,6 +93,10 @@ def get_aabb_area(aabb):
 #####################################
 
 # AABB approximation
+def get_aabb_vertices(aabb):
+    d = len(aabb[0])
+    return [tuple(aabb[i[k]][k] for k in range(d))
+            for i in product(range(len(aabb)), repeat=d)]
 
 def vertices_from_data(data):
     geometry_type = get_data_type(data)
@@ -126,8 +140,6 @@ def vertices_from_link(body, link):
     for data in get_collision_data(body, link):
         vertices.extend(vertices_from_data(data))
     return vertices
-
-OBJ_MESH_CACHE = {}
 
 def vertices_from_rigid(body, link=BASE_LINK):
     assert implies(link == BASE_LINK, get_num_links(body) == 0)

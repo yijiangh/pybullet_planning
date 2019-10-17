@@ -33,5 +33,6 @@ Describe typical classes found in project
 """
 
 from .rrt_connect import birrt, direct_path
+from .lazy_prm import lazy_prm
 
 # __all__ = [name for name in dir() if not name.startswith('_')]

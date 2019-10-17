@@ -1,5 +1,11 @@
-#####################################
+import math
+import numpy as np
+import pybullet as p
 
+from .pose_transformation import Pose, Point, Euler
+from .pose_transformation import multiply, point_from_pose, get_length, invert, get_unit_vector, apply_affine
+
+#####################################
 # Polygonal surfaces
 
 def create_rectangular_surface(width, length):
@@ -37,12 +43,6 @@ def distance_from_segment(x1, y1, x2, y2, x3, y3): # x3,y3 is the point
     dx = x - x3
     dy = y - y3
     return math.sqrt(dx*dx + dy*dy)
-
-def tform_point(affine, point):
-    return point_from_pose(multiply(affine, Pose(point=point)))
-
-def apply_affine(affine, points):
-    return [tform_point(affine, p) for p in points]
 
 def is_mesh_on_surface(polygon, world_from_surface, mesh, world_from_mesh, epsilon=1e-2):
     surface_from_mesh = multiply(invert(world_from_surface), world_from_mesh)
