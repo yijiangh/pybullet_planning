@@ -227,7 +227,7 @@ class DegreePRM(PRM):
             return new_vertices
         for v1 in new_vertices:
             degree = 0
-            for _, v2 in sorted(filter(lambda (d, v2): v2 != v1 and d <= self.connect_distance,
+            for _, v2 in sorted(filter(lambda d, v2: v2 != v1 and d <= self.connect_distance,
                                        map(lambda v: (self.distance(v1.q, v.q), v), self.vertices.values())),  # TODO - slow, use nearest neighbors
                                 key=operator.itemgetter(0)):
                 if self.target_degree <= degree:

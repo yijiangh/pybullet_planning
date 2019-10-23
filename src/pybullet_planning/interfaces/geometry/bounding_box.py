@@ -8,10 +8,10 @@ from pybullet_planning.utils import implies
 from pybullet_planning.interfaces.robots.link import get_link_subtree, get_all_links, get_num_links
 from pybullet_planning.interfaces.env_manager import get_model_info
 
+from .pose_transformation import unit_pose, apply_affine
 from .get_data import get_data_type, get_data_extents, get_data_radius, get_data_height, \
     get_data_filename, get_data_scale, get_collision_data, get_data_pose
 from .mesh import read_obj
-from .pose_transformation import unit_pose, apply_affine
 
 #####################################
 # Bounding box
@@ -29,12 +29,6 @@ def aabb_overlap(aabb1, aabb2):
     lower2, upper2 = aabb2
     return np.less_equal(lower1, upper2).all() and \
            np.less_equal(lower2, upper1).all()
-
-def get_subtree_aabb(body, root_link=BASE_LINK):
-    return aabb_union(get_aabb(body, link) for link in get_link_subtree(body, root_link))
-
-def get_aabbs(body):
-    return [get_aabb(body, link=link) for link in get_all_links(body)]
 
 def get_aabb(body, link=None):
     # Note that the query is conservative and may return additional objects that don't have actual AABB overlap.
@@ -129,46 +123,3 @@ def vertices_from_data(data):
     else:
         raise NotImplementedError(geometry_type)
     return apply_affine(get_data_pose(data), vertices)
-
-def vertices_from_link(body, link):
-    # In local frame
-    vertices = []
-    # TODO: requires the viewer to be active
-    #for data in get_visual_data(body, link):
-    #    vertices.extend(vertices_from_data(data))
-    # Pybullet creates multiple collision elements (with unknown_file) when noncovex
-    for data in get_collision_data(body, link):
-        vertices.extend(vertices_from_data(data))
-    return vertices
-
-def vertices_from_rigid(body, link=BASE_LINK):
-    assert implies(link == BASE_LINK, get_num_links(body) == 0)
-    try:
-        vertices = vertices_from_link(body, link)
-    except RuntimeError:
-        info = get_model_info(body)
-        assert info is not None
-        _, ext = os.path.splitext(info.path)
-        if ext == '.obj':
-            if info.path not in OBJ_MESH_CACHE:
-                OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
-            mesh = OBJ_MESH_CACHE[info.path]
-            vertices = mesh.vertices
-        else:
-            raise NotImplementedError(ext)
-    return vertices
-
-def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
-    # TODO: make it just orientation
-    vertices = apply_affine(body_pose, vertices_from_rigid(body, **kwargs))
-    aabb = aabb_from_points(vertices)
-    return get_aabb_center(aabb), get_aabb_extent(aabb)
-    #with PoseSaver(body):
-    #    set_pose(body, body_pose)
-    #    set_velocity(body, linear=np.zeros(3), angular=np.zeros(3))
-    #    return get_center_extent(body, **kwargs)
-
-def approximate_as_cylinder(body, **kwargs):
-    center, (width, length, height) = approximate_as_prism(body, **kwargs)
-    diameter = (width + length) / 2  # TODO: check that these are close
-    return center, (diameter, height)

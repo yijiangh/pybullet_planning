@@ -7,7 +7,6 @@ from collections import namedtuple
 
 from pybullet_planning.utils import INF, CLIENT, CLIENTS
 from pybullet_planning.utils import is_darwin
-from pybullet_planning.interfaces.env_manager import step_simulation, threaded_input
 
 # from future_builtins import map, filter
 # from builtins import input # TODO - use future
@@ -140,3 +139,38 @@ def wait_for_interrupt(max_time=np.inf):
         pass
     finally:
         print()
+
+
+def step_simulation():
+    p.stepSimulation(physicsClientId=CLIENT)
+
+def threaded_input(*args, **kwargs):
+    # OS X doesn't multi-thread the OpenGL visualizer
+    # http://openrave.org/docs/0.8.2/_modules/openravepy/misc/#SetViewerUserThread
+    # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/userData.py
+    # https://github.com/bulletphysics/bullet3/tree/master/examples/ExampleBrowser
+    #from pybullet_utils import bullet_client
+    #from pybullet_utils.bullet_client import BulletClient
+    #server = bullet_client.BulletClient(connection_mode=p.SHARED_MEMORY_SERVER) # GUI_SERVER
+    #sim_id = p.connect(p.GUI)
+    #print(dir(server))
+    #client = bullet_client.BulletClient(connection_mode=p.SHARED_MEMORY)
+    #sim_id = p.connect(p.SHARED_MEMORY)
+
+    #threading = __import__('threading')
+    import threading
+    data = []
+    thread = threading.Thread(target=lambda: data.append(user_input(*args, **kwargs)), args=[])
+    thread.start()
+    #threading.enumerate()
+    #thread_id = 0
+    #for tid, tobj in threading._active.items():
+    #    if tobj is thread:
+    #        thread_id = tid
+    #        break
+    try:
+        while thread.is_alive():
+            update_viewer()
+    finally:
+        thread.join()
+    return data[-1]

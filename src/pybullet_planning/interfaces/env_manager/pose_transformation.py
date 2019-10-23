@@ -160,3 +160,11 @@ def tform_point(affine, point):
 
 def apply_affine(affine, points):
     return [tform_point(affine, p) for p in points]
+
+def set_pose(body, pose):
+    (point, quat) = pose
+    p.resetBasePositionAndOrientation(body, point, quat, physicsClientId=CLIENT)
+
+def get_pose(body):
+    return p.getBasePositionAndOrientation(body, physicsClientId=CLIENT)
+    #return np.concatenate([point, quat])

@@ -50,3 +50,12 @@ NULL_ID = -1
 TEMP_DIR = 'temp/'
 
 OBJ_MESH_CACHE = {}
+
+def get_client(client=None):
+    if client is None:
+        return CLIENT
+    return client
+
+def set_client(client):
+    global CLIENT
+    CLIENT = client

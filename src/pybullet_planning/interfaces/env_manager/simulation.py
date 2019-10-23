@@ -4,12 +4,12 @@ import numpy as np
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, CLIENTS, GRAVITY, INFO_FROM_BODY, STATIC_MASS
-from pybullet_planning.utils import is_darwin
+from pybullet_planning.utils import is_darwin, get_client
 
-from .savers import Saver
-from pybullet_planning.interfaces.geometry.shape import create_obj
-from pybullet_planning.interfaces.visualize import HideOutput, update_viewer, user_input
-from pybullet_planning.interfaces.robots.body import set_pose
+from pybullet_planning.interfaces.env_manager.savers import Saver
+from pybullet_planning.interfaces.env_manager.user_io import HideOutput, update_viewer, user_input
+from pybullet_planning.interfaces.env_manager.pose_transformation import set_pose
+from pybullet_planning.interfaces.env_manager.shape_creation import ModelInfo, create_obj
 
 #####################################
 
@@ -74,7 +74,7 @@ def connect(use_gui=True, shadows=True):
     # Shared Memory: execute the physics simulation and rendering in a separate process
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/vrminitaur.py#L7
     # make sure to compile pybullet with PYBULLET_USE_NUMPY enabled
-    if use_gui and not is_darwin() and ('DISPLAY' not in os.environ):
+    if use_gui and is_darwin() and ('DISPLAY' not in os.environ):
         use_gui = False
         print('No display detected!')
     method = p.GUI if use_gui else p.DIRECT
@@ -114,37 +114,6 @@ def connect(use_gui=True, shadows=True):
     #    p.configureDebugVisualizer(*pair)
     return sim_id
 
-def threaded_input(*args, **kwargs):
-    # OS X doesn't multi-thread the OpenGL visualizer
-    # http://openrave.org/docs/0.8.2/_modules/openravepy/misc/#SetViewerUserThread
-    # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/userData.py
-    # https://github.com/bulletphysics/bullet3/tree/master/examples/ExampleBrowser
-    #from pybullet_utils import bullet_client
-    #from pybullet_utils.bullet_client import BulletClient
-    #server = bullet_client.BulletClient(connection_mode=p.SHARED_MEMORY_SERVER) # GUI_SERVER
-    #sim_id = p.connect(p.GUI)
-    #print(dir(server))
-    #client = bullet_client.BulletClient(connection_mode=p.SHARED_MEMORY)
-    #sim_id = p.connect(p.SHARED_MEMORY)
-
-    #threading = __import__('threading')
-    import threading
-    data = []
-    thread = threading.Thread(target=lambda: data.append(user_input(*args, **kwargs)), args=[])
-    thread.start()
-    #threading.enumerate()
-    #thread_id = 0
-    #for tid, tobj in threading._active.items():
-    #    if tobj is thread:
-    #        thread_id = tid
-    #        break
-    try:
-        while thread.is_alive():
-            update_viewer()
-    finally:
-        thread.join()
-    return data[-1]
-
 def disconnect():
     # TODO: change CLIENT?
     if CLIENT in CLIENTS:
@@ -177,9 +146,6 @@ def enable_gravity():
 def disable_gravity():
     p.setGravity(0, 0, 0, physicsClientId=CLIENT)
 
-def step_simulation():
-    p.stepSimulation(physicsClientId=CLIENT)
-
 def set_real_time(real_time):
     p.setRealTimeSimulation(int(real_time), physicsClientId=CLIENT)
 
@@ -211,34 +177,6 @@ def reset_simulation():
 #####################################
 
 # Simulation
-
-def get_client(client=None):
-    if client is None:
-        return CLIENT
-    return client
-
-def set_client(client):
-    global CLIENT
-    CLIENT = client
-
-ModelInfo = namedtuple('URDFInfo', ['name', 'path', 'fixed_base', 'scale'])
-
-def get_model_info(body):
-    key = (CLIENT, body)
-    return INFO_FROM_BODY.get(key, None)
-
-def get_urdf_flags(cache=False, cylinder=False):
-    # by default, Bullet disables self-collision
-    # URDF_INITIALIZE_SAT_FEATURES
-    # URDF_ENABLE_CACHED_GRAPHICS_SHAPES seems to help
-    # but URDF_INITIALIZE_SAT_FEATURES does not (might need to be provided a mesh)
-    # flags = p.URDF_INITIALIZE_SAT_FEATURES | p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
-    flags = 0
-    if cache:
-        flags |= p.URDF_ENABLE_CACHED_GRAPHICS_SHAPES
-    if cylinder:
-        flags |= p.URDF_USE_IMPLICIT_CYLINDER
-    return flags
 
 def load_pybullet(filename, fixed_base=False, scale=1., **kwargs):
     # fixed_base=False implies infinite base mass
@@ -282,16 +220,6 @@ URDF_FLAGS = [p.URDF_USE_INERTIA_FROM_FILE,
 def get_model_path(rel_path): # TODO: add to search path
     directory = os.path.dirname(os.path.abspath(__file__))
     return os.path.join(directory, '..', rel_path)
-
-def load_model(rel_path, pose=None, **kwargs):
-    # TODO: error with loadURDF when loading MESH visual and CYLINDER collision
-    abs_path = get_model_path(rel_path)
-    add_data_path()
-    #with LockRenderer():
-    body = load_pybullet(abs_path, **kwargs)
-    if pose is not None:
-        set_pose(body, pose)
-    return body
 
 def save_state():
     return p.saveState(physicsClientId=CLIENT)

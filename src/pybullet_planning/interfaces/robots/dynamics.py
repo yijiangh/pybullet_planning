@@ -5,7 +5,6 @@ import numpy as np
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, BASE_LINK, STATIC_MASS
-from pybullet_planning.interfaces.env_manager import disable_gravity
 from pybullet_planning.interfaces.geometry import Pose, multiply, invert
 from .link import get_all_links, parent_link_from_joint
 from .joint import get_joint_parent_frame
@@ -38,11 +37,12 @@ def set_static(body):
     for link in get_all_links(body):
         set_mass(body, mass=STATIC_MASS, link=link)
 
-def set_all_static():
-    # TODO: mass saver
-    disable_gravity()
-    for body in get_bodies():
-        set_static(body)
+# this is messing up the dependencies...
+# def set_all_static():
+#     # TODO: mass saver
+#     disable_gravity()
+#     for body in get_bodies():
+#         set_static(body)
 
 def get_joint_inertial_pose(body, joint):
     dynamics_info = get_dynamics_info(body, joint)
