@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.interfaces.geometry import get_length, get_unit_vector, quat_angle_between, get_distance
+from pybullet_planning.interfaces.env_manager.pose_transformation import get_length, get_unit_vector, quat_angle_between, get_distance
 
 #####################################
 

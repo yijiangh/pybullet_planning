@@ -3,14 +3,13 @@ import numpy as np
 from itertools import combinations, product
 
 from pybullet_planning.utils import CIRCULAR_LIMITS, DEFAULT_RESOLUTION, MAX_DISTANCE
-from pybullet_planning.interfaces.robots import get_custom_limits, is_circular, get_joint_positions, \
-    child_link_from_joint, get_link_subtree, get_joint_ancestors, get_links, get_joint_ancestors, \
-    are_links_adjacent, set_joint_positions
-from pybullet_planning.interfaces.geometry import circular_difference, get_unit_vector, all_between, \
-    pairwise_collision, pairwise_link_collision
+from pybullet_planning.interfaces.env_manager.pose_transformation import circular_difference, get_unit_vector, all_between
+
+from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
+from pybullet_planning.interfaces.debug_utils import add_line
+from pybullet_planning.interfaces.robots.joint import get_custom_limits, get_joint_positions
+
 from pybullet_planning.motion_planners import birrt, lazy_prm
-from pybullet_planning.interfaces.visualize import wait_for_user
-from pybullet_planning.interfaces.env_manager import add_line
 
 #####################################
 
@@ -51,6 +50,7 @@ def get_halton_sample_fn(body, joints, **kwargs):
     return get_sample_fn(body, joints, use_halton=True, **kwargs)
 
 def get_difference_fn(body, joints):
+    from pybullet_planning.interfaces.robots.joint import is_circular
     circular_joints = [is_circular(body, joint) for joint in joints]
 
     def fn(q2, q1):
@@ -139,6 +139,8 @@ def adjust_path(robot, joints, path):
     return adjusted_path
 
 def get_moving_links(body, joints):
+    from pybullet_planning.interfaces.robots.link import child_link_from_joint
+    from pybullet_planning.interfaces.robots.link import get_link_subtree
     moving_links = set()
     for joint in joints:
         link = child_link_from_joint(joint)
@@ -146,12 +148,14 @@ def get_moving_links(body, joints):
             moving_links.update(get_link_subtree(body, link))
     return list(moving_links)
 
+
 def get_moving_pairs(body, moving_joints):
     """
     Check all fixed and moving pairs
     Do not check all fixed and fixed pairs
     Check all moving pairs with a common
     """
+    from pybullet_planning.interfaces.robots.link import get_joint_ancestors
     moving_links = get_moving_links(body, moving_joints)
     for link1, link2 in combinations(moving_links, 2):
         ancestors1 = set(get_joint_ancestors(body, link1)) & set(moving_joints)
@@ -161,6 +165,7 @@ def get_moving_pairs(body, moving_joints):
 
 
 def get_self_link_pairs(body, joints, disabled_collisions=set(), only_moving=True):
+    from pybullet_planning.interfaces.robots.link import get_links, are_links_adjacent
     moving_links = get_moving_links(body, joints)
     fixed_links = list(set(get_links(body)) - set(moving_links))
     check_link_pairs = list(product(moving_links, fixed_links))
@@ -176,6 +181,9 @@ def get_self_link_pairs(body, joints, disabled_collisions=set(), only_moving=Tru
 
 def get_collision_fn(body, joints, obstacles, attachments, self_collisions, disabled_collisions,
                      custom_limits={}, **kwargs):
+    from pybullet_planning.interfaces.robots.collision import pairwise_collision, pairwise_link_collision
+    from pybullet_planning.interfaces.robots.joint import set_joint_positions
+
     # TODO: convert most of these to keyword arguments
     check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions) \
         if self_collisions else []

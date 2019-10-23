@@ -3,12 +3,9 @@ from collections import namedtuple
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.interfaces.robots import get_joint_positions, get_custom_limits, get_movable_joints, \
-    get_link_subtree, prune_fixed_joints, clone_body, remove_body, set_joint_positions, get_link_pose, \
+from pybullet_planning.interfaces.robots.joint import get_joint_positions, get_custom_limits, get_movable_joints, set_joint_positions, \
     get_configuration
-from pybullet_planning.interfaces.kinematics import inverse_kinematics_helper, is_pose_close
-from pybullet_planning.interfaces.geometry import all_between
-
+from pybullet_planning.interfaces.robots.body import clone_body, remove_body, get_link_pose
 
 #####################################
 
@@ -24,6 +21,10 @@ def get_null_space(robot, joints, custom_limits={}):
 
 def plan_cartesian_motion(robot, first_joint, target_link, waypoint_poses,
                           max_iterations=200, custom_limits={}, **kwargs):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
+    from pybullet_planning.interfaces.robots.link import get_link_subtree, prune_fixed_joints
+    from pybullet_planning.interfaces.kinematics import inverse_kinematics_helper, is_pose_close
+
     # TODO: fix stationary joints
     # TODO: pass in set of movable joints and take least common ancestor
     # TODO: update with most recent bullet updates

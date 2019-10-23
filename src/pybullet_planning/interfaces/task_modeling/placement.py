@@ -2,10 +2,11 @@ import numpy as np
 import pybullet as p
 
 from pybullet_planning.utils import CIRCULAR_LIMITS
-from pybullet_planning.interfaces.geometry import Euler, Pose
-from pybullet_planning.interfaces.geometry import get_center_extent, get_aabb, aabb_contains_aabb, aabb2d_from_aabb, \
-    aabb_contains_point, unit_pose, multiply
-from pybullet_planning.interfaces.robots import get_link_subtree, get_link_pose, set_pose, get_pose, get_point
+from pybullet_planning.interfaces.env_manager.pose_transformation import Euler, Pose, unit_pose, multiply, set_pose, get_pose
+from pybullet_planning.interfaces.geometry.bounding_box import get_center_extent, get_aabb, aabb_contains_aabb, aabb2d_from_aabb, \
+    aabb_contains_point
+
+from pybullet_planning.interfaces.robots.body import get_point
 
 #####################################
 # Placements

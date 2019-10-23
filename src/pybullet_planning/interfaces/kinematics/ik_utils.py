@@ -3,7 +3,6 @@ import numpy as np
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT
-from pybullet_planning.interfaces.geometry import all_between
 
 def inverse_kinematics_helper(robot, link, target_pose, null_space=None):
     (target_point, target_quat) = target_pose
@@ -38,6 +37,7 @@ def is_pose_close(pose, target_pose, pos_tolerance=1e-3, ori_tolerance=1e-3*np.p
     return True
 
 def inverse_kinematics(robot, link, target_pose, max_iterations=200, custom_limits={}, **kwargs):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
     from pybullet_planning.interfaces.robots import get_movable_joints, set_joint_positions, get_link_pose, get_custom_limits
 
     movable_joints = get_movable_joints(robot)

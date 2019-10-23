@@ -5,10 +5,8 @@ from itertools import product, combinations
 
 from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED
 
-from pybullet_planning.interfaces.geometry.pose_transformation import unit_pose, tform_point, unit_from_theta, PoseSaver
+from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, tform_point, unit_from_theta
 from pybullet_planning.interfaces.geometry.bounding_box import get_aabb
-from pybullet_planning.interfaces.robots.body import get_name, set_pose
-from pybullet_planning.interfaces.robots.link import get_link_name
 
 def get_lifetime(lifetime):
     if lifetime is None:
@@ -45,6 +43,10 @@ def remove_all_debug():
     p.removeAllUserDebugItems(physicsClientId=CLIENT)
 
 def add_body_name(body, name=None, **kwargs):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import set_pose
+    from pybullet_planning.interfaces.env_manager.savers import PoseSaver
+    from pybullet_planning.interfaces.robots.body import get_name
+
     if name is None:
         name = get_name(body)
     with PoseSaver(body):
@@ -63,6 +65,7 @@ def add_segments(points, closed=False, **kwargs):
     return lines
 
 def draw_link_name(body, link=BASE_LINK):
+    from pybullet_planning.interfaces.robots.link import get_link_name
     return add_text(get_link_name(body, link), position=(0, 0.2, 0),
                     parent=body, parent_link=link)
 

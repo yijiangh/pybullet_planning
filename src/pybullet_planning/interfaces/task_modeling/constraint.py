@@ -3,8 +3,6 @@ from collections import namedtuple
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, BASE_LINK
-from pybullet_planning.interfaces.robots import get_pose, get_com_pose
-from pybullet_planning.interfaces.geometry import unit_point, unit_quat, multiply, invert
 
 #####################################
 # Constraints - applies forces when not satisfied
@@ -38,6 +36,9 @@ def get_fixed_constraints():
     return fixed_constraints
 
 def add_fixed_constraint(body, robot, robot_link, max_force=None):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import get_pose, unit_point, unit_quat, multiply, invert
+    from pybullet_planning.interfaces.robots import get_com_pose
+
     body_link = BASE_LINK
     body_pose = get_pose(body)
     #body_pose = get_com_pose(body, link=body_link)
@@ -72,4 +73,3 @@ def remove_fixed_constraint(body, robot, robot_link):
                 (robot == constraint_info.parentBodyUniqueId) and \
                 (robot_link == constraint_info.parentJointIndex):
             remove_constraint(constraint)
-

@@ -1,15 +1,13 @@
 import numpy as np
 
 from pybullet_planning.utils import MAX_DISTANCE, CIRCULAR_LIMITS
-from pybullet_planning.interfaces.geometry import circular_difference, pairwise_collision
 from pybullet_planning.motion_planners import birrt, direct_path
-
-from pybullet_planning.interfaces.robots import set_base_values, get_base_values
 
 #####################################
 # SE(2) pose motion planning
 
 def get_base_difference_fn():
+    from pybullet_planning.interfaces.env_manager.pose_transformation import circular_difference
     def fn(q2, q1):
         dx, dy = np.array(q2[:2]) - np.array(q1[:2])
         dtheta = circular_difference(q2[2], q1[2])
@@ -26,11 +24,13 @@ def get_base_distance_fn(weights=1*np.ones(3)):
 def plan_base_motion(body, end_conf, base_limits, obstacles=[], direct=False,
                      weights=1*np.ones(3), resolutions=0.05*np.ones(3),
                      max_distance=MAX_DISTANCE, **kwargs):
+    from pybullet_planning.interfaces.robots.collision import pairwise_collision
+    from pybullet_planning.interfaces.robots.body import set_base_values, get_base_values
+
     def sample_fn():
         x, y = np.random.uniform(*base_limits)
         theta = np.random.uniform(*CIRCULAR_LIMITS)
         return (x, y, theta)
-
 
     difference_fn = get_base_difference_fn()
     distance_fn = get_base_distance_fn(weights=weights)

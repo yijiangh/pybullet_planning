@@ -3,9 +3,8 @@ from collections import namedtuple
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, BASE_LINK
-from pybullet_planning.interfaces.geometry import flatten_links, multiply, invert
-from pybullet_planning.interfaces.robots import get_link_subtree, get_link_pose, set_pose, get_pose
-from .constraint import get_constraint_info
+from pybullet_planning.interfaces.env_manager.pose_transformation import multiply, invert, set_pose, get_pose
+from pybullet_planning.interfaces.robots.link import get_link_subtree, get_link_pose
 
 #####################################
 # Grasps
@@ -21,6 +20,7 @@ class Attachment(object):
         #self.child_link = child_link # child_link=BASE_LINK
     @property
     def bodies(self):
+        from pybullet_planning.interfaces.robots.collision import flatten_links
         return flatten_links(self.child) | flatten_links(self.parent, get_link_subtree(
             self.parent, self.parent_link))
     def assign(self):
@@ -63,6 +63,7 @@ def get_grasp_pose(constraint):
     """
     Grasps are parent_from_child
     """
+    from pybullet_planning.interfaces.task_modeling.constraint import get_constraint_info
     constraint_info = get_constraint_info(constraint)
     assert(constraint_info.constraintType == p.JOINT_FIXED)
     joint_from_parent = (constraint_info.jointPivotInParent, constraint_info.jointFrameOrientationParent)

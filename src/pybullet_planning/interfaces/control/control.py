@@ -1,5 +1,13 @@
-#####################################
 
+import numpy as np
+import pybullet as p
+
+from pybullet_planning.utils import CLIENT
+from pybullet_planning.interfaces.env_manager.pose_transformation import unit_point
+from pybullet_planning.interfaces.robots.joint import get_max_velocity, get_max_force, get_joint_positions, get_movable_joints, \
+    movable_from_joints
+
+#####################################
 # Control
 
 def control_joint(body, joint, value):
@@ -82,6 +90,7 @@ def trajectory_controller(body, joints, path, **kwargs):
             yield positions
 
 def simulate_controller(controller, max_time=np.inf): # Allow option to sleep rather than yield?
+    from pybullet_planning.interfaces.env_manager import get_time_step, step_simulation
     sim_dt = get_time_step()
     sim_time = 0.0
     for _ in controller:
@@ -115,6 +124,11 @@ def compute_jacobian(robot, link, positions=None):
 
 
 def compute_joint_weights(robot, num=100):
+    import time
+    from pybullet_planning.interfaces.planner_interface.joint_motion_planning import get_sample_fn
+    from pybullet_planning.interfaces.robots.link import get_links
+    from pybullet_planning.interfaces.robots.dynamics import get_mass
+
     # http://openrave.org/docs/0.6.6/_modules/openravepy/databases/linkstatistics/#LinkStatisticsModel
     # TODO: use velocities instead
     start_time = time.time()

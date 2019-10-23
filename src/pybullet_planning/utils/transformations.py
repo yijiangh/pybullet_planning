@@ -147,6 +147,7 @@ import warnings
 import math
 
 import numpy
+import random
 
 # Documentation in HTML format can be generated with Epydoc
 __docformat__ = "restructuredtext en"
@@ -537,14 +538,14 @@ def clip_matrix(left, right, bottom, top, near, far, perspective=False):
     >>> numpy.dot(M, [frustrum[0], frustrum[2], frustrum[4], 1.0])
     array([-1., -1., -1.,  1.])
     >>> numpy.dot(M, [frustrum[1], frustrum[3], frustrum[5], 1.0])
-    array([ 1.,  1.,  1.,  1.])
+    array([1., 1., 1., 1.])
     >>> M = clip_matrix(*frustrum, perspective=True)
     >>> v = numpy.dot(M, [frustrum[0], frustrum[2], frustrum[4], 1.0])
     >>> v / v[3]
     array([-1., -1., -1.,  1.])
     >>> v = numpy.dot(M, [frustrum[1], frustrum[3], frustrum[4], 1.0])
     >>> v / v[3]
-    array([ 1.,  1., -1.,  1.])
+    array([ 1., 1., -1., 1.])
     """
     if left >= right or bottom >= top or near >= far:
         raise ValueError("invalid frustrum")
@@ -957,7 +958,7 @@ def euler_from_matrix(matrix, axes='sxyz'):
     >>> for axes in _AXES2TUPLE.keys():
     ...    R0 = euler_matrix(axes=axes, *angles)
     ...    R1 = euler_matrix(axes=axes, *euler_from_matrix(R0, axes))
-    ...    if not numpy.allclose(R0, R1): print axes, "failed"
+    ...    if not numpy.allclose(R0, R1): print(axes, "failed")
     """
     try:
         firstaxis, parity, repetition, frame = _AXES2TUPLE[axes.lower()]
@@ -1514,7 +1515,7 @@ def inverse_matrix(matrix):
     >>> for size in range(1, 7):
     ...     M0 = numpy.random.rand(size, size)
     ...     M1 = inverse_matrix(M0)
-    ...     if not numpy.allclose(M1, numpy.linalg.inv(M0)): print size
+    ...     if not numpy.allclose(M1, numpy.linalg.inv(M0)): print(size)
     """
     return numpy.linalg.inv(matrix)
 

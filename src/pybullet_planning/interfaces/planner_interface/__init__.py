@@ -1,10 +1,10 @@
-"""geometry
+"""interfaces to the motion planners
 
 """
 
-# from .cartesian_motion_planning import *
-# from .joint_motion_planning import *
-# from .nonholonomic_motion_planning import *
-# from .SE2_pose_motion_planning import *
+from .cartesian_motion_planning import *
+from .joint_motion_planning import *
+from .nonholonomic_motion_planning import *
+from .SE2_pose_motion_planning import *
 
-# __all__ = [name for name in dir() if not name.startswith('_')]
+__all__ = [name for name in dir() if not name.startswith('_')]

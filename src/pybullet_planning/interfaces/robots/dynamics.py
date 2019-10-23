@@ -14,7 +14,7 @@ DynamicsInfo = namedtuple('DynamicsInfo', ['mass', 'lateral_friction',
                                            'contact_damping', 'contact_stiffness'])
 
 def get_dynamics_info(body, link=BASE_LINK):
-    return DynamicsInfo(*p.getDynamicsInfo(body, link, physicsClientId=CLIENT))
+    return DynamicsInfo(*p.getDynamicsInfo(body, link, physicsClientId=CLIENT)[:-1])
 
 get_link_info = get_dynamics_info
 

@@ -1,14 +1,15 @@
 import numpy as np
 
 from pybullet_planning.utils import PI, MAX_DISTANCE
-from pybullet_planning.interfaces.geometry import get_angle
-from pybullet_planning.interfaces.robots import get_joint_positions
+
 from pybullet_planning.motion_planners import birrt
 
-from .joint_motion_planning import get_distance_fn, get_extend_fn, get_sample_fn, get_collision_fn, check_initial_end
+from pybullet_planning.interfaces.planner_interface.joint_motion_planning import get_distance_fn, get_extend_fn, get_sample_fn, get_collision_fn, check_initial_end
+
 #####################################
 
 def get_closest_angle_fn(body, joints, linear_weight=1., angular_weight=1., reversible=True):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import get_angle
     assert len(joints) == 3
     linear_extend_fn = get_distance_fn(body, joints[:2], weights=linear_weight*np.ones(2))
     angular_extend_fn = get_distance_fn(body, joints[2:], weights=[angular_weight])
@@ -56,6 +57,7 @@ def plan_nonholonomic_motion(body, joints, end_conf, obstacles=[], attachments=[
                              self_collisions=True, disabled_collisions=set(),
                              weights=None, resolutions=None, reversible=True,
                              max_distance=MAX_DISTANCE, custom_limits={}, **kwargs):
+    from pybullet_planning.interfaces.robots.joint import get_joint_positions
 
     assert len(joints) == len(end_conf)
     sample_fn = get_sample_fn(body, joints, custom_limits=custom_limits)
