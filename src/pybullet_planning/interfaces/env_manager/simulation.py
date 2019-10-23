@@ -9,7 +9,7 @@ from pybullet_planning.utils import is_darwin, get_client
 from pybullet_planning.interfaces.env_manager.savers import Saver
 from pybullet_planning.interfaces.env_manager.user_io import HideOutput, update_viewer, user_input
 from pybullet_planning.interfaces.env_manager.pose_transformation import set_pose
-from pybullet_planning.interfaces.env_manager.shape_creation import ModelInfo, create_obj
+from pybullet_planning.interfaces.env_manager.shape_creation import ModelInfo, create_obj, get_urdf_flags
 
 #####################################
 

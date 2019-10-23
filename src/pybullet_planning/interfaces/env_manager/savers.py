@@ -43,3 +43,68 @@ class VideoSaver(Saver):
     def restore(self):
         if self.log_id is not None:
             p.stopStateLogging(self.log_id)
+
+#####################################
+
+class ConfSaver(Saver):
+    def __init__(self, body): #, joints):
+        from pybullet_planning.interfaces.robots.joint import get_configuration
+        self.body = body
+        self.conf = get_configuration(body)
+
+    def apply_mapping(self, mapping):
+        self.body = mapping.get(self.body, self.body)
+
+    def restore(self):
+        from pybullet_planning.interfaces.robots.joint import set_configuration
+        set_configuration(self.body, self.conf)
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, self.body)
+
+class BodySaver(Saver):
+    def __init__(self, body): #, pose=None):
+        #if pose is None:
+        #    pose = get_pose(body)
+        self.body = body
+        self.pose_saver = PoseSaver(body)
+        self.conf_saver = ConfSaver(body)
+        self.savers = [self.pose_saver, self.conf_saver]
+        # TODO: store velocities
+
+    def apply_mapping(self, mapping):
+        for saver in self.savers:
+            saver.apply_mapping(mapping)
+
+    def restore(self):
+        for saver in self.savers:
+            saver.restore()
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, self.body)
+
+class WorldSaver(Saver):
+    def __init__(self):
+        from pybullet_planning.interfaces.robots.body import get_bodies
+        self.body_savers = [BodySaver(body) for body in get_bodies()]
+        # TODO: add/remove new bodies
+
+    def restore(self):
+        for body_saver in self.body_savers:
+            body_saver.restore()
+
+class PoseSaver(Saver):
+    def __init__(self, body):
+        self.body = body
+        self.pose = get_pose(self.body)
+        self.velocity = get_velocity(self.body)
+
+    def apply_mapping(self, mapping):
+        self.body = mapping.get(self.body, self.body)
+
+    def restore(self):
+        set_pose(self.body, self.pose)
+        set_velocity(self.body, *self.velocity)
+
+    def __repr__(self):
+        return '{}({})'.format(self.__class__.__name__, self.body)

@@ -2,7 +2,6 @@ from collections import namedtuple
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, CIRCULAR_LIMITS, UNBOUNDED_LIMITS
-from pybullet_planning.interfaces.geometry.pose_transformation import wrap_angle
 
 #####################################
 # Joints
@@ -184,6 +183,7 @@ def violates_limits(body, joints, values):
     return any(violates_limit(body, joint, value) for joint, value in zip(joints, values))
 
 def wrap_position(body, joint, position):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import wrap_angle
     if is_circular(body, joint):
         return wrap_angle(position)
     return position

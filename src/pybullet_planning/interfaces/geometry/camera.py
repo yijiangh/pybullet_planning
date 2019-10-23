@@ -31,6 +31,7 @@ def set_camera_pose(camera_point, target_point=np.zeros(3)):
                                  target_point, physicsClientId=CLIENT)
 
 def set_camera_pose2(world_from_camera, distance=2):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import tform_point, point_from_pose
     target_camera = np.array([0, 0, distance])
     target_world = tform_point(world_from_camera, target_camera)
     camera_world = point_from_pose(world_from_camera)
@@ -53,11 +54,11 @@ def demask_pixel(pixel):
     return body, link
 
 def save_image(filename, rgba):
-    import scipy
+    import imageio
     if filename.endswith('.jpg'):
-        scipy.misc.imsave(filename, rgba[:, :, :3])
+        imageio.imwrite(filename, rgba[:, :, :3])
     elif filename.endswith('.png'):
-        scipy.misc.imsave(filename, rgba)  # (480, 640, 4)
+        imageio.imwrite(filename, rgba)  # (480, 640, 4)
         # scipy.misc.toimage(image_array, cmin=0.0, cmax=...).save('outfile.jpg')
     else:
         raise ValueError(filename)
@@ -90,10 +91,12 @@ def apply_alpha(color, alpha=1.0):
     return tuple(color[:3]) + (alpha,)
 
 def spaced_colors(n, s=1, v=1):
+    import colorsys
     return [colorsys.hsv_to_rgb(h, s, v) for h in np.linspace(0, 1, n, endpoint=False)]
 
 def image_from_segmented(segmented, color_from_body=None):
     if color_from_body is None:
+        from pybullet_planning.interfaces.robots.body import get_bodies
         bodies = get_bodies()
         color_from_body = dict(zip(bodies, spaced_colors(len(bodies))))
     image = np.zeros(segmented.shape[:2] + (3,))
@@ -135,4 +138,5 @@ def get_image(camera_pos, target_pos, width=640, height=480, vertical_fov=60.0, 
     return CameraImage(image.rgbPixels, depth, segmented)
 
 def set_default_camera():
+    from pybullet_planning.interfaces.env_manager.pose_transformation import Point
     set_camera(160, -35, 2.5, Point())

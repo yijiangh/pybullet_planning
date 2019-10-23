@@ -2,8 +2,9 @@ import math
 import numpy as np
 import pybullet as p
 
-from .pose_transformation import Pose, Point, Euler
-from .pose_transformation import multiply, point_from_pose, get_length, invert, get_unit_vector, apply_affine
+from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, Point, Euler
+from pybullet_planning.interfaces.env_manager.pose_transformation import multiply, point_from_pose, \
+    get_length, invert, get_unit_vector, apply_affine
 
 #####################################
 # Polygonal surfaces

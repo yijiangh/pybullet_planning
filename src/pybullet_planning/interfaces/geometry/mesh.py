@@ -5,8 +5,6 @@ import numpy as np
 
 from pybullet_planning.utils import TEMP_DIR, PI
 from pybullet_planning.utils import ensure_dir, write, read, safe_zip
-from .shape import create_obj
-from .pose_transformation import unit_from_theta, apply_affine
 
 #####################################
 # Mesh Files
@@ -18,6 +16,7 @@ def create_mesh(mesh, under=True, **kwargs):
     # http://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
     # TODO: read OFF / WRL / OBJ files
     # TODO: maintain dict to file
+    from pybullet_planning.interfaces.env_manager.shape_creation import create_obj
     ensure_dir(TEMP_DIR)
     path = os.path.join(TEMP_DIR, 'mesh{}.obj'.format(next(mesh_count)))
     write(path, obj_file_from_mesh(mesh, under=under))
@@ -242,9 +241,12 @@ def rectangular_mesh(width, length):
     return Mesh(vertices, faces)
 
 def tform_mesh(affine, mesh):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import apply_affine
     return Mesh(apply_affine(affine, mesh.vertices), mesh.faces)
 
 def grow_polygon(vertices, radius, n=8):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import unit_from_theta
+
     vertices2d = [vertex[:2] for vertex in vertices]
     if not vertices2d:
         return []

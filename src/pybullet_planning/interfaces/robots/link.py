@@ -3,9 +3,7 @@ from collections import defaultdict, deque, namedtuple
 import pybullet as p
 
 from pybullet_planning.utils import BASE_LINK, CLIENT
-from pybullet_planning.interfaces.geometry.pose_transformation import multiply, invert
-from .joint import get_num_joints, get_joints, get_joint_info, is_movable, prune_fixed_joints
-from .body import get_base_name, get_pose
+from pybullet_planning.interfaces.robots.joint import get_num_joints, get_joints, get_joint_info, is_movable, prune_fixed_joints
 
 #####################################
 # Links
@@ -23,6 +21,7 @@ def get_all_links(body):
     return [BASE_LINK] + list(get_links(body))
 
 def get_link_name(body, link):
+    from pybullet_planning.interfaces.robots.body import get_base_name
     if link == BASE_LINK:
         return get_base_name(body)
     return get_joint_info(body, link).linkName.decode('UTF-8')
@@ -35,6 +34,7 @@ def get_link_parent(body, link):
 parent_link_from_joint = get_link_parent
 
 def link_from_name(body, name):
+    from pybullet_planning.interfaces.robots.body import get_base_name
     if name == get_base_name(body):
         return BASE_LINK
     for link in get_joints(body):
@@ -69,6 +69,7 @@ def get_link_inertial_pose(body, link):
     return link_state.localInertialFramePosition, link_state.localInertialFrameOrientation
 
 def get_link_pose(body, link):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import get_pose
     if link == BASE_LINK:
         return get_pose(body)
     # if set to 1 (or True), the Cartesian world position/orientation will be recomputed using forward kinematics.
@@ -76,6 +77,7 @@ def get_link_pose(body, link):
     return link_state.worldLinkFramePosition, link_state.worldLinkFrameOrientation
 
 def get_relative_pose(body, link1, link2=BASE_LINK):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import multiply, invert
     world_from_link1 = get_link_pose(body, link1)
     world_from_link2 = get_link_pose(body, link2)
     link2_from_link1 = multiply(invert(world_from_link2), world_from_link1)

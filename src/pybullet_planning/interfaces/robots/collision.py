@@ -3,9 +3,10 @@ from itertools import product
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE
-from pybullet_planning.interfaces.env_manager import step_simulation
-from pybullet_planning.interfaces.robots import get_all_links, get_bodies
+from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE, UNKNOWN_FILE
+from pybullet_planning.utils import get_client
+from pybullet_planning.interfaces.env_manager.user_io import step_simulation
+from pybullet_planning.interfaces.robots.body import get_all_links, get_bodies
 
 #####################################
 
@@ -109,33 +110,3 @@ def batch_ray_collision(rays, threads=1):
         #parentObjectUniqueId=
         #parentLinkIndex=
         physicsClientId=CLIENT)]
-
-def collision_shape_from_data(data, body, link, client=None):
-    client = get_client(client)
-    if (data.geometry_type == p.GEOM_MESH) and (data.filename == UNKNOWN_FILE):
-        return -1
-    pose = multiply(get_joint_inertial_pose(body, link), get_data_pose(data))
-    point, quat = pose
-    # TODO: the visual data seems affected by the collision data
-    return p.createCollisionShape(shapeType=data.geometry_type,
-                                  radius=get_data_radius(data),
-                                  # halfExtents=get_data_extents(data.geometry_type, data.dimensions),
-                                  halfExtents=np.array(get_data_extents(data)) / 2,
-                                  height=get_data_height(data),
-                                  fileName=data.filename.decode(encoding='UTF-8'),
-                                  meshScale=get_data_scale(data),
-                                  planeNormal=get_data_normal(data),
-                                  flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
-                                  collisionFramePosition=point,
-                                  collisionFrameOrientation=quat,
-                                  physicsClientId=client)
-    # return p.createCollisionShapeArray()
-
-def clone_collision_shape(body, link, client=None):
-    client = get_client(client)
-    collision_data = get_collision_data(body, link)
-    if not collision_data:
-        return -1
-    assert (len(collision_data) == 1)
-    # TODO: can do CollisionArray
-    return collision_shape_from_data(collision_data[0], body, link, client)

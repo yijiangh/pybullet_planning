@@ -5,13 +5,7 @@ import pybullet as p
 
 from pybullet_planning.utils import CLIENT, BASE_LINK, UNKNOWN_FILE, OBJ_MESH_CACHE
 from pybullet_planning.utils import implies
-from pybullet_planning.interfaces.robots.link import get_link_subtree, get_all_links, get_num_links
-from pybullet_planning.interfaces.env_manager import get_model_info
 
-from .pose_transformation import unit_pose, apply_affine
-from .get_data import get_data_type, get_data_extents, get_data_radius, get_data_height, \
-    get_data_filename, get_data_scale, get_collision_data, get_data_pose
-from .mesh import read_obj
 
 #####################################
 # Bounding box
@@ -29,6 +23,17 @@ def aabb_overlap(aabb1, aabb2):
     lower2, upper2 = aabb2
     return np.less_equal(lower1, upper2).all() and \
            np.less_equal(lower2, upper1).all()
+
+#####################################
+# Bounding box from body
+
+def get_subtree_aabb(body, root_link=BASE_LINK):
+    from pybullet_planning.interfaces.robots.link import get_link_subtree
+    return aabb_union(get_aabb(body, link) for link in get_link_subtree(body, root_link))
+
+def get_aabbs(body):
+    from pybullet_planning.interfaces.robots.link import get_all_links
+    return [get_aabb(body, link=link) for link in get_all_links(body)]
 
 def get_aabb(body, link=None):
     # Note that the query is conservative and may return additional objects that don't have actual AABB overlap.
@@ -91,35 +96,3 @@ def get_aabb_vertices(aabb):
     d = len(aabb[0])
     return [tuple(aabb[i[k]][k] for k in range(d))
             for i in product(range(len(aabb)), repeat=d)]
-
-def vertices_from_data(data):
-    geometry_type = get_data_type(data)
-    #if geometry_type == p.GEOM_SPHERE:
-    #    parameters = [get_data_radius(data)]
-    if geometry_type == p.GEOM_BOX:
-        extents = np.array(get_data_extents(data))
-        aabb = AABB(-extents/2., +extents/2.)
-        vertices = get_aabb_vertices(aabb)
-    elif geometry_type in (p.GEOM_CYLINDER, p.GEOM_CAPSULE):
-        # TODO: p.URDF_USE_IMPLICIT_CYLINDER
-        radius, height = get_data_radius(data), get_data_height(data)
-        extents = np.array([2*radius, 2*radius, height])
-        aabb = AABB(-extents/2., +extents/2.)
-        vertices = get_aabb_vertices(aabb)
-    elif geometry_type == p.GEOM_SPHERE:
-        radius = get_data_radius(data)
-        half_extents = radius*np.ones(3)
-        aabb = AABB(-half_extents, +half_extents)
-        vertices = get_aabb_vertices(aabb)
-    elif geometry_type == p.GEOM_MESH:
-        filename, scale = get_data_filename(data), get_data_scale(data)
-        if filename == UNKNOWN_FILE:
-            raise RuntimeError(filename)
-        mesh = read_obj(filename, decompose=False)
-        vertices = [scale*np.array(vertex) for vertex in mesh.vertices]
-        # TODO: could compute AABB here for improved speed at the cost of being conservative
-    #elif geometry_type == p.GEOM_PLANE:
-    #   parameters = [get_data_extents(data)]
-    else:
-        raise NotImplementedError(geometry_type)
-    return apply_affine(get_data_pose(data), vertices)

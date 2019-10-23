@@ -161,6 +161,10 @@ def tform_point(affine, point):
 def apply_affine(affine, points):
     return [tform_point(affine, p) for p in points]
 
+##############################################
+# placing here to resolve cycly dependencies
+# more can be found in inferfaces.robots.body
+
 def set_pose(body, pose):
     (point, quat) = pose
     p.resetBasePositionAndOrientation(body, point, quat, physicsClientId=CLIENT)

@@ -2,20 +2,17 @@ import numpy as np
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK
-from pybullet_planning.utils import get_client
-from pybullet_planning.interfaces.env_manager.savers import Saver
-from pybullet_planning.interfaces.geometry.pose_transformation import Pose, Point, Euler
-from pybullet_planning.interfaces.geometry.pose_transformation import euler_from_quat, base_values_from_pose, \
-    quat_from_euler, z_rotation
-from pybullet_planning.interfaces.geometry.get_data import get_collision_data
-from pybullet_planning.interfaces.geometry.shape import clone_collision_shape, clone_visual_shape
-from pybullet_planning.interfaces.geometry.bounding_box import aabb_union, get_aabb
+from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, OBJ_MESH_CACHE
+from pybullet_planning.utils import implies
+from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, Point, Euler
+from pybullet_planning.interfaces.env_manager.pose_transformation import euler_from_quat, base_values_from_pose, \
+    quat_from_euler, z_rotation, get_pose, set_pose, apply_affine, unit_pose
+from pybullet_planning.interfaces.env_manager.shape_creation import get_collision_data, clone_collision_shape, clone_visual_shape
 
-from .dynamics import get_mass, get_dynamics_info, get_local_link_pose
-from .joint import JOINT_TYPES, get_joint_name, get_joint_type, is_circular, get_joint_limits, is_fixed, \
+from pybullet_planning.interfaces.robots.dynamics import get_mass, get_dynamics_info, get_local_link_pose
+from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, is_circular, get_joint_limits, is_fixed, \
     get_joint_info, get_joint_positions, get_joints, is_movable
-from .link import get_links, parent_joint_from_link, get_link_name, get_link_parent, get_link_pose, \
+from pybullet_planning.interfaces.robots.link import get_links, parent_joint_from_link, get_link_name, get_link_parent, get_link_pose, \
     get_link_subtree, get_all_links
 
 #####################################
@@ -139,6 +136,7 @@ def dump_world():
         print()
 
 def clone_body(body, links=None, collision=True, visual=True, client=None):
+    from pybullet_planning.utils import get_client
     # TODO: names are not retained
     # TODO: error with createMultiBody link poses on PR2
     # localVisualFrame_position: position of local visual frame, relative to link/joint frame
@@ -207,6 +205,7 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
     return new_body
 
 def clone_world(client=None, exclude=[]):
+    from pybullet_planning.interfaces.env_manager.simulation import has_gui
     visual = has_gui(client)
     mapping = {}
     for body in get_bodies():
@@ -231,13 +230,8 @@ def set_color(body, color, link=BASE_LINK, shape_index=-1):
                                #textureUniqueId=None, specularColor=None,
                                physicsClientId=CLIENT)
 
-def get_subtree_aabb(body, root_link=BASE_LINK):
-    return aabb_union(get_aabb(body, link) for link in get_link_subtree(body, root_link))
-
-def get_aabbs(body):
-    return [get_aabb(body, link=link) for link in get_all_links(body)]
-
 def vertices_from_link(body, link):
+    from pybullet_planning.interfaces.env_manager.shape_creation import vertices_from_data
     # In local frame
     vertices = []
     # TODO: requires the viewer to be active
@@ -249,6 +243,10 @@ def vertices_from_link(body, link):
     return vertices
 
 def vertices_from_rigid(body, link=BASE_LINK):
+    import os
+    from pybullet_planning.interfaces.env_manager import get_model_info
+    from pybullet_planning.interfaces.geometry.mesh import read_obj
+    from pybullet_planning.interfaces.robots.link import get_num_links
     assert implies(link == BASE_LINK, get_num_links(body) == 0)
     try:
         vertices = vertices_from_link(body, link)
@@ -266,6 +264,7 @@ def vertices_from_rigid(body, link=BASE_LINK):
     return vertices
 
 def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
+    from pybullet_planning.interfaces.geometry.bounding_box import aabb_from_points, get_aabb_center, get_aabb_extent
     # TODO: make it just orientation
     vertices = apply_affine(body_pose, vertices_from_rigid(body, **kwargs))
     aabb = aabb_from_points(vertices)
@@ -283,6 +282,7 @@ def approximate_as_cylinder(body, **kwargs):
 #####################################
 
 def load_model(rel_path, pose=None, **kwargs):
+    from pybullet_planning.interfaces.env_manager.simulation import get_model_path, add_data_path, load_pybullet
     # TODO: error with loadURDF when loading MESH visual and CYLINDER collision
     abs_path = get_model_path(rel_path)
     add_data_path()
@@ -291,65 +291,3 @@ def load_model(rel_path, pose=None, **kwargs):
     if pose is not None:
         set_pose(body, pose)
     return body
-
-#####################################
-
-class ConfSaver(Saver):
-    def __init__(self, body): #, joints):
-        self.body = body
-        self.conf = get_configuration(body)
-
-    def apply_mapping(self, mapping):
-        self.body = mapping.get(self.body, self.body)
-
-    def restore(self):
-        set_configuration(self.body, self.conf)
-
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.body)
-
-class BodySaver(Saver):
-    def __init__(self, body): #, pose=None):
-        #if pose is None:
-        #    pose = get_pose(body)
-        self.body = body
-        self.pose_saver = PoseSaver(body)
-        self.conf_saver = ConfSaver(body)
-        self.savers = [self.pose_saver, self.conf_saver]
-        # TODO: store velocities
-
-    def apply_mapping(self, mapping):
-        for saver in self.savers:
-            saver.apply_mapping(mapping)
-
-    def restore(self):
-        for saver in self.savers:
-            saver.restore()
-
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.body)
-
-class WorldSaver(Saver):
-    def __init__(self):
-        self.body_savers = [BodySaver(body) for body in get_bodies()]
-        # TODO: add/remove new bodies
-
-    def restore(self):
-        for body_saver in self.body_savers:
-            body_saver.restore()
-
-class PoseSaver(Saver):
-    def __init__(self, body):
-        self.body = body
-        self.pose = get_pose(self.body)
-        self.velocity = get_velocity(self.body)
-
-    def apply_mapping(self, mapping):
-        self.body = mapping.get(self.body, self.body)
-
-    def restore(self):
-        set_pose(self.body, self.pose)
-        set_velocity(self.body, *self.velocity)
-
-    def __repr__(self):
-        return '{}({})'.format(self.__class__.__name__, self.body)

@@ -201,6 +201,47 @@ def create_obj(path, scale=1., mass=STATIC_MASS, collision=True, color=(0.5, 0.5
 
 #####################################
 
+def vertices_from_data(data):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import apply_affine
+    from pybullet_planning.interfaces.env_manager.shape_creation import get_data_type, get_data_extents, get_data_radius, get_data_height, \
+        get_data_filename, get_data_scale, get_collision_data, get_data_pose
+    from pybullet_planning.interfaces.env_manager import get_model_info
+
+    geometry_type = get_data_type(data)
+    #if geometry_type == p.GEOM_SPHERE:
+    #    parameters = [get_data_radius(data)]
+    if geometry_type == p.GEOM_BOX:
+        extents = np.array(get_data_extents(data))
+        aabb = AABB(-extents/2., +extents/2.)
+        vertices = get_aabb_vertices(aabb)
+    elif geometry_type in (p.GEOM_CYLINDER, p.GEOM_CAPSULE):
+        # TODO: p.URDF_USE_IMPLICIT_CYLINDER
+        radius, height = get_data_radius(data), get_data_height(data)
+        extents = np.array([2*radius, 2*radius, height])
+        aabb = AABB(-extents/2., +extents/2.)
+        vertices = get_aabb_vertices(aabb)
+    elif geometry_type == p.GEOM_SPHERE:
+        radius = get_data_radius(data)
+        half_extents = radius*np.ones(3)
+        aabb = AABB(-half_extents, +half_extents)
+        vertices = get_aabb_vertices(aabb)
+    elif geometry_type == p.GEOM_MESH:
+        from pybullet_planning.interfaces.geometry.mesh import read_obj
+        filename, scale = get_data_filename(data), get_data_scale(data)
+        if filename == UNKNOWN_FILE:
+            raise RuntimeError(filename)
+        mesh = read_obj(filename, decompose=False)
+        vertices = [scale*np.array(vertex) for vertex in mesh.vertices]
+        # TODO: could compute AABB here for improved speed at the cost of being conservative
+    #elif geometry_type == p.GEOM_PLANE:
+    #   parameters = [get_data_extents(data)]
+    else:
+        raise NotImplementedError(geometry_type)
+    return apply_affine(get_data_pose(data), vertices)
+
+
+#####################################
+
 def visual_shape_from_data(data, client=None):
     client = get_client(client)
     if (data.visualGeometryType == p.GEOM_MESH) and (data.meshAssetFileName == UNKNOWN_FILE):
@@ -238,6 +279,42 @@ def clone_visual_shape(body, link, client=None):
         return -1
     assert (len(visual_data) == 1)
     return visual_shape_from_data(visual_data[0], client)
+
+#####################################
+
+def collision_shape_from_data(data, body, link, client=None):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import multiply
+    from pybullet_planning.interfaces.robots.dynamics import get_joint_inertial_pose
+
+    client = get_client(client)
+    if (data.geometry_type == p.GEOM_MESH) and (data.filename == UNKNOWN_FILE):
+        return -1
+    pose = multiply(get_joint_inertial_pose(body, link), get_data_pose(data))
+    point, quat = pose
+    # TODO: the visual data seems affected by the collision data
+    return p.createCollisionShape(shapeType=data.geometry_type,
+                                  radius=get_data_radius(data),
+                                  # halfExtents=get_data_extents(data.geometry_type, data.dimensions),
+                                  halfExtents=np.array(get_data_extents(data)) / 2,
+                                  height=get_data_height(data),
+                                  fileName=data.filename.decode(encoding='UTF-8'),
+                                  meshScale=get_data_scale(data),
+                                  planeNormal=get_data_normal(data),
+                                  flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+                                  collisionFramePosition=point,
+                                  collisionFrameOrientation=quat,
+                                  physicsClientId=client)
+    # return p.createCollisionShapeArray()
+
+def clone_collision_shape(body, link, client=None):
+    from pybullet_planning.interfaces.env_manager.shape_creation import get_collision_data
+    client = get_client(client)
+    collision_data = get_collision_data(body, link)
+    if not collision_data:
+        return -1
+    assert (len(collision_data) == 1)
+    # TODO: can do CollisionArray
+    return collision_shape_from_data(collision_data[0], body, link, client)
 
 #####################################
 

@@ -5,10 +5,6 @@ import numpy as np
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, BASE_LINK, STATIC_MASS
-from pybullet_planning.interfaces.geometry import Pose, multiply, invert
-from .link import get_all_links, parent_link_from_joint
-from .joint import get_joint_parent_frame
-from .body import get_bodies
 
 #####################################
 
@@ -34,23 +30,28 @@ def set_mass(body, mass, link=BASE_LINK):
     set_dynamics(body, link=link, mass=mass)
 
 def set_static(body):
+    from pybullet_planning.interfaces.robots.link import get_all_links
     for link in get_all_links(body):
         set_mass(body, mass=STATIC_MASS, link=link)
 
-# this is messing up the dependencies...
-# def set_all_static():
-#     # TODO: mass saver
-#     disable_gravity()
-#     for body in get_bodies():
-#         set_static(body)
+def set_all_static():
+    from pybullet_planning.interfaces.env_manager.simulation import disable_gravity
+    from pybullet_planning.interfaces.robots.body import get_bodies
+    # TODO: mass saver
+    disable_gravity()
+    for body in get_bodies():
+        set_static(body)
 
 def get_joint_inertial_pose(body, joint):
     dynamics_info = get_dynamics_info(body, joint)
     return dynamics_info.local_inertial_pos, dynamics_info.local_inertial_orn
 
 def get_local_link_pose(body, joint):
-    parent_joint = parent_link_from_joint(body, joint)
+    from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, multiply, invert
+    from pybullet_planning.interfaces.robots.joint import get_joint_parent_frame
+    from pybullet_planning.interfaces.robots.link import parent_link_from_joint
 
+    parent_joint = parent_link_from_joint(body, joint)
     #world_child = get_link_pose(body, joint)
     #world_parent = get_link_pose(body, parent_joint)
     ##return multiply(invert(world_parent), world_child)
