@@ -44,7 +44,8 @@ def get_joint_names(body, joints):
 
 def joint_from_name(body, name):
     for joint in get_joints(body):
-        if get_joint_name(body, joint) == name:
+        jt_name = get_joint_name(body, joint)
+        if jt_name == name or jt_name.decode('UTF-8') == name:
             return joint
     raise ValueError(body, name)
 

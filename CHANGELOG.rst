@@ -7,3 +7,4 @@ Changelog
 
 * Initial version
 * Divide the original `utils.py` file into separate modules
+* Modules cycle dependency resolved.

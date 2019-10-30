@@ -38,12 +38,19 @@ def unit_generator(d, use_halton=False):
             use_halton = False
     return halton_generator(d) if use_halton else uniform_generator(d)
 
+def interval_generator(lower, upper, **kwargs):
+    assert len(lower) == len(upper)
+    assert np.less(lower, upper).all() # TODO: equality
+    extents = np.array(upper) - np.array(lower)
+    for scale in unit_generator(len(lower), **kwargs):
+        point = np.array(lower) + scale*extents
+        yield point
+
 def get_sample_fn(body, joints, custom_limits={}, **kwargs):
-    generator = unit_generator(len(joints), **kwargs)
     lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits, circular_limits=CIRCULAR_LIMITS)
-    limits_extents = np.array(upper_limits) - np.array(lower_limits)
+    generator = interval_generator(lower_limits, upper_limits, **kwargs)
     def fn():
-        return tuple(next(generator) * limits_extents + np.array(lower_limits))
+        return tuple(next(generator))
     return fn
 
 def get_halton_sample_fn(body, joints, **kwargs):
