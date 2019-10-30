@@ -95,6 +95,7 @@ class WorldSaver(Saver):
 
 class PoseSaver(Saver):
     def __init__(self, body):
+        from pybullet_planning.interfaces.robots.body import get_pose, get_velocity
         self.body = body
         self.pose = get_pose(self.body)
         self.velocity = get_velocity(self.body)
@@ -103,6 +104,7 @@ class PoseSaver(Saver):
         self.body = mapping.get(self.body, self.body)
 
     def restore(self):
+        from pybullet_planning.interfaces.robots.body import set_pose, set_velocity
         set_pose(self.body, self.pose)
         set_velocity(self.body, *self.velocity)
 

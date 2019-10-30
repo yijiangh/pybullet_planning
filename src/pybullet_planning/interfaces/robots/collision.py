@@ -11,31 +11,174 @@ from pybullet_planning.interfaces.robots.body import get_all_links, get_bodies
 #####################################
 
 def contact_collision():
+    """run simulation for one step and check if there is a collision
+
+    Returns
+    -------
+    bool
+        True if there is a collision, False otherwise
+    """
     step_simulation()
     return len(p.getContactPoints(physicsClientId=CLIENT)) != 0
+
 
 ContactResult = namedtuple('ContactResult', ['contactFlag', 'bodyUniqueIdA', 'bodyUniqueIdB',
                                          'linkIndexA', 'linkIndexB', 'positionOnA', 'positionOnB',
                                          'contactNormalOnB', 'contactDistance', 'normalForce'])
 
-def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE): # 10000
-    return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,
-                                  linkIndexA=link1, linkIndexB=link2,
-                                  physicsClientId=CLIENT)) != 0 # getContactPoints
+
+def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE): # 10000
+    """check pairwise collision checking info between bodies
+
+    See getClosestPoints in <pybullet documentation `https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit?usp=sharing`>_
+    TODO: [DOC] shared reference to pybullet doc
+
+    Note: `getContactPoints` can be used here as well
+
+    Parameters
+    ----------
+    body1 : pb_body
+        [description]
+    link1 : pb_link
+        [description]
+    body2 : pb_body
+        [description]
+    link2 : pb_link, optional
+        [description], by default BASE_LINK
+    max_distance : float, optional
+        If the distance between objects exceeds this maximum distance, no points may be returned.
+        by default MAX_DISTANCE (set in pybullet_planning.utils.shared_const)
+
+    Returns
+    -------
+    list of contact points
+        each element of the list has the following fields:
+        contactFlag : int
+            reserved
+        bodyUniqueIdA : int
+            body unique id of body A
+        bodyUniqueIdB : int
+            body unique id of body B
+        linkIndexA : int
+            link index of body A, -1 for base
+        linkIndexB : int
+            link index of body B, -1 for base
+        positionOnA : vec3, list of 3 floats
+            contact position on A, in Cartesian world coordinates
+        positionOnB : vec3, list of 3 floats
+            contact position on B, in Cartesian world coordinates
+        contactNormalOnB : vec3, list of 3 floats
+            contact normal on B, pointing towards A
+        contactDistance : float
+            contact distance, positive for separation, negative for penetration
+        normalForce : float
+            normal force applied during the last 'stepSimulation'
+        lateralFriction1 : float
+            lateral friction force in the lateralFrictionDir1 direction
+        lateralFrictionDir1 : vec3, list of 3 floats
+            first lateral friction direction
+        lateralFriction2 : float
+            lateral friction force in the lateralFrictionDir2 direction
+        lateralFrictionDir2 : vec3, list of 3 floats
+            second lateral friction direction
+
+    """
+    return p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,
+                              linkIndexA=link1, linkIndexB=link2,
+                              physicsClientId=CLIENT)
+
+def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):
+    """check pairwise collision between bodies
+
+    See getClosestPoints in <pybullet documentation `https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit?usp=sharing`>_
+    TODO: [DOC] shared reference to pybullet doc
+
+    Parameters
+    ----------
+    body1 : int
+        [description]
+    link1 : int
+        [description]
+    body2 : int
+        [description]
+    link2 : int, optional
+        [description], by default BASE_LINK
+    max_distance : float, optional
+        If the distance between objects exceeds this maximum distance, no points may be returned.
+        by default MAX_DISTANCE (set in pybullet_planning.utils.shared_const)
+
+    Returns
+    -------
+    Bool
+        True if there is a collision, False otherwise
+    """
+    return len(pairwise_link_collision_info(body1, link1, body2, link2, max_distance)) != 0
+
 
 def flatten_links(body, links=None):
+    """util fn to get a list (body, link)
+
+    TODO: [Q] what's the use case for this one?
+
+    Parameters
+    ----------
+    body : int
+        [description]
+    links : list of int, optional
+        given links, by default None
+
+    Returns
+    -------
+    set of (body, link)
+        [description]
+    """
     if links is None:
         links = get_all_links(body)
     return {(body, frozenset([link])) for link in links}
 
 def expand_links(body):
+    """expand all links of a body
+
+    TODO: [REFACTOR] move to body or link modules?
+
+    Parameters
+    ----------
+    body : int
+        [description]
+
+    Returns
+    -------
+    body : int
+        [description]
+    links : list of int
+        [description]
+    """
     body, links = body if isinstance(body, tuple) else (body, None)
     if links is None:
         links = get_all_links(body)
     return body, links
 
 def any_link_pair_collision(body1, links1, body2, links2=None, **kwargs):
-    # TODO: this likely isn't needed anymore
+    """check collision between two bodies' links
+
+    TODO: Caelan : this likely isn't needed anymore
+
+    Parameters
+    ----------
+    body1 : [type]
+        [description]
+    links1 : [type]
+        [description]
+    body2 : [type]
+        [description]
+    links2 : [type], optional
+        [description], by default None
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     if links1 is None:
         links1 = get_all_links(body1)
     if links2 is None:
@@ -47,10 +190,47 @@ def any_link_pair_collision(body1, links1, body2, links2=None, **kwargs):
             return True
     return False
 
-def body_collision(body1, body2, max_distance=MAX_DISTANCE): # 10000
+def any_link_pair_collision_info(body1, links1, body2, links2=None, **kwargs):
+    """check collision between two bodies' links and return detailed information
+
+    Note: for now, this is simply a copy of the original `any_link_pair_collision` function
+    to return closest point query info. This function has duplicated computation and should
+    not be used in a planning process.
+
+    Parameters
+    ----------
+    body1 : [type]
+        [description]
+    links1 : [type]
+        [description]
+    body2 : [type]
+        [description]
+    links2 : [type], optional
+        [description], by default None
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    if links1 is None:
+        links1 = get_all_links(body1)
+    if links2 is None:
+        links2 = get_all_links(body2)
+    for link1, link2 in product(links1, links2):
+        if (body1 == body2) and (link1 == link2):
+            continue
+        if pairwise_link_collision(body1, link1, body2, link2, **kwargs):
+            return pairwise_link_collision_info(body1, link1, body2, link2, **kwargs)
+    return False
+
+def body_collision_info(body1, body2, max_distance=MAX_DISTANCE): # 10000
     # TODO: confirm that this doesn't just check the base link
-    return len(p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,
-                                  physicsClientId=CLIENT)) != 0 # getContactPoints`
+    return p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,
+                              physicsClientId=CLIENT) # getContactPoints`
+
+def body_collision(body1, body2, max_distance=MAX_DISTANCE):
+    return len(body_collision_info(body1, body2, max_distance)) != 0
 
 def pairwise_collision(body1, body2, **kwargs):
     if isinstance(body1, tuple) or isinstance(body2, tuple):
@@ -58,6 +238,31 @@ def pairwise_collision(body1, body2, **kwargs):
         body2, links2 = expand_links(body2)
         return any_link_pair_collision(body1, links1, body2, links2, **kwargs)
     return body_collision(body1, body2, **kwargs)
+
+def pairwise_collision_info(body1, body2, **kwargs):
+    """[summary]
+
+    Note: for now, this is simply a copy of the original `any_link_pair_collision` function
+    to return closest point query info. This function has duplicated computation and should
+    not be used in a planning process.
+
+    Parameters
+    ----------
+    body1 : [type]
+        [description]
+    body2 : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    if isinstance(body1, tuple) or isinstance(body2, tuple):
+        body1, links1 = expand_links(body1)
+        body2, links2 = expand_links(body2)
+        return any_link_pair_collision_info(body1, links1, body2, links2, **kwargs)
+    return body_collision_info(body1, body2, **kwargs)
 
 #def single_collision(body, max_distance=1e-3):
 #    return len(p.getClosestPoints(body, max_distance=max_distance)) != 0
@@ -77,6 +282,187 @@ def link_pairs_collision(body1, links1, body2, links2=None, **kwargs):
         if pairwise_link_collision(body1, link1, body2, link2, **kwargs):
             return True
     return False
+
+def link_pairs_collision_info(body1, links1, body2, links2=None, **kwargs):
+    """[summary]
+
+    Note: for now, this is simply a copy of the original `any_link_pair_collision` function
+    to return closest point query info. This function has duplicated computation and should
+    not be used in a planning process.
+
+    Parameters
+    ----------
+    body1 : [type]
+        [description]
+    links1 : [type]
+        [description]
+    body2 : [type]
+        [description]
+    links2 : [type], optional
+        [description], by default None
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    if links2 is None:
+        links2 = get_all_links(body2)
+    for link1, link2 in product(links1, links2):
+        if (body1 == body2) and (link1 == link2):
+            continue
+        if pairwise_link_collision(body1, link1, body2, link2, **kwargs):
+            return pairwise_link_collision_info(body1, link1, body2, link2, **kwargs)
+    return False
+
+def get_collision_fn(body, joints, obstacles, attachments, self_collisions, disabled_collisions,
+                     custom_limits={}, **kwargs):
+    # TODO: convert most of these to keyword arguments
+    from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
+    from pybullet_planning.interfaces.robots.collision import pairwise_collision, pairwise_link_collision
+    from pybullet_planning.interfaces.robots.joint import set_joint_positions, get_custom_limits
+    from pybullet_planning.interfaces.robots.link import get_self_link_pairs, get_moving_links
+
+    check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions) \
+        if self_collisions else []
+    moving_links = frozenset(get_moving_links(body, joints))
+    attached_bodies = [attachment.child for attachment in attachments]
+    moving_bodies = [(body, moving_links)] + attached_bodies
+    #moving_bodies = [body] + [attachment.child for attachment in attachments]
+    check_body_pairs = list(product(moving_bodies, obstacles))  # + list(combinations(moving_bodies, 2))
+    lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
+
+    # TODO: maybe prune the link adjacent to the robot
+    # TODO: test self collision with the holding
+    def collision_fn(q):
+        if not all_between(lower_limits, q, upper_limits):
+            #print('Joint limits violated')
+            return True
+        set_joint_positions(body, joints, q)
+        for attachment in attachments:
+            attachment.assign()
+        for link1, link2 in check_link_pairs:
+            # Self-collisions should not have the max_distance parameter
+            if pairwise_link_collision(body, link1, body, link2): #, **kwargs):
+                #print(get_body_name(body), get_link_name(body, link1), get_link_name(body, link2))
+                return True
+        for body1, body2 in check_body_pairs:
+            if pairwise_collision(body1, body2, **kwargs):
+                #print(get_body_name(body1), get_body_name(body2))
+                return True
+        return False
+    return collision_fn
+
+def get_collision_diagnosis_fn(body, joints, obstacles,
+                     attachments=[], self_collisions=True, disabled_collisions=set(),
+                     custom_limits={}, ignored_pairs=[], diagnosis=False, viz_last_duration=-1, **kwargs):
+    """make a collision checking function.
+
+    Note: this is the diagnosis version for debugging. Upon finding a collision, it will pause the scene
+    and identify the pairs of bodies and links that cause collision.
+
+    TODO: this function can be merged with the `get_collision_fn` but I need a review from Caelan to do this
+    to prevent breaking downstream packages.
+
+    Parameters
+    ----------
+    body : [type]
+        [description]
+    joints : [type]
+        [description]
+    obstacles : [type]
+        [description]
+    attachments : list, optional
+        [description], by default []
+    self_collisions : bool, optional
+        [description], by default True
+    disabled_collisions : [type], optional
+        [description], by default set()
+    custom_limits : dict, optional
+        [description], by default {}
+    ignored_pairs : list, optional
+        [description], by default []
+    diagnosis : bool, optional
+        [description], by default False
+    viz_last_duration : int, optional
+        [description], by default -1
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
+    from pybullet_planning.interfaces.robots.collision import pairwise_collision, pairwise_link_collision
+    from pybullet_planning.interfaces.robots.joint import set_joint_positions, get_custom_limits
+    from pybullet_planning.interfaces.robots.link import get_self_link_pairs, get_moving_links, get_link_attached_body_pairs
+    from pybullet_planning.interfaces.debug_utils.debug_utils import draw_collision_diagnosis
+
+    check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions=disabled_collisions) if self_collisions else []
+    check_link_attach_body_pairs = get_link_attached_body_pairs(body, attachments)
+
+    moving_bodies = [body] + [attachment.child for attachment in attachments]
+    if obstacles is None:
+        obstacles = list(set(get_bodies()) - set(moving_bodies))
+    else:
+        obstacles = list(set(obstacles) - set(moving_bodies))
+    check_body_pairs = list(set(product(moving_bodies, obstacles)))  # + list(combinations(moving_bodies, 2))
+
+    if ignored_pairs:
+        for body_pair in ignored_pairs:
+            found = False
+            for c_body_pair in check_body_pairs:
+                if body_pair[0] in c_body_pair and body_pair[1] in c_body_pair:
+                    check_body_pairs.remove(c_body_pair)
+                    found = True
+                if found:
+                    break
+
+    lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
+
+    # TODO: maybe prune the link adjacent to the robot
+    # TODO: test self collision with the holding
+    def collision_fn(q, dynamic_obstacles=[]):
+        if not all_between(lower_limits, q, upper_limits):
+            return True
+        set_joint_positions(body, joints, q)
+        for attachment in attachments:
+            attachment.assign()
+        if dynamic_obstacles:
+            check_body_pairs.extend(list(product(moving_bodies, dynamic_obstacles)))
+
+        # body's link-link self collision
+        for link1, link2 in check_link_pairs:
+            # Self-collisions should not have the max_distance parameter
+            if pairwise_link_collision(body, link1, body, link2): #, **kwargs):
+                if diagnosis:
+                    print('body link-link collision!')
+                    cr = pairwise_link_collision_info(body, link1, body, link2)
+                    draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
+
+                return True
+
+        # body's link - attached bodies collision
+        for body_links, at_body in check_link_attach_body_pairs:
+            if link_pairs_collision(body, body_links, at_body):
+                if diagnosis:
+                    print('body - attachment collision!')
+                    cr = link_pairs_collision_info(body, body_links, at_body)
+                    draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
+                return True
+
+        # body - body collision
+        if any(pairwise_collision(*pair, **kwargs) for pair in check_body_pairs):
+            if diagnosis:
+                print('body - body collision!')
+                for pair in check_body_pairs:
+                    cr = pairwise_collision_info(*pair, **kwargs)
+                    draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
+            return True
+        else:
+            return False
+
+    return collision_fn
 
 #####################################
 

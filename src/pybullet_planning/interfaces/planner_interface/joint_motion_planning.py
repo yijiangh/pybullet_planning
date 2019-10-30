@@ -1,13 +1,14 @@
 import random
 import numpy as np
-from itertools import combinations, product
+from itertools import product
 
 from pybullet_planning.utils import CIRCULAR_LIMITS, DEFAULT_RESOLUTION, MAX_DISTANCE
-from pybullet_planning.interfaces.env_manager.pose_transformation import circular_difference, get_unit_vector, all_between
+from pybullet_planning.interfaces.env_manager.pose_transformation import circular_difference, get_unit_vector
 
 from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
 from pybullet_planning.interfaces.debug_utils import add_line
 from pybullet_planning.interfaces.robots.joint import get_custom_limits, get_joint_positions
+from pybullet_planning.interfaces.robots.collision import get_collision_fn
 
 from pybullet_planning.motion_planners import birrt, lazy_prm
 
@@ -145,82 +146,6 @@ def adjust_path(robot, joints, path):
         adjusted_path.append(adjusted_path[-1] + difference)
     return adjusted_path
 
-def get_moving_links(body, joints):
-    from pybullet_planning.interfaces.robots.link import child_link_from_joint
-    from pybullet_planning.interfaces.robots.link import get_link_subtree
-    moving_links = set()
-    for joint in joints:
-        link = child_link_from_joint(joint)
-        if link not in moving_links:
-            moving_links.update(get_link_subtree(body, link))
-    return list(moving_links)
-
-
-def get_moving_pairs(body, moving_joints):
-    """
-    Check all fixed and moving pairs
-    Do not check all fixed and fixed pairs
-    Check all moving pairs with a common
-    """
-    from pybullet_planning.interfaces.robots.link import get_joint_ancestors
-    moving_links = get_moving_links(body, moving_joints)
-    for link1, link2 in combinations(moving_links, 2):
-        ancestors1 = set(get_joint_ancestors(body, link1)) & set(moving_joints)
-        ancestors2 = set(get_joint_ancestors(body, link2)) & set(moving_joints)
-        if ancestors1 != ancestors2:
-            yield link1, link2
-
-
-def get_self_link_pairs(body, joints, disabled_collisions=set(), only_moving=True):
-    from pybullet_planning.interfaces.robots.link import get_links, are_links_adjacent
-    moving_links = get_moving_links(body, joints)
-    fixed_links = list(set(get_links(body)) - set(moving_links))
-    check_link_pairs = list(product(moving_links, fixed_links))
-    if only_moving:
-        check_link_pairs.extend(get_moving_pairs(body, joints))
-    else:
-        check_link_pairs.extend(combinations(moving_links, 2))
-    check_link_pairs = list(filter(lambda pair: not are_links_adjacent(body, *pair), check_link_pairs))
-    check_link_pairs = list(filter(lambda pair: (pair not in disabled_collisions) and
-                                                (pair[::-1] not in disabled_collisions), check_link_pairs))
-    return check_link_pairs
-
-
-def get_collision_fn(body, joints, obstacles, attachments, self_collisions, disabled_collisions,
-                     custom_limits={}, **kwargs):
-    from pybullet_planning.interfaces.robots.collision import pairwise_collision, pairwise_link_collision
-    from pybullet_planning.interfaces.robots.joint import set_joint_positions
-
-    # TODO: convert most of these to keyword arguments
-    check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions) \
-        if self_collisions else []
-    moving_links = frozenset(get_moving_links(body, joints))
-    attached_bodies = [attachment.child for attachment in attachments]
-    moving_bodies = [(body, moving_links)] + attached_bodies
-    #moving_bodies = [body] + [attachment.child for attachment in attachments]
-    check_body_pairs = list(product(moving_bodies, obstacles))  # + list(combinations(moving_bodies, 2))
-    lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
-
-    # TODO: maybe prune the link adjacent to the robot
-    # TODO: test self collision with the holding
-    def collision_fn(q):
-        if not all_between(lower_limits, q, upper_limits):
-            #print('Joint limits violated')
-            return True
-        set_joint_positions(body, joints, q)
-        for attachment in attachments:
-            attachment.assign()
-        for link1, link2 in check_link_pairs:
-            # Self-collisions should not have the max_distance parameter
-            if pairwise_link_collision(body, link1, body, link2): #, **kwargs):
-                #print(get_body_name(body), get_link_name(body, link1), get_link_name(body, link2))
-                return True
-        for body1, body2 in check_body_pairs:
-            if pairwise_collision(body1, body2, **kwargs):
-                #print(get_body_name(body1), get_body_name(body2))
-                return True
-        return False
-    return collision_fn
 
 def plan_waypoints_joint_motion(body, joints, waypoints, start_conf=None, obstacles=[], attachments=[],
                                 self_collisions=True, disabled_collisions=set(),

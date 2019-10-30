@@ -141,3 +141,51 @@ def draw_ray(ray, ray_result=None, visible_color=GREEN, occluded_color=RED, **kw
         add_line(hit_position, ray.end, color=occluded_color, **kwargs),
     ]
 
+
+def get_body_from_pb_id(i):
+    return p.getBodyUniqueId(i, physicsClientId=CLIENT)
+
+def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
+    from pybullet_planning.interfaces.env_manager.simulation import has_gui
+    from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration
+    from pybullet_planning.interfaces.robots.link import get_link_name
+    from pybullet_planning.interfaces.robots.body import get_name, set_color
+
+    if not has_gui() and pb_closest_pt_output:
+        return
+    # if paint_all_others:
+    #     set_all_bodies_color()
+        # for b in obstacles:
+        #     set_color(b, (0,0,1,0.3))
+    for u_cr in pb_closest_pt_output:
+        handles = []
+        b1 = get_body_from_pb_id(u_cr[1])
+        b2 = get_body_from_pb_id(u_cr[2])
+        l1 = u_cr[3]
+        l2 = u_cr[4]
+        l1_name = get_link_name(b1, l1)
+        l2_name = get_link_name(b2, l2)
+        print('pairwise LINK collision: Body #{0} Link #{1} - Body #{2} Link #{3}'.format(
+            get_name(b1), l1_name, get_name(b2), l2_name))
+        set_color(b1, (1, 0, 0, 0.2))
+        set_color(b2, (0, 1, 0, 0.2))
+
+        handles.append(add_body_name(b1))
+        handles.append(add_body_name(b2))
+        handles.append(draw_link_name(b1, l1))
+        handles.append(draw_link_name(b2, l2))
+
+        handles.append(add_line(u_cr[5], u_cr[6], color=(0,0,1), width=5))
+        # camera_base_pt = u_cr[5]
+        # camera_pt = np.array(camera_base_pt) + np.array([0.1, 0, 0.05])
+        # set_camera_pose(tuple(camera_pt), camera_base_pt)
+
+        if viz_last_duration < 0:
+            wait_for_user()
+        else:
+            wait_for_duration(viz_last_duration)
+
+        # restore lines and colors
+        for h in handles: remove_debug(h)
+        set_color(b1, (1, 1, 1, 1))
+        set_color(b2, (1, 1, 1, 1))
