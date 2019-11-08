@@ -16,8 +16,7 @@ pybullet_planning
 
 .. Write project description
 
-**pybullet_planning** is a suite of utility functions to facilitate robotic planning related research on the
-`pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
+*pybullet_planning* is a suite of utility functions to facilitate robotic planning related research on the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
 
 
 Main features

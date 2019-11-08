@@ -7,10 +7,13 @@ def clip(value, min_value=-INF, max_value=+INF):
     return min(max(min_value, value), max_value)
 
 def randomize(sequence): # TODO: bisect
-    indices = range(len(sequence))
+    indices = list(range(len(sequence)))
     random.shuffle(indices)
     for i in indices:
-        yield sequence[i]
+        try:
+            yield sequence[i]
+        except TypeError:
+            yield list(sequence)[i]
 
 def get_random_seed():
     return random.getstate()[1][0]

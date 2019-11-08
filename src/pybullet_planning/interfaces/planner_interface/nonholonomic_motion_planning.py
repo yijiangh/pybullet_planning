@@ -4,7 +4,8 @@ from pybullet_planning.utils import PI, MAX_DISTANCE
 
 from pybullet_planning.motion_planners import birrt
 
-from pybullet_planning.interfaces.planner_interface.joint_motion_planning import get_distance_fn, get_extend_fn, get_sample_fn, get_collision_fn, check_initial_end
+from pybullet_planning.interfaces.robots.collision import get_collision_fn
+from pybullet_planning.interfaces.planner_interface.joint_motion_planning import get_distance_fn, get_extend_fn, get_sample_fn, check_initial_end
 
 #####################################
 

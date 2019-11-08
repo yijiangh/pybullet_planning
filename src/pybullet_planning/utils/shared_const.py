@@ -42,7 +42,9 @@ DEFAULT_NORMAL = [0, 0, 1]
 DEFAULT_RESOLUTION = 0.05
 
 # Collision
-#MAX_DISTANCE = 1e-3
+# MAX_DISTANCE = 1e-3
+# Used in collision checking query, e.g. pybullet.getClosestPoint
+# If the distance between objects exceeds this maximum distance, no points may be returned.
 MAX_DISTANCE = 0.
 
 UNKNOWN_FILE = 'unknown_file'

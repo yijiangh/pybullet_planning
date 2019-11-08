@@ -1,4 +1,4 @@
-from itertools import product
+from itertools import product, combinations
 from collections import defaultdict, deque, namedtuple
 import pybullet as p
 
@@ -169,3 +169,74 @@ def get_fixed_links(body):
                     visited.add(next_link)
         fixed.update(product(cluster, cluster))
     return fixed
+
+
+def get_moving_links(body, joints):
+    moving_links = set()
+    for joint in joints:
+        link = child_link_from_joint(joint)
+        if link not in moving_links:
+            moving_links.update(get_link_subtree(body, link))
+    return list(moving_links)
+
+
+def get_moving_pairs(body, moving_joints):
+    """
+    Check all fixed and moving pairs
+    Do not check all fixed and fixed pairs
+    Check all moving pairs with a common
+    """
+    moving_links = get_moving_links(body, moving_joints)
+    for link1, link2 in combinations(moving_links, 2):
+        ancestors1 = set(get_joint_ancestors(body, link1)) & set(moving_joints)
+        ancestors2 = set(get_joint_ancestors(body, link2)) & set(moving_joints)
+        if ancestors1 != ancestors2:
+            yield link1, link2
+
+
+def get_self_link_pairs(body, joints, disabled_collisions=set(), only_moving=True):
+    moving_links = get_moving_links(body, joints)
+    fixed_links = list(set(get_links(body)) - set(moving_links))
+    check_link_pairs = list(product(moving_links, fixed_links))
+    if only_moving:
+        check_link_pairs.extend(get_moving_pairs(body, joints))
+    else:
+        check_link_pairs.extend(combinations(moving_links, 2))
+    check_link_pairs = list(filter(lambda pair: not are_links_adjacent(body, *pair), check_link_pairs))
+    check_link_pairs = list(filter(lambda pair: (pair not in disabled_collisions) and
+                                                (pair[::-1] not in disabled_collisions), check_link_pairs))
+    return check_link_pairs
+
+
+def get_link_attached_body_pairs(body, attachments=[]):
+    link_body_pairs = []
+    body_links = get_links(body)
+
+    for attach in attachments:
+        if attach.child in [pair[1] for pair in link_body_pairs]:
+            continue
+        if attach.parent == body:
+            body_check_links = list(filter(lambda b_l : attach.parent_link != b_l and \
+                not are_links_adjacent(body, b_l, attach.parent_link), body_links))
+            link_body_pairs.append((body_check_links, attach.child))
+
+    return link_body_pairs
+
+
+def get_disabled_collisions(robot, disabled_link_pair_names):
+    return {tuple(link_from_name(robot, link)
+                  for link in pair if has_link(robot, link))
+                  for pair in disabled_link_pair_names}
+
+
+def get_body_body_disabled_collisions(body1, body2, disabled_link_pair_names):
+    disabled_link_pairs = set()
+    for link_name1, link_name2 in disabled_link_pair_names:
+        if has_link(body1, link_name1) and has_link(body2, link_name2):
+            pair = ((body1, link_from_name(body1, link_name1)), (body2, link_from_name(body2, link_name2)))
+        elif has_link(body2, link_name1) and has_link(body1, link_name2):
+            pair = ((body1, link_from_name(body1, link_name2)), (body2, link_from_name(body2, link_name1)))
+        else:
+            continue
+        disabled_link_pairs.add(pair)
+    return disabled_link_pairs
