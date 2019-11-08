@@ -170,6 +170,7 @@ def get_fixed_links(body):
         fixed.update(product(cluster, cluster))
     return fixed
 
+
 def get_moving_links(body, joints):
     moving_links = set()
     for joint in joints:
@@ -220,3 +221,22 @@ def get_link_attached_body_pairs(body, attachments=[]):
             link_body_pairs.append((body_check_links, attach.child))
 
     return link_body_pairs
+
+
+def get_disabled_collisions(robot, disabled_link_pair_names):
+    return {tuple(link_from_name(robot, link)
+                  for link in pair if has_link(robot, link))
+                  for pair in disabled_link_pair_names}
+
+
+def get_body_body_disabled_collisions(body1, body2, disabled_link_pair_names):
+    disabled_link_pairs = set()
+    for link_name1, link_name2 in disabled_link_pair_names:
+        if has_link(body1, link_name1) and has_link(body2, link_name2):
+            pair = ((body1, link_from_name(body1, link_name1)), (body2, link_from_name(body2, link_name2)))
+        elif has_link(body2, link_name1) and has_link(body1, link_name2):
+            pair = ((body1, link_from_name(body1, link_name2)), (body2, link_from_name(body2, link_name1)))
+        else:
+            continue
+        disabled_link_pairs.add(pair)
+    return disabled_link_pairs
