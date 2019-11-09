@@ -15,6 +15,7 @@ Unreleased
 * diagnosis collision checking function to help visualizing the collision bodies' information
 * add `workspace_bodies` to the `get_collision_fn` to check collisions with the obstacles specified in a URDF file.
 * move `ik_interface` module from application side to this repo, since it's "universal" for fixed-end robot. Might need to add a separete one for robots with moving base later.
+* enable travis ci unit test
 
 **Changed**
 
