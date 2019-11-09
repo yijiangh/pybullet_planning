@@ -1,12 +1,49 @@
+# * pybullet_planning
+# safelist
+branches:
+  only:
+  - dev
+#   - master
+
 language: python
 
 python:
   - "2.7"
   - "3.6"
 
+# * use these when not using a conda env
+before_install:
+- pip install Cython --install-option="--no-cython-compile"
+- pip install cmake
 install:
-  - pip install -r requirements.txt
+- pip install --no-cache-dir -r requirements-dev.txt
+
+# install:
+#   - sudo apt-get update
+#   # We do this conditionally because it saves us some downloading if the
+#   # version is the same.
+#   - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+#       wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+#     else
+#       wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+#     fi
+#   - bash miniconda.sh -b -p $HOME/miniconda
+#   - source "$HOME/miniconda/etc/profile.d/conda.sh"
+#   - hash -r
+#   - conda config --set always_yes yes --set changeps1 no
+#   - conda update -q conda
+#   # Useful for debugging any issues with conda
+#   - conda info -a
+#   - conda env create -f test_env.yml python=$TRAVIS_PYTHON_VERSION
+#   - conda activate test_env
+#   - pip install Cython --install-option="--no-cython-compile"
+#   - pip install --no-cache-dir -r requirements-dev.txt
+#  # Replace dep1 dep2 ... with your dependencies
+#   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION dep1 dep2 ...
 
 script:
-  - invoke test
-
+- pip install ikfast_pybind
+- invoke test
+# - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
+#     invoke docs;
+#   fi
