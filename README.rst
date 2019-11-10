@@ -8,9 +8,9 @@ pybullet_planning
     :target: https://github.com/yijiangh/pybullet_planning/blob/master/LICENSE
     :alt: License MIT
 
-.. .. image:: https://travis-ci.org/yijiangh/pybullet_planning.svg?branch=master
-..     :target: https://travis-ci.org/yijiangh/pybullet_planning
-..     :alt: Travis CI
+ .. image:: https://travis-ci.com/yijiangh/pybullet_planning.svg?branch=master
+     :target: https://travis-ci.com/yijiangh/pybullet_planning
+     :alt: Travis CI
 
 .. end-badges
 

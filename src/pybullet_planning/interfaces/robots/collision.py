@@ -316,10 +316,9 @@ def link_pairs_collision_info(body1, links1, body2, links2=None, **kwargs):
     return False
 
 def get_collision_fn(body, joints, obstacles,
-                    attachments=[], check_self_collisions=True,
-                    disabled_self_collision_link_pairs=[],
-                    ws_bodies=[],
-                    ws_disabled_body_link_pairs={},
+                    attachments=[], self_collisions=True,
+                    disabled_collisions=[],
+                    workspace_bodies=[], workspace_disabled_collisions={},
                     custom_limits={}, **kwargs):
     # TODO: Caelan: convert most of these to keyword arguments
     from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
@@ -327,16 +326,16 @@ def get_collision_fn(body, joints, obstacles,
     from pybullet_planning.interfaces.robots.joint import set_joint_positions, get_custom_limits
     from pybullet_planning.interfaces.robots.link import get_self_link_pairs, get_moving_links
     # * self-collision link pairs
-    self_check_link_pairs = get_self_link_pairs(body, joints, disabled_self_collision_link_pairs) if check_self_collisions else []
+    self_check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions) if self_collisions else []
     # * workspace body link pairs
     moving_links = frozenset(get_moving_links(body, joints))
     body_moving_links = [(body, ml) for ml in list(moving_links)]
     check_link_pairs = []
-    for ws_body in ws_bodies:
+    for ws_body in workspace_bodies:
         ws_body_links = [(ws_body, ol) for ol in get_links(ws_body)]
         ws_body_check_link_pairs = set(product(body_moving_links, ws_body_links))
-        ws_body_check_link_pairs = list(filter(lambda pair: (pair not in ws_disabled_body_link_pairs) and
-                                                            (pair[::-1] not in ws_disabled_body_link_pairs),
+        ws_body_check_link_pairs = list(filter(lambda pair: (pair not in workspace_disabled_collisions) and
+                                                            (pair[::-1] not in workspace_disabled_collisions),
                                                ws_body_check_link_pairs))
         check_link_pairs.extend(list(ws_body_check_link_pairs))
     # * body pairs
@@ -375,18 +374,18 @@ def get_collision_fn(body, joints, obstacles,
     return collision_fn
 
 def get_floating_body_collision_fn(body, body_root_link=None, obstacles=[], attachments=[],
-        ws_bodies=[], ws_disabled_body_link_pairs={}, **kwargs):
+        workspace_bodies=[], workspace_disabled_collisions={}, **kwargs):
     from pybullet_planning.interfaces.robots.collision import pairwise_collision, pairwise_link_collision
     from pybullet_planning.interfaces.robots.link import get_links, get_link_pose, get_link_name
     from pybullet_planning.interfaces.robots.body import set_pose, get_body_name
     # * workspace body link pairs
     body_links = [(body, BASE_LINK)]
     check_link_pairs = []
-    for ws_body in ws_bodies:
+    for ws_body in workspace_bodies:
         ws_body_links = [(ws_body, ol) for ol in get_links(ws_body)]
         ws_body_check_link_pairs = set(product(body_links, ws_body_links))
-        ws_body_check_link_pairs = list(filter(lambda pair: (pair not in ws_disabled_body_link_pairs) and
-                                                            (pair[::-1] not in ws_disabled_body_link_pairs),
+        ws_body_check_link_pairs = list(filter(lambda pair: (pair not in workspace_disabled_collisions) and
+                                                            (pair[::-1] not in workspace_disabled_collisions),
                                                ws_body_check_link_pairs))
         check_link_pairs.extend(list(ws_body_check_link_pairs))
     # * body pairs
@@ -408,8 +407,13 @@ def get_floating_body_collision_fn(body, body_root_link=None, obstacles=[], atta
     return collision_fn
 
 def get_collision_diagnosis_fn(body, joints, obstacles,
-                     attachments=[], self_collisions=True, disabled_collisions=set(),
-                     custom_limits={}, ignored_pairs=[], diagnosis=False, viz_last_duration=-1, **kwargs):
+                               attachments=[], self_collisions=True,
+                               disabled_collisions=[],
+                               workspace_bodies=[], workspace_disabled_collisions={},
+                               custom_limits={}, diagnosis=False, viz_last_duration=-1, **kwargs):
+# def get_collision_diagnosis_fn(body, joints, obstacles,
+#                      attachments=[], self_collisions=True, disabled_collisions=set(),
+#                      custom_limits={}, ignored_pairs=[], diagnosis=False, viz_last_duration=-1, **kwargs):
     """make a collision checking function.
 
     Note: this is the diagnosis version for debugging. Upon finding a collision, it will pause the scene
@@ -424,30 +428,46 @@ def get_collision_diagnosis_fn(body, joints, obstacles,
     from pybullet_planning.interfaces.robots.link import get_self_link_pairs, get_moving_links, get_link_attached_body_pairs
     from pybullet_planning.interfaces.debug_utils.debug_utils import draw_collision_diagnosis
 
-    check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions=disabled_collisions) if self_collisions else []
-    check_link_attach_body_pairs = get_link_attached_body_pairs(body, attachments)
-
-    moving_bodies = [body] + [attachment.child for attachment in attachments]
-    if obstacles is None:
-        obstacles = list(set(get_bodies()) - set(moving_bodies))
-    else:
-        obstacles = list(set(obstacles) - set(moving_bodies))
-    check_body_pairs = list(set(product(moving_bodies, obstacles)))  # + list(combinations(moving_bodies, 2))
-
-    if ignored_pairs:
-        for body_pair in ignored_pairs:
-            found = False
-            for c_body_pair in check_body_pairs:
-                if body_pair[0] in c_body_pair and body_pair[1] in c_body_pair:
-                    check_body_pairs.remove(c_body_pair)
-                    found = True
-                if found:
-                    break
-
+    # * self-collision link pairs
+    self_check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions) if self_collisions else []
+    # * workspace body link pairs
+    moving_links = frozenset(get_moving_links(body, joints))
+    body_moving_links = [(body, ml) for ml in list(moving_links)]
+    check_link_pairs = []
+    for ws_body in workspace_bodies:
+        ws_body_links = [(ws_body, ol) for ol in get_links(ws_body)]
+        ws_body_check_link_pairs = set(product(body_moving_links, ws_body_links))
+        ws_body_check_link_pairs = list(filter(lambda pair: (pair not in workspace_disabled_collisions) and
+                                                            (pair[::-1] not in workspace_disabled_collisions),
+                                               ws_body_check_link_pairs))
+        check_link_pairs.extend(list(ws_body_check_link_pairs))
+    # * body pairs
+    attached_bodies = [attachment.child for attachment in attachments]
+    moving_bodies = [(body, moving_links)] + attached_bodies
+    # moving_bodies = [body] + [attachment.child for attachment in attachments]
+    check_body_pairs = list(product(moving_bodies, obstacles))  # + list(combinations(moving_bodies, 2))
     lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
 
-    # TODO: maybe prune the link adjacent to the robot
-    # TODO: test self collision with the holding
+    # # ! Archived
+    # check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions=disabled_collisions) if self_collisions else []
+    # check_link_attach_body_pairs = get_link_attached_body_pairs(body, attachments)
+    # moving_bodies = [body] + [attachment.child for attachment in attachments]
+    # if obstacles is None:
+    #     obstacles = list(set(get_bodies()) - set(moving_bodies))
+    # else:
+    #     obstacles = list(set(obstacles) - set(moving_bodies))
+    # check_body_pairs = list(set(product(moving_bodies, obstacles)))  # + list(combinations(moving_bodies, 2))
+    # if ignored_pairs:
+    #     for body_pair in ignored_pairs:
+    #         found = False
+    #         for c_body_pair in check_body_pairs:
+    #             if body_pair[0] in c_body_pair and body_pair[1] in c_body_pair:
+    #                 check_body_pairs.remove(c_body_pair)
+    #                 found = True
+    #             if found:
+    #                 break
+    # lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
+
     def collision_fn(q, dynamic_obstacles=[]):
         if not all_between(lower_limits, q, upper_limits):
             return True
@@ -457,36 +477,51 @@ def get_collision_diagnosis_fn(body, joints, obstacles,
         if dynamic_obstacles:
             check_body_pairs.extend(list(product(moving_bodies, dynamic_obstacles)))
 
-        # body's link-link self collision
-        for link1, link2 in check_link_pairs:
+        # * body's link-link self collision
+        for link1, link2 in self_check_link_pairs:
             # Self-collisions should not have the max_distance parameter
             if pairwise_link_collision(body, link1, body, link2): #, **kwargs):
                 if diagnosis:
                     print('body link-link collision!')
                     cr = pairwise_link_collision_info(body, link1, body, link2)
+                    print(cr)
                     draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
 
                 return True
 
-        # body's link - attached bodies collision
-        for body_links, at_body in check_link_attach_body_pairs:
-            if link_pairs_collision(body, body_links, at_body):
+        # # * body's link - attached bodies collision
+        # for body_links, at_body in check_link_attach_body_pairs:
+        #     if link_pairs_collision(body, body_links, at_body):
+        #         if diagnosis:
+        #             print('body - attachment collision!')
+        #             cr = link_pairs_collision_info(body, body_links, at_body)
+        #             draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
+        #         return True
+
+        # * body - ws_bodies link check
+        for (body1, link1), (body2, link2) in check_link_pairs:
+            # Self-collisions should not have the max_distance parameter
+            if pairwise_link_collision(body1, link1, body2, link2): #, **kwargs):
+                #print(get_body_name(body), get_link_name(body, link1), get_link_name(body, link2))
                 if diagnosis:
-                    print('body - attachment collision!')
-                    cr = link_pairs_collision_info(body, body_links, at_body)
+                    print('body link-link collision!')
+                    cr = pairwise_link_collision_info(body1, link1, body2, link2)
+                    print(cr)
                     draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
                 return True
 
-        # body - body collision
+        # * body - body collision
         if any(pairwise_collision(*pair, **kwargs) for pair in check_body_pairs):
             if diagnosis:
-                print('body - body collision!')
                 for pair in check_body_pairs:
                     cr = pairwise_collision_info(*pair, **kwargs)
-                    draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
+                    if not cr:
+                        print('body - body collision!')
+                        print(cr)
+                        draw_collision_diagnosis(cr, viz_last_duration=viz_last_duration)
             return True
-        else:
-            return False
+
+        return False
 
     return collision_fn
 
