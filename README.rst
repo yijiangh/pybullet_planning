@@ -8,9 +8,15 @@ pybullet_planning
     :target: https://github.com/yijiangh/pybullet_planning/blob/master/LICENSE
     :alt: License MIT
 
- .. image:: https://travis-ci.com/yijiangh/pybullet_planning.svg?branch=master
-     :target: https://travis-ci.com/yijiangh/pybullet_planning
-     :alt: Travis CI
+
+.. image:: https://travis-ci.com/yijiangh/pybullet_planning.svg?branch=master
+    :target: https://travis-ci.com/yijiangh/pybullet_planning
+    :alt: Travis CI
+
+
+.. image:: https://coveralls.io/repos/github/yijiangh/pybullet_planning/badge.svg?branch=master
+    :target: https://coveralls.io/github/yijiangh/pybullet_planning?branch=master
+    :alt: Coveralls
 
 .. end-badges
 

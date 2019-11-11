@@ -6,6 +6,8 @@ flake8
 autopep8
 pylint
 pytest
+pytest-cov
+python-coveralls
 isort
 twine
 -e .

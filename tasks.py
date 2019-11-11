@@ -183,7 +183,7 @@ def test(ctx, checks=True, build=False):
                 ctx.run('pip install --verbose dist/*.tar.gz')
 
         log.write('Running pytest')
-        ctx.run('pytest --doctest-modules')
+        ctx.run('pytest --doctest-modules --cov=pybullet_planning tests')
 
 
 @task(help={

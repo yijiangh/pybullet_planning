@@ -108,6 +108,13 @@ def is_fixed_base(body):
     return get_mass(body) == STATIC_MASS
 
 def dump_body(body):
+    """print out information of the given body. Notice this only prints out movable joints.
+
+    Parameters
+    ----------
+    body : int
+        body index for inspection
+    """
     print('Body id: {} | Name: {} | Rigid: {} | Fixed: {}'.format(
         body, get_body_name(body), is_rigid_body(body), is_fixed_base(body)))
     for joint in get_joints(body):
@@ -131,6 +138,8 @@ def dump_body(body):
         #print(map(get_data_geometry, get_collision_data(body, link)))
 
 def dump_world():
+    """print out information for all bodies that're currently in the scene
+    """
     for body in get_bodies():
         dump_body(body)
         print()

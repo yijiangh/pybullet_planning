@@ -1,0 +1,100 @@
+<?xml version="1.0" ?>
+<robot name="mit_3-412_workspace" xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <link name="workspace_base_link"/>
+  <link name="MIT_3412_robot_base_plate">
+    <collision>
+      <geometry>
+        <mesh filename="../meshes/mit_3-412_workspace/collision/MIT_3-412_robot_base_plate.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="MIT_3412_backwall">
+    <collision>
+      <geometry>
+        <mesh filename="../meshes/mit_3-412_workspace/collision/MIT_3-412_back_wall.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="MIT_3412_fab_table">
+    <collision>
+      <geometry>
+        <mesh filename="../meshes/mit_3-412_workspace/collision/MIT_3-412_fab_table.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="MIT_3412_front_wall">
+    <collision>
+      <geometry>
+        <mesh filename="../meshes/mit_3-412_workspace/collision/MIT_3-412_front_wall.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="MIT_3412_right_corner_piece">
+    <collision>
+      <geometry>
+        <mesh filename="../meshes/mit_3-412_workspace/collision/MIT_3-412_right_corner_piece.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="MIT_3412_left_wall">
+    <collision>
+      <geometry>
+        <mesh filename="../meshes/mit_3-412_workspace/collision/MIT_3-412_left_wall.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="MIT_3412_right_wall">
+    <collision>
+      <geometry>
+        <mesh filename="../meshes/mit_3-412_workspace/collision/MIT_3-412_right_wall.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="workspace_baselink_to_MIT_3412_robot_base_plate" type="fixed">
+    <parent link="workspace_base_link"/>
+    <child link="MIT_3412_robot_base_plate"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="workspace_baselink_to_MIT_3412_backwall" type="fixed">
+    <parent link="workspace_base_link"/>
+    <child link="MIT_3412_backwall"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="workspace_baselink_to_MIT_3412_fab_table" type="fixed">
+    <parent link="workspace_base_link"/>
+    <child link="MIT_3412_fab_table"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="workspace_baselink_to_MIT_3412_front_wall" type="fixed">
+    <parent link="workspace_base_link"/>
+    <child link="MIT_3412_front_wall"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="workspace_baselink_to_MIT_3412_right_corner_piece" type="fixed">
+    <parent link="workspace_base_link"/>
+    <child link="MIT_3412_right_corner_piece"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="workspace_baselink_to_MIT_3412_left_wall" type="fixed">
+    <parent link="workspace_base_link"/>
+    <child link="MIT_3412_left_wall"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="workspace_baselink_to_MIT_3412_right_wall" type="fixed">
+    <parent link="workspace_base_link"/>
+    <child link="MIT_3412_right_wall"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+
+  <!-- end of link list -->
+
+  <!-- joint list -->
+  <!-- <joint name="world_to_workspace" type="fixed">
+    <parent link="base_link"/>
+    <child link="workspace_base_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint> -->
+
+</robot>

@@ -47,3 +47,5 @@ script:
 # - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
 #     invoke docs;
 #   fi
+after_success:
+  - coveralls
