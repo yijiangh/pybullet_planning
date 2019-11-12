@@ -1,8 +1,14 @@
 # * pybullet_planning
+# blocklist
+# branches:
+#   except:
+#   - master
+#   - caelan
+
 # safelist
-branches:
-  only:
-  - dev
+# branches:
+#   only:
+#   - dev
 #   - master
 
 language: python
