@@ -23,7 +23,6 @@ def ee_path():
     here = os.path.dirname(__file__)
     return os.path.join(here, 'test_data', 'dms_bar_gripper.obj')
 
-@pytest.mark.body
 def test_create_ee_link(viewer, robot_path, ee_path):
     connect(use_gui=viewer)
     with HideOutput():
@@ -45,7 +44,6 @@ def test_create_ee_link(viewer, robot_path, ee_path):
 
     if has_gui() : wait_for_user()
 
-@pytest.mark.wip
 def test_moving_links_joints(viewer, robot_path, workspace_path):
     connect(use_gui=viewer)
     with HideOutput():
