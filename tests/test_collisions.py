@@ -1,4 +1,5 @@
 import os
+import sys
 import pytest
 import numpy as np
 from pybullet_planning import BASE_LINK
@@ -44,7 +45,6 @@ def obstacle_obj_path():
 #     return True
 #     # return False
 
-@pytest.mark.wip
 def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_path, obstacle_obj_path):
     connect(use_gui=viewer)
     with HideOutput():
@@ -53,7 +53,10 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
         ee_body = create_obj(ee_path)
         attached_bar_body = create_obj(attach_obj_path)
         box_body = create_obj(obstacle_obj_path)
-        assert isinstance(robot, int) and isinstance(ee_body, int)
+        if sys.version_info[0] >= 3:
+            assert isinstance(robot, int) and isinstance(ee_body, int)
+        else:
+            assert isinstance(robot, (long, int)) and isinstance(ee_body, (long, int))
     dump_world()
 
     # * adjust camera pose (optional)
@@ -276,4 +279,60 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
     with pytest.warns(UserWarning, match='joint limit violation!'):
         assert collision_fn(conf, diagnosis=True)
     assert not collision_fn_disable(conf, diagnosis=True)
+    print('\n')
+
+@pytest.mark.wip
+def test_floating_collsion_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_path, obstacle_obj_path):
+    connect(use_gui=viewer)
+    with HideOutput():
+        robot = load_pybullet(robot_path, fixed_base=True)
+        workspace = load_pybullet(workspace_path, fixed_base=True)
+        ee_body = create_obj(ee_path)
+        attached_bar_body = create_obj(attach_obj_path)
+        box_body = create_obj(obstacle_obj_path)
+    dump_world()
+
+    # * adjust camera pose (optional)
+    if has_gui():
+        camera_base_pt = (0,0,0)
+        camera_pt = np.array(camera_base_pt) + np.array([1, -0.5, 0.5])
+        set_camera_pose(tuple(camera_pt), camera_base_pt)
+
+    ik_joints = get_movable_joints(robot)
+    robot_start_conf = [0,-1.65715,1.71108,-1.62348,0,0]
+    set_joint_positions(robot, ik_joints, robot_start_conf)
+
+    tool_attach_link_name = 'ee_link'
+    tool_attach_link = link_from_name(robot, tool_attach_link_name)
+    assert isinstance(tool_attach_link, int)
+
+    print('#'*10)
+    print('floating body to obstacles collision exoneration')
+    conf = [-3.0369999999999999, -1.6060000000000001, -1.99, -0.92500000000000004, 1.78, 0.105]
+    set_joint_positions(robot, ik_joints, conf)
+    world_from_tool0 = get_link_pose(robot, tool_attach_link)
+    fb_collision_fn = get_floating_body_collision_fn(ee_body, obstacles=[box_body],
+                                                     attachments=[], disabled_collisions=[])
+    fb_collision_fn_disable = get_floating_body_collision_fn(ee_body, obstacles=[box_body],
+                                                     attachments=[], disabled_collisions=
+                                                     {((box_body, BASE_LINK), (ee_body, BASE_LINK))})
+    with pytest.warns(UserWarning, match='moving body - body collision!'):
+        assert fb_collision_fn(world_from_tool0, diagnosis=True)
+    assert not fb_collision_fn_disable(world_from_tool0, diagnosis=True)
+    print('\n')
+
+    print('#'*10)
+    print('attachment to multi-links obstacles collision exoneration')
+    conf = [-2.8450000000000002, -2.1469999999999998, -1.99, -0.92500000000000004, 1.78, 0.105]
+    set_joint_positions(robot, ik_joints, conf)
+    world_from_tool0 = get_link_pose(robot, tool_attach_link)
+    fb_collision_fn = get_floating_body_collision_fn(ee_body, obstacles=[workspace],
+                                                     attachments=[], disabled_collisions=[])
+    fb_collision_fn_disable = get_floating_body_collision_fn(ee_body, obstacles=[workspace],
+                                                     attachments=[], disabled_collisions=
+                                                     {((workspace, link_from_name(workspace, 'MIT_3412_fab_table')),
+                                                       (ee_body, BASE_LINK))})
+    with pytest.warns(UserWarning, match='moving body - body collision!'):
+        assert fb_collision_fn(world_from_tool0, diagnosis=True)
+    assert not fb_collision_fn_disable(world_from_tool0, diagnosis=True)
     print('\n')

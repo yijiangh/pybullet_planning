@@ -352,15 +352,14 @@ def get_collision_fn(body, joints, obstacles=[],
         If the body considered is a single-link (floating) body, assign the link index to BASE_LINK.
         reversing the order of the tuples above is also acceptable, by default {}
     custom_limits: dict, optional
-        customized joint range, example: {'robot_joint_a1': (-np.pi/2, np.pi/2)}, by default {}
+        customized joint range, example: {joint index (int) : (-np.pi/2, np.pi/2)}, by default {}
 
     Returns
     -------
-    bool
-        False if no collision found, True otherwise.
-
-        If you need more information for diagnosing collision between bodies and links,
-        consider using `get_collision_diagnosis_fn`.
+    function handle
+        collision_fn: (conf, diagnosis) -> False if no collision found, True otherwise.
+        if need diagnosis information for the collision, set diagnosis to True will help you visualize
+        which link is colliding to which.
     """
     from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
     from pybullet_planning.interfaces.robots.joint import set_joint_positions, get_custom_limits
@@ -438,36 +437,59 @@ def get_collision_fn(body, joints, obstacles=[],
         return False
     return collision_fn
 
-def get_floating_body_collision_fn(body, body_root_link=None, obstacles=[], attachments=[],
-        workspace_bodies=[], workspace_disabled_collisions={}, **kwargs):
-    # TODO: moving_body_obstacles_disabled_collisions
+def get_floating_body_collision_fn(body, obstacles=[], attachments=[], disabled_collisions={}, **kwargs):
+    """get collision checking function collision_fn(joint_values) -> bool for a floating body (no movable joint).
+
+    Parameters
+    ----------
+    body : int
+        the main moving body (usually the robot). We refer to this body as 'the main body'
+        in this function's docstring.
+    obstacles : list of int
+        body indices for collision objects, by default []
+    attachments : list of Attachment, optional
+        list of attachment, by default []
+    disabled_collisions : set of tuples, optional
+        list of tuples for specifying disabled collisions, the tuple must be of the following format:
+            ((int, int), (int, int)) : (body index, link index), (body index, link index)
+        If the body considered is a single-link (floating) body, assign the link index to BASE_LINK.
+        reversing the order of the tuples above is also acceptable, by default {}
+
+    Returns
+    -------
+    function handle
+        collision_fn: (conf, diagnosis) -> False if no collision found, True otherwise.
+        if need diagnosis information for the collision, set diagnosis to True will help you visualize
+        which link is colliding to which.
+    """
     from pybullet_planning.interfaces.robots.collision import pairwise_collision, pairwise_link_collision
     from pybullet_planning.interfaces.robots.link import get_links, get_link_pose, get_link_name
     from pybullet_planning.interfaces.robots.body import set_pose, get_body_name
-    # * workspace body link pairs
-    body_links = [(body, BASE_LINK)]
-    check_link_pairs = []
-    for ws_body in workspace_bodies:
-        ws_body_links = [(ws_body, ol) for ol in get_links(ws_body)]
-        ws_body_check_link_pairs = set(product(body_links, ws_body_links))
-        ws_body_check_link_pairs = list(filter(lambda pair: (pair not in workspace_disabled_collisions) and
-                                                            (pair[::-1] not in workspace_disabled_collisions),
-                                               ws_body_check_link_pairs))
-        check_link_pairs.extend(list(ws_body_check_link_pairs))
-    # * body pairs
-    attached_bodies = [attachment.child for attachment in attachments]
-    moving_bodies = [(body, get_links(body))] + attached_bodies
-    #moving_bodies = [body] + [attachment.child for attachment in attachments]
-    check_body_pairs = list(product(moving_bodies, obstacles))  # + list(combinations(moving_bodies, 2))
+    from pybullet_planning.interfaces.debug_utils.debug_utils import draw_collision_diagnosis
 
-    def collision_fn(pose):
+    attached_bodies = [attachment.child for attachment in attachments]
+    moving_bodies = [body] + attached_bodies
+    # * body pairs
+    check_body_pairs = list(product(moving_bodies, obstacles))  # + list(combinations(moving_bodies, 2))
+    check_body_link_pairs = []
+    for body1, body2 in check_body_pairs:
+        body1, links1 = expand_links(body1)
+        body2, links2 = expand_links(body2)
+        bb_link_pairs = product(links1, links2)
+        for bb_links in bb_link_pairs:
+            bbll_pair = ((body1, bb_links[0]), (body2, bb_links[1]))
+            if bbll_pair not in disabled_collisions and bbll_pair[::-1] not in disabled_collisions:
+                check_body_link_pairs.append(bbll_pair)
+
+    def collision_fn(pose, diagnosis=False):
         set_pose(body, pose)
-        for check_pair in check_link_pairs:
-            (body1, link1), (body2, link2) = check_pair
-            if pairwise_link_collision(body1, link1, body2, link2): #, **kwargs):
-                return True
-        for body1, body2 in check_body_pairs:
-            if pairwise_collision(body1, body2, **kwargs):
+        # * body - body check
+        for (body1, link1), (body2, link2) in check_body_link_pairs:
+            if pairwise_link_collision(body1, link1, body2, link2, **kwargs):
+                if diagnosis:
+                    warnings.warn('moving body - body collision!', UserWarning)
+                    cr = pairwise_link_collision_info(body1, link1, body2, link2)
+                    draw_collision_diagnosis(cr)
                 return True
         return False
     return collision_fn
