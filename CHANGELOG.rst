@@ -15,17 +15,30 @@ Unreleased
 * diagnosis collision checking function to help visualizing the collision bodies' information
 * add `workspace_bodies` to the `get_collision_fn` to check collisions with the obstacles specified in a URDF file.
 * move `ik_interface` module from application side to this repo, since it's "universal" for fixed-end robot. Might need to add a separete one for robots with moving base later.
-* enable travis ci unit test
+* enable travis ci unit test, collision_fn well tested
 
 **Changed**
 
+* add `extra_disabled_collisions` parameter to `get_collision_fn`
+
 **Removed**
+
+* `get_collision_diagnosis_fn` removed, integrated into the `get_collision_fn`
 
 **Fixed**
 
 * `utils.numeric_sample.randomize`: `random.shuffle` cannot operate on a `range` in py 3.x. Enforced conversion to `list` to fix it.
 
 **Deprecated**
+
+**TODO**
+
+* add body name for bodies from `create_obj`
+
+**Requested features**
+
+* `clone_body` work for bodies from `create_obj`
+
 
 0.0.1
 -------
