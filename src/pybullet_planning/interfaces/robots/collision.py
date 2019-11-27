@@ -395,7 +395,7 @@ def get_collision_fn(body, joints, obstacles=[],
     # print('extra disabled: ', extra_disabled_collisions)
     # * joint limits
     lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
-    print('l : {}, u : {}'.format(lower_limits, upper_limits))
+
     # TODO: maybe prune the link adjacent to the robot
     # // TODO: test self collision with the holding
     def collision_fn(q, diagnosis=False):

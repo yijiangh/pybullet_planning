@@ -1,4 +1,5 @@
 import os
+import sys
 import pytest
 from pybullet_planning import load_pybullet, connect, wait_for_user, LockRenderer, has_gui, WorldSaver, HideOutput, \
     reset_simulation, disconnect, set_camera_pose, has_gui
@@ -6,6 +7,8 @@ from pybullet_planning import create_obj, create_attachment, Attachment
 from pybullet_planning import link_from_name, get_link_pose, get_moving_links, get_link_name
 from pybullet_planning import get_num_joints, get_joint_names, get_movable_joints
 from pybullet_planning import dump_world, set_pose
+from pybullet_planning import clone_body, create_box
+from pybullet_planning import Pose
 
 
 @pytest.fixture
@@ -28,7 +31,10 @@ def test_create_ee_link(viewer, robot_path, ee_path):
     with HideOutput():
         robot = load_pybullet(robot_path, fixed_base=True)
         ee_body = create_obj(ee_path)
-        assert isinstance(robot, int) and isinstance(ee_body, int)
+        if sys.version_info[0] >= 3:
+            assert isinstance(robot, int) and isinstance(ee_body, int)
+        else:
+            assert isinstance(robot, (long, int)) and isinstance(ee_body, (long, int))
     dump_world()
 
     tool_attach_link_name = 'ee_link'
@@ -77,3 +83,41 @@ def test_moving_links_joints(viewer, robot_path, workspace_path):
     assert 0 == len(ws_moving_links)
 
     if has_gui() : wait_for_user()
+
+@pytest.mark.clone
+def test_clone_body(viewer, workspace_path, ee_path):
+    connect(use_gui=viewer)
+    with HideOutput():
+        workspace = load_pybullet(workspace_path, fixed_base=True)
+        ee_body = create_obj(ee_path)
+        box = create_box(0.5, 0.5, 0.5)
+        set_pose(box, Pose(point=[1,0,0]))
+    move_pose = Pose(point=[0, 3, 0])
+    box_pose = Pose(point=[1, 3, 0])
+
+    print('*'*10)
+    print('clone workspace')
+    c_ws = clone_body(workspace, visual=False)
+    set_pose(c_ws, move_pose)
+
+    print('*'*10)
+    print('clone visual box')
+    c_box_v = clone_body(box, visual=True, collision=False)
+    set_pose(c_box_v, box_pose)
+
+    print('*'*10)
+    print('clone collision box')
+    c_box_c = clone_body(box, visual=False, collision=True)
+    set_pose(c_box_c, box_pose)
+
+    print('*'*10)
+    print('clone visual ee from obj')
+    c_ee_v = clone_body(ee_body, visual=True, collision=False)
+    set_pose(c_ee_v, move_pose)
+
+    print('clone collision ee from obj')
+    c_ee_c = clone_body(ee_body, visual=False, collision=True)
+    set_pose(c_ee_c, move_pose)
+
+    if has_gui():
+        wait_for_user()
