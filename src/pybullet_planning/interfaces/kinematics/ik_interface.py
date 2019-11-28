@@ -45,7 +45,7 @@ def get_ik_tool_link_pose(fk_fn, robot, ik_joint_names, base_link_name, \
     return multiply(world_from_base, base_from_tool)
 
 
-def get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_from_tcp=None):
+def get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_from_tcp=None, **kwargs):
     """get an ik generator
 
     Parameters
@@ -73,7 +73,7 @@ def get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_
         base_from_ik_tool_link = multiply(base_from_tcp, invert(ik_tool_link_from_tcp))
     else:
         base_from_ik_tool_link = base_from_tcp
-    yield compute_inverse_kinematics(ik_fn, base_from_ik_tool_link)
+    yield compute_inverse_kinematics(ik_fn, base_from_ik_tool_link, **kwargs)
 
 
 def sample_tool_ik(ik_fn, robot, ik_joint_names, base_link_name, world_from_tcp,
@@ -110,7 +110,7 @@ def sample_tool_ik(ik_fn, robot, ik_joint_names, base_link_name, world_from_tcp,
     """
 
     ik_joints = joints_from_names(robot, ik_joint_names)
-    generator = get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_from_tcp)
+    generator = get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_from_tcp, **kwargs)
     sols = next(generator)
     if closest_only and sols:
         current_conf = get_joint_positions(robot, ik_joints)
