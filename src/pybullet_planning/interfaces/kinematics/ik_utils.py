@@ -56,3 +56,54 @@ def inverse_kinematics(robot, link, target_pose, max_iterations=200, custom_limi
     if not all_between(lower_limits, kinematic_conf, upper_limits):
         return None
     return kinematic_conf
+
+
+def snap_sols(sols, q_guess, joint_limits, weights=None, best_sol_only=False):
+    """get the best solution based on closeness to the q_guess and weighted joint diff
+
+    Parameters
+    ----------
+    sols : [type]
+        [description]
+    q_guess : [type]
+        [description]
+    joint_limits : [type]
+        [description]
+    weights : [type], optional
+        [description], by default None
+    best_sol_only : bool, optional
+        [description], by default False
+
+    Returns
+    -------
+    lists of joint conf (list)
+    or
+    joint conf (list)
+    """
+    import numpy as np
+    valid_sols = []
+    dof = len(q_guess)
+    if not weights:
+        weights = [1.0] * dof
+    else:
+        assert dof == len(weights)
+
+    for sol in sols:
+        test_sol = np.ones(dof)*9999.
+        for i in range(dof):
+            for add_ang in [-2.*np.pi, 0, 2.*np.pi]:
+                test_ang = sol[i] + add_ang
+                if (test_ang <= joint_limits[i][1] and test_ang >= joint_limits[i][0] and \
+                    abs(test_ang - q_guess[i]) < abs(test_sol[i] - q_guess[i])):
+                    test_sol[i] = test_ang
+        if np.all(test_sol != 9999.):
+            valid_sols.append(test_sol.tolist())
+
+    if len(valid_sols) == 0:
+        return []
+
+    if best_sol_only:
+        best_sol_ind = np.argmin(np.sum((weights*(valid_sols - np.array(q_guess)))**2,1))
+        return valid_sols[best_sol_ind]
+    else:
+        return valid_sols

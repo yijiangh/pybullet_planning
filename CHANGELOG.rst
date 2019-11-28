@@ -17,10 +17,12 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 * move `ik_interface` module from application side to this repo, since it's "universal" for fixed-end robot. Might need to add a separete one for robots with moving base later.
 * enable travis ci unit test, collision_fn well tested
 * `get_floating_body_collision_fn` to check a body without joints's collision. Associated test added.
+* Added `snap_sols` to `kinematics.ik_utils`
 
 **Changed**
 
-* add `extra_disabled_collisions` parameter to `get_collision_fn`
+* add `extra_disabled_collisions` parameter to `get_collision_fn`, `plan_joint_motion`
+* Changed `get_name` to return name without index if name is not `''`
 
 **Removed**
 
@@ -29,6 +31,7 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 **Fixed**
 
 * `utils.numeric_sample.randomize`: `random.shuffle` cannot operate on a `range` in py 3.x. Enforced conversion to `list` to fix it.
+* Fixed `get_collision_fn` to ignore checking between bodies both specified in attachment and obstacles (prioritize its role as attachment)
 
 **Deprecated**
 

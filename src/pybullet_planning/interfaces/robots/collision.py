@@ -386,6 +386,8 @@ def get_collision_fn(body, joints, obstacles=[],
     for body1, body2 in check_body_pairs:
         body1, links1 = expand_links(body1)
         body2, links2 = expand_links(body2)
+        if body1 == body2:
+            continue
         bb_link_pairs = product(links1, links2)
         for bb_links in bb_link_pairs:
             bbll_pair = ((body1, bb_links[0]), (body2, bb_links[1]))
