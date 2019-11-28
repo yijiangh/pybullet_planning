@@ -37,7 +37,9 @@ def get_name(body):
     name = get_body_name(body)
     if name == '':
         name = 'body'
-    return '{}{}'.format(name, int(body))
+        return '{}{}'.format(name, int(body))
+    else:
+        return name
 
 def has_body(name):
     try:

@@ -150,7 +150,7 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
     from pybullet_planning.interfaces.env_manager.user_io import HideOutput
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration
     from pybullet_planning.interfaces.robots.link import get_link_name, get_links
-    from pybullet_planning.interfaces.robots.body import get_body_name, set_color, remove_body, clone_body
+    from pybullet_planning.interfaces.robots.body import set_color, remove_body, clone_body, get_name
 
     if not has_gui() and pb_closest_pt_output:
         return
@@ -164,25 +164,28 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
         b2 = get_body_from_pb_id(u_cr[2])
         l1 = u_cr[3]
         l2 = u_cr[4]
+        b1_name = get_name(b1)
+        b2_name = get_name(b2)
         l1_name = get_link_name(b1, l1)
         l2_name = get_link_name(b2, l2)
+
         print('*'*10)
         print('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2} Link #{3})'.format(
-            get_body_name(b1), l1_name, get_body_name(b2), l2_name))
+            b1_name, l1_name, b2_name, l2_name))
         clone1_fail = False
         clone2_fail = False
         try:
             with HideOutput():
                 cloned_body1 = clone_body(b1, links=[l1] if get_links(b1) else None, collision=True, visual=False)
         except:
-            print('cloning (body #{}, link #{}) fails.'.format(get_body_name(b1), l1_name))
+            print('cloning (body #{}, link #{}) fails.'.format(b1_name, l1_name))
             clone1_fail = True
             cloned_body1 = b1
         try:
             with HideOutput():
                 cloned_body2 = clone_body(b2, links=[l2] if get_links(b2) else None, collision=True, visual=False)
         except:
-            print('cloning (body #{}, link #{}) fails.'.format(get_body_name(b2), l2_name))
+            print('cloning (body #{}, link #{}) fails.'.format(b2_name, l2_name))
             clone2_fail = True
             cloned_body2 = b2
 
