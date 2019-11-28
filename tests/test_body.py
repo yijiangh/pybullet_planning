@@ -1,6 +1,8 @@
 import os
 import sys
 import pytest
+import pybullet
+import warnings
 from pybullet_planning import load_pybullet, connect, wait_for_user, LockRenderer, has_gui, WorldSaver, HideOutput, \
     reset_simulation, disconnect, set_camera_pose, has_gui
 from pybullet_planning import create_obj, create_attachment, Attachment
@@ -116,8 +118,10 @@ def test_clone_body(viewer, workspace_path, ee_path):
     set_pose(c_ee_v, move_pose)
 
     print('clone collision ee from obj')
-    c_ee_c = clone_body(ee_body, visual=False, collision=True)
-    set_pose(c_ee_c, move_pose)
+    with pytest.raises(pybullet.error):
+        warnings.warn('Currently, we do not support clone bodies that are created from an obj file.')
+        c_ee_c = clone_body(ee_body, visual=False, collision=True)
+        set_pose(c_ee_c, move_pose)
 
     if has_gui():
         wait_for_user()

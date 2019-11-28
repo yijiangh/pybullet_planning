@@ -1,4 +1,4 @@
-
+import warnings
 from collections import namedtuple
 import pybullet as p
 
@@ -31,6 +31,38 @@ class Attachment(object):
     def apply_mapping(self, mapping):
         self.parent = mapping.get(self.parent, self.parent)
         self.child = mapping.get(self.child, self.child)
+    def to_data(self):
+        from pybullet_planning.interfaces.robots.body import get_body_name, get_name
+        from pybullet_planning.interfaces.robots.link import get_link_name
+        data = {}
+        data['parent_name'] = get_body_name(self.parent)
+        data['parent_link_name'] = get_link_name(self.parent, self.parent_link)
+        data['grasp_pose'] = self.grasp_pose
+        child_name =  get_body_name(self.child)
+        data['child_name'] = get_name(self.child) if child_name == '' else child_name
+        return data
+    @classmethod
+    def from_data(cls, data):
+        from pybullet_planning.interfaces.env_manager.simulation import is_connected
+        from pybullet_planning.interfaces.robots.body import body_from_name
+        from pybullet_planning.interfaces.robots.link import link_from_name
+        if not is_connected():
+            warnings.warn('Pybullet environment not connected or body/joints not found, robot and joints kept as names.', UserWarning)
+            parent = data['parent_name']
+            parent_link = data['parent_link_name']
+            child = data['child_name']
+            grasp_pose = data['grasp_pose']
+        else:
+            parent = body_from_name(data['parent_name'])
+            parent_link = link_from_name(parent, data['parent_link_name'])
+            try:
+                child = body_from_name(data['child_name'])
+            except ValueError:
+                warnings.warn('Cannot find body with name {}, keep child name as str'.format(data['child_name']), UserWarning)
+                child = data['child_name']
+            grasp_pose = data['grasp_pose']
+        return cls(parent, parent_link, grasp_pose, child)
+
     def __repr__(self):
         return '{}({},{})'.format(self.__class__.__name__, self.parent, self.child)
 

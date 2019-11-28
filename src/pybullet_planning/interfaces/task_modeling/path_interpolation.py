@@ -37,6 +37,17 @@ def interpolate_poses(pose1, pose2, pos_step_size=0.01, ori_step_size=np.pi/16):
         yield (pos, quat)
     yield pose2
 
+def interpolate_poses_by_num_steps(pose1, pose2, num_steps=5):
+    pos1, quat1 = pose1
+    pos2, quat2 = pose2
+    for i in range(num_steps):
+        fraction = float(i) / num_steps
+        pos = (1-fraction)*np.array(pos1) + fraction*np.array(pos2)
+        quat = p.getQuaternionSlerp(quat1, quat2, interpolationFraction=fraction)
+        #quat = quaternion_slerp(quat1, quat2, fraction=fraction)
+        yield (pos, quat)
+    yield pose2
+
 # def workspace_trajectory(robot, link, start_point, direction, quat, **kwargs):
 #     # TODO: pushing example
 #     # TODO: just use current configuration?
