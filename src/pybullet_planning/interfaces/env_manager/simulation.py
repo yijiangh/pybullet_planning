@@ -4,7 +4,7 @@ import numpy as np
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, CLIENTS, GRAVITY, INFO_FROM_BODY, STATIC_MASS
-from pybullet_planning.utils import is_darwin, get_client
+from pybullet_planning.utils import is_darwin, is_windows, get_client
 
 from pybullet_planning.interfaces.env_manager.savers import Saver
 from pybullet_planning.interfaces.env_manager.user_io import HideOutput, update_viewer, user_input
@@ -74,7 +74,7 @@ def connect(use_gui=True, shadows=True):
     # Shared Memory: execute the physics simulation and rendering in a separate process
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/vrminitaur.py#L7
     # make sure to compile pybullet with PYBULLET_USE_NUMPY enabled
-    if use_gui and is_darwin() and ('DISPLAY' not in os.environ):
+    if use_gui and not is_darwin() and not is_windows() and ('DISPLAY' not in os.environ):
         use_gui = False
         print('No display detected!')
     method = p.GUI if use_gui else p.DIRECT

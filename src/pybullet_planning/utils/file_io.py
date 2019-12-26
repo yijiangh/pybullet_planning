@@ -23,6 +23,9 @@ def is_darwin(): # TODO: change loading accordingly
     return platform.system() == 'Darwin' # platform.release()
     #return sys.platform == 'darwin'
 
+def is_windows():
+    return platform.system() == 'Windows'
+
 def read(filename):
     with open(filename, 'r') as f:
         return f.read()
