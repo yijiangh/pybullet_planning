@@ -1,38 +1,49 @@
 """
+********************************************************************************
+motion_planners
+********************************************************************************
+
+.. currentmodule:: pybullet_planning.motion_planners
 
 Python implementations of several robotic motion planners
 
 Sampling-based:
-* Probabilistic Roadmap (PRM)
-* Rapidly-Exploring Random Tree (RRT)
-* RRT-Connect (BiRRT)
-* Linear Shortcutting
-* MultiRRT
-* RRT*
 
-Grid search
-* Breadth-First Search (BFS)
-* A*
+- Probabilistic Roadmap (PRM)
+- Rapidly-Exploring Random Tree (RRT)
+- RRT-Connect (BiRRT)
+- Linear Shortcutting
+- MultiRRT
+- RRT*
 
+Grid search:
 
-Setup
-=====
+- Breadth-First Search (BFS)
+- A*
 
-In order to use this library, ...
+Probabilistic Roadmap (PRM)
+=============================
 
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
 
-Main concepts
-=============
+    lazy_prm
 
-Describe typical classes found in project
+RRT-Connect (BiRRT)
+=====================
 
-.. autoclass:: SampleClassName
-   :members:
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
 
+    rrt_connect
+    birrt
+    direct_path
 
 """
 
-from .rrt_connect import birrt, direct_path
-from .lazy_prm import lazy_prm
+from .rrt_connect import *
+from .lazy_prm import *
 
-# __all__ = [name for name in dir() if not name.startswith('_')]
+__all__ = [name for name in dir() if not name.startswith('_')]

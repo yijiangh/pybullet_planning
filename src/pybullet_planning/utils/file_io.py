@@ -35,12 +35,26 @@ def write(filename, string):
         f.write(string)
 
 def read_pickle(filename):
+    """[summary]
+
+    Parameters
+    ----------
+    filename : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     # Can sometimes read pickle3 from python2 by calling twice
     # Can possibly read pickle2 from python3 by using encoding='latin1'
     with open(filename, 'rb') as f:
         return pickle.load(f)
 
 def write_pickle(filename, data):  # NOTE - cannot pickle lambda or nested functions
+    """[summary]
+    """
     with open(filename, 'wb') as f:
         pickle.dump(data, f)
 
