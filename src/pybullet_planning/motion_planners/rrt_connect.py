@@ -2,8 +2,37 @@ from .smoothing import smooth_path
 from .rrt import TreeNode, configs
 from .utils import irange, argmin, RRT_ITERATIONS, RRT_RESTARTS, RRT_SMOOTHING
 
+__all__ = [
+    'rrt_connect',
+    'birrt',
+    'direct_path',
+    ]
 
 def rrt_connect(q1, q2, distance, sample, extend, collision, iterations=RRT_ITERATIONS):
+    """rrt_connect summary
+
+    Parameters
+    ----------
+    q1 : [type]
+        [description]
+    q2 : [type]
+        [description]
+    distance : [type]
+        [description]
+    sample : [type]
+        [description]
+    extend : [type]
+        [description]
+    collision : [type]
+        [description]
+    iterations : [type], optional
+        [description], by default RRT_ITERATIONS
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     if collision(q1) or collision(q2):
         return None
     root1, root2 = TreeNode(q1), TreeNode(q2)
@@ -36,6 +65,24 @@ def rrt_connect(q1, q2, distance, sample, extend, collision, iterations=RRT_ITER
 # TODO: version which checks whether the segment is valid
 
 def direct_path(q1, q2, extend, collision):
+    """direct path [summary]
+
+    Parameters
+    ----------
+    q1 : [type]
+        [description]
+    q2 : [type]
+        [description]
+    extend : [type]
+        [description]
+    collision : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     if collision(q1) or collision(q2):
         return None
     path = [q1]
@@ -48,6 +95,40 @@ def direct_path(q1, q2, extend, collision):
 
 def birrt(q1, q2, distance, sample, extend, collision,
           restarts=RRT_RESTARTS, iterations=RRT_ITERATIONS, smooth=RRT_SMOOTHING):
+    """birrt [summary]
+
+    TODO: add citation to the algorithm.
+    See `pybullet_planning.interfaces.planner_interface.joint_motion_planning.plan_joint_motion` for an example
+    of standard usage.
+
+    Parameters
+    ----------
+    q1 : [type]
+        [description]
+    q2 : [type]
+        [description]
+    distance : [type]
+        see `pybullet_planning.interfaces.planner_interface.joint_motion_planning.get_difference_fn` for an example
+    sample : function handle
+        configuration space sampler
+        see `pybullet_planning.interfaces.planner_interface.joint_motion_planning.get_sample_fn` for an example
+    extend : function handle
+        see `pybullet_planning.interfaces.planner_interface.joint_motion_planning.get_extend_fn` for an example
+    collision : function handle
+        collision checking function
+        see `pybullet_planning.interfaces.robots.collision.get_collision_fn` for an example
+    restarts : int, optional
+        [description], by default RRT_RESTARTS
+    iterations : int, optional
+        [description], by default RRT_ITERATIONS
+    smooth : int, optional
+        smoothing iterations, by default RRT_SMOOTHING
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     if collision(q1) or collision(q2):
         return None
     path = direct_path(q1, q2, extend, collision)

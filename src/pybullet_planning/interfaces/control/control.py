@@ -11,6 +11,22 @@ from pybullet_planning.interfaces.robots.joint import get_max_velocity, get_max_
 # Control
 
 def control_joint(body, joint, value):
+    """[summary]
+
+    Parameters
+    ----------
+    body : [type]
+        [description]
+    joint : [type]
+        [description]
+    value : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     return p.setJointMotorControl2(bodyUniqueId=body,
                                    jointIndex=joint,
                                    controlMode=p.POSITION_CONTROL,
@@ -21,6 +37,22 @@ def control_joint(body, joint, value):
                                    physicsClientId=CLIENT)
 
 def control_joints(body, joints, positions):
+    """[summary]
+
+    Parameters
+    ----------
+    body : [type]
+        [description]
+    joints : [type]
+        [description]
+    positions : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     # TODO: the whole PR2 seems to jitter
     #kp = 1.0
     #kv = 0.3

@@ -9,6 +9,10 @@ import random
 import time
 import numpy as np
 
+__all__ = [
+    'lazy_prm'
+    ]
+
 Node = namedtuple('Node', ['g', 'parent'])
 unit_cost_fn = lambda v1, v2: 1.
 zero_heuristic_fn = lambda v: 0

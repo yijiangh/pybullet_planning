@@ -4,9 +4,9 @@ pybullet_planning
 
 .. start-badges
 
-.. image:: https://img.shields.io/badge/License-MIT-blue.svg
-    :target: https://github.com/yijiangh/pybullet_planning/blob/master/LICENSE
-    :alt: License MIT
+.. image:: https://readthedocs.org/projects/pybullet-planning/badge/?version=latest
+    :target: https://pybullet-planning.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation Status
 
 
 .. image:: https://travis-ci.com/yijiangh/pybullet_planning.svg?branch=master
@@ -18,78 +18,86 @@ pybullet_planning
     :target: https://coveralls.io/github/yijiangh/pybullet_planning?branch=master
     :alt: Coveralls
 
+
+.. image:: https://img.shields.io/badge/License-MIT-blue.svg
+    :target: https://github.com/yijiangh/pybullet_planning/blob/master/LICENSE
+    :alt: License MIT
+
 .. end-badges
 
 .. Write project description
 
-*pybullet_planning* is a suite of utility functions to facilitate robotic planning related research on the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
+**pybullet_planning** is a suite of utility functions to facilitate robotic planning related research on the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
 
 
 Main features
 -------------
 
-* feature
-
-**pybullet_planning** runs on Python 2.5+ and 3.x.
-
-
-Documentation
--------------
-
-.. Explain how to access documentation: API, examples, etc.
-
-..
-.. optional sections:
-
-Requirements
-------------
-
-.. Write requirements instructions here
+* easy-to-use functions to connect with pybullet, tailored for task and motion planning research
+* built-in implementations of standard motion planners, including PRM, RRT, biRRT, A* etc.
 
 
-Installation
-------------
+Getting Started
+---------------
 
-.. Write installation instructions here
+**pybullet_planning** can be installed using ``pip``:
 
+::
+
+    pip install pybullet_planning
+
+
+.. note::
+
+    On Windows, you may need to install
+    `Microsoft Visual C++ 14.0 <https://www.scivision.co/python-windows-visual-c++-14-required/>`_.
+
+
+Once the installation is completed, you can verify your setup.
+Start Python from the command prompt and run the following:
+
+::
+
+    >>> import pybullet_planning
+
+
+First Steps
+---------------
+
+* `Documentation <https://pybullet-planning.readthedocs.io>`_
 
 Contributing
 ------------
 
-Make sure you setup your local development environment correctly:
+We love contributions!
 
-* Clone the `pybullet_planning <https://github.com/yijiangh/pybullet_planning>`_ repository.
-* Install development dependencies:
-
-::
-
-    pip install -r requirements-dev.txt
-
-**You're ready to start working!**
-
-During development, use tasks on the
-command line to ease recurring operations:
-
-* ``invoke clean``: Clean all generated artifacts.
-* ``invoke check``: Run various code and documentation style checks.
-* ``invoke docs``: Generate documentation.
-* ``invoke test``: Run all tests and checks in one swift command.
-* ``invoke``: Show available tasks.
-
-For more details, check the `Contributor's Guide <CONTRIBUTING.rst>`_.
-
+Check the `Contributor's Guide <./CONTRIBUTING.rst>`_
+for more details.
 
 Releasing this project
 ----------------------
 
-.. Write releasing instructions here
+Ready to release a new version of **pybullet_planning**? Here's how to do it:
 
+* We use `semver <https://semver.org/>`_, i.e. we bump versions as follows:
 
-.. end of optional sections
-..
+  * ``patch``: bugfixes.
+  * ``minor``: backwards-compatible features added.
+  * ``major``: backwards-incompatible changes.
+
+* Update the ``CHANGELOG.rst`` with all novelty!
+* Ready? Release everything in one command:
+
+::
+
+    invoke release [patch|minor|major]
+    # with -b to bump version
+
+* Celebrate! 💃
+
 
 Credits
 -------------
 
 This package was initiated by Caelan Garrett <caelan@csail.mit.edu> `@caelan <https://github.com/caelan>`_,
-with some maintainence from Yijiang Huang <yijiangh@mit.edu> `@yijiangh <https://github.com/yijiangh>`_.
+and other `contributors <./AUTHORS.rst>`_.
