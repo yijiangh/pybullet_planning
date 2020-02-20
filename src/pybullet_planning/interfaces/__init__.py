@@ -5,27 +5,17 @@ interfaces
 
 .. currentmodule:: pybullet_planning.interfaces
 
+.. toctree::
+    :maxdepth: 2
 
-control
-=======
-
-todo
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-
-    control_joint
-    control_joints
-
-debug_utils
-===========
-
-todo
-
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
+    pybullet_planning.interfaces.control
+    pybullet_planning.interfaces.debug_utils
+    pybullet_planning.interfaces.env_manager
+    pybullet_planning.interfaces.geometry
+    pybullet_planning.interfaces.kinematics
+    pybullet_planning.interfaces.planner_interface
+    pybullet_planning.interfaces.robots
+    pybullet_planning.interfaces.task_modeling
 
 """
 

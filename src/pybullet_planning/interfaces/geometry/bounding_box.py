@@ -11,6 +11,9 @@ from pybullet_planning.utils import implies
 # Bounding box
 
 AABB = namedtuple('AABB', ['lower', 'upper'])
+"""axis-aligned bounding box: https://en.wikipedia.org/wiki/Bounding_volume
+
+"""
 
 def aabb_from_points(points):
     return AABB(np.min(points, axis=0), np.max(points, axis=0))

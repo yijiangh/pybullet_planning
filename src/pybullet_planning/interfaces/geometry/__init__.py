@@ -1,4 +1,33 @@
-"""geometry
+"""
+********************************************************************************
+interfaces.geometry
+********************************************************************************
+
+.. currentmodule:: pybullet_planning.interfaces.geometry
+
+TODO: module description
+
+Main Types
+--------------
+
+.. currentmodule:: pybullet_planning.interfaces.geometry
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    AABB
+
+Bounding box operations
+-----------------------
+
+.. currentmodule:: pybullet_planning.interfaces.geometry
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    AABB
 
 """
 

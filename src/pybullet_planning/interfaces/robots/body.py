@@ -260,6 +260,25 @@ def vertices_from_link(body, link):
     return vertices
 
 def vertices_from_rigid(body, link=BASE_LINK):
+    """compute all vertices of given body
+
+    Parameters
+    ----------
+    body : int
+        [description]
+    link : [type], optional
+        if BASE_LINK, we assume the body is single-linked, by default BASE_LINK
+
+    Returns
+    -------
+    list of three-float lists
+        body vertices
+
+    Raises
+    ------
+    NotImplementedError
+        only supports body created from a `.obj` file
+    """
     import os
     from pybullet_planning.interfaces.env_manager import get_model_info
     from pybullet_planning.interfaces.geometry.mesh import read_obj
@@ -281,6 +300,20 @@ def vertices_from_rigid(body, link=BASE_LINK):
     return vertices
 
 def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
+    """get the AABB bounding box of a body
+
+    Parameters
+    ----------
+    body : int
+        pb body's index
+    body_pose : [type], optional
+        [description], by default unit_pose()
+
+    Returns
+    -------
+    tuple of (Point, float)
+        bounding box center and extent length
+    """
     from pybullet_planning.interfaces.geometry.bounding_box import aabb_from_points, get_aabb_center, get_aabb_extent
     # TODO: make it just orientation
     vertices = apply_affine(body_pose, vertices_from_rigid(body, **kwargs))
@@ -292,6 +325,18 @@ def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
     #    return get_center_extent(body, **kwargs)
 
 def approximate_as_cylinder(body, **kwargs):
+    """get the bounding cylinder of the AABB bounding box of a body
+
+    Parameters
+    ----------
+    body : int
+        [description]
+
+    Returns
+    -------
+    Point, tuple of (diameter, height)
+        [description]
+    """
     center, (width, length, height) = approximate_as_prism(body, **kwargs)
     diameter = (width + length) / 2  # TODO: check that these are close
     return center, (diameter, height)

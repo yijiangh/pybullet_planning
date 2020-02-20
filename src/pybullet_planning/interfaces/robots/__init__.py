@@ -1,4 +1,35 @@
 """
+********************************************************************************
+interfaces.robots
+********************************************************************************
+
+.. currentmodule:: pybullet_planning.interfaces.robots
+
+TODO: module description
+
+Body
+--------------
+
+.. currentmodule:: pybullet_planning.interfaces.robots
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    vertices_from_rigid
+
+
+Body Approximation
+-------------------
+
+.. currentmodule:: pybullet_planning.interfaces.robots
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    approximate_as_prism
+    approximate_as_cylinder
 
 """
 

@@ -10,18 +10,72 @@ from pybullet_planning.utils import CLIENT, unit_vector, quaternion_from_matrix,
 #Pose = namedtuple('Pose', ['position', 'orientation'])
 
 def Point(x=0., y=0., z=0.):
+    """Representing a point in 3D
+
+    Parameters
+    ----------
+    x : float, optional
+        [description], by default 0.
+    y : float, optional
+        [description], by default 0.
+    z : float, optional
+        [description], by default 0.
+
+    Returns
+    -------
+    np array of three floats
+        [description]
+    """
     return np.array([x, y, z])
 
 def Euler(roll=0., pitch=0., yaw=0.):
+    """Representing a 3D rotation by Eulerian angles
+
+    .. image:: ../images/roll_pitch_yaw.png
+        :scale: 60 %
+        :align: center
+
+    `image source <https://devforum.roblox.com/t/take-out-pitch-from-rotation-matrix-while-preserving-yaw-and-roll/95204>`_
+
+    Parameters
+    ----------
+    roll : float, optional
+        [description], by default 0.
+    pitch : float, optional
+        [description], by default 0.
+    yaw : float, optional
+        [description], by default 0.
+
+    Returns
+    -------
+    np array of three floats
+        [description]
+    """
     return np.array([roll, pitch, yaw])
 
 def Pose(point=None, euler=None):
+    """Representing a pose (or frame) in 3D
+
+    Parameters
+    ----------
+    point : np array of three-floats, optional
+        [description], by default None
+    euler : np array of three eulerian angles, optional
+        (roll, pitch, yaw), by default None
+
+    Returns
+    -------
+    tuple of point, quaternion
+        [description]
+    """
     point = Point() if point is None else point
     euler = Euler() if euler is None else euler
     return (point, quat_from_euler(euler))
 
 #def Pose2d(x=0., y=0., yaw=0.):
 #    return np.array([x, y, yaw])
+
+#####################################
 
 def invert(pose):
     (point, quat) = pose
@@ -102,9 +156,33 @@ def matrix_from_tform(tform):
     return np.array(tform)[:3,:3]
 
 def point_from_pose(pose):
+    """get the origin point from a pose
+
+    Parameters
+    ----------
+    pose : Pose
+        [description]
+
+    Returns
+    -------
+    Point, np array of three floats
+        [description]
+    """
     return pose[0]
 
 def quat_from_pose(pose):
+    """get the quaternion from a pose
+
+    Parameters
+    ----------
+    pose : [type]
+        [description]
+
+    Returns
+    -------
+    Quaternion, np array of four floats
+        [description]
+    """
     return pose[1]
 
 def tform_from_pose(pose):
@@ -156,9 +234,37 @@ def all_between(lower_limits, values, upper_limits):
            np.less_equal(values, upper_limits).all()
 
 def tform_point(affine, point):
+    """transform a given point
+
+    Parameters
+    ----------
+    affine : Pose
+        [description]
+    point : [type]
+        [description]
+
+    Returns
+    -------
+    Point
+        [description]
+    """
     return point_from_pose(multiply(affine, Pose(point=point)))
 
 def apply_affine(affine, points):
+    """apply affine transformation on the given list of points
+
+    Parameters
+    ----------
+    affine : Pose
+        [description]
+    points : [type]
+        [description]
+
+    Returns
+    -------
+    list of points
+        [description]
+    """
     return [tform_point(affine, p) for p in points]
 
 ##############################################
