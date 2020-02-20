@@ -241,6 +241,12 @@ def set_color(body, color, link=BASE_LINK, shape_index=-1):
                                #textureUniqueId=None, specularColor=None,
                                physicsClientId=CLIENT)
 
+def set_texture(body, texture=None, link=BASE_LINK, shape_index=-1):
+    if texture is None:
+        texture = -1
+    return p.changeVisualShape(body, link, shapeIndex=shape_index, textureUniqueId=texture,
+                               physicsClientId=CLIENT)
+
 def vertices_from_link(body, link):
     from pybullet_planning.interfaces.env_manager.shape_creation import vertices_from_data
     # In local frame
