@@ -165,6 +165,30 @@ def create_body(collision_id=-1, visual_id=-1, mass=STATIC_MASS):
 
 
 def create_box(w, l, h, mass=STATIC_MASS, color=(1, 0, 0, 1)):
+    """
+
+    .. image:: ../images/box.png
+        :scale: 60 %
+        :align: center
+
+    Parameters
+    ----------
+    w : [type]
+        [description]
+    l : [type]
+        [description]
+    h : [type]
+        [description]
+    mass : [type], optional
+        by static_mass (0) assumes the body has infinite mass and will not be affected by gravity, by default STATIC_MASS
+    color : tuple, optional
+        [description], by default (1, 0, 0, 1)
+
+    Returns
+    -------
+    int
+        box body index
+    """
     collision_id, visual_id = create_shape(get_box_geometry(w, l, h), color=color)
     return create_body(collision_id, visual_id, mass=mass)
     # basePosition | baseOrientation
@@ -172,6 +196,28 @@ def create_box(w, l, h, mass=STATIC_MASS, color=(1, 0, 0, 1)):
 
 
 def create_cylinder(radius, height, mass=STATIC_MASS, color=(0, 0, 1, 1)):
+    """
+
+    .. image:: ../images/cylinder.png
+        :scale: 60 %
+        :align: center
+
+    Parameters
+    ----------
+    radius : [type]
+        [description]
+    height : [type]
+        [description]
+    mass : [type], optional
+        [description], by default STATIC_MASS
+    color : tuple, optional
+        [description], by default (0, 0, 1, 1)
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     collision_id, visual_id = create_shape(get_cylinder_geometry(radius, height), color=color)
     return create_body(collision_id, visual_id, mass=mass)
 
@@ -209,6 +255,7 @@ def vertices_from_data(data):
     from pybullet_planning.interfaces.env_manager.shape_creation import get_data_type, get_data_extents, get_data_radius, get_data_height, \
         get_data_filename, get_data_scale, get_collision_data, get_data_pose
     from pybullet_planning.interfaces.env_manager import get_model_info
+    from pybullet_planning.interfaces.geometry.bounding_box import AABB, get_aabb_vertices
 
     geometry_type = get_data_type(data)
     #if geometry_type == p.GEOM_SPHERE:

@@ -11,6 +11,7 @@ This library is a suite of utility functions to facilitate robotic planning rela
     :maxdepth: 1
 
     pybullet_planning.interfaces
+    pybullet_planning.primitives
     pybullet_planning.motion_planners
     pybullet_planning.utils
 
@@ -22,5 +23,6 @@ from .__version__ import __author__, __author_email__, __copyright__, __descript
 from .utils import *
 from .interfaces import *
 from .motion_planners import *
+from .primitives import *
 
 __all__ = ['__author__', '__author_email__', '__copyright__', '__description__', '__license__', '__title__', '__url__', '__version__']

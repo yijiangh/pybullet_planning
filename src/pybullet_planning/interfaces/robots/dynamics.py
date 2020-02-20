@@ -30,6 +30,13 @@ def set_mass(body, mass, link=BASE_LINK):
     set_dynamics(body, link=link, mass=mass)
 
 def set_static(body):
+    """set all the body's links to be static (infinite mass, doesn't move under gravity)
+
+    Parameters
+    ----------
+    body : int
+        [description]
+    """
     from pybullet_planning.interfaces.robots.link import get_all_links
     for link in get_all_links(body):
         set_mass(body, mass=STATIC_MASS, link=link)

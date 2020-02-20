@@ -22,7 +22,9 @@ Grid search:
 - A*
 
 Probabilistic Roadmap (PRM)
-=============================
+----------------------------
+
+.. currentmodule:: .lazy_prm
 
 .. autosummary::
     :toctree: generated/
@@ -31,7 +33,9 @@ Probabilistic Roadmap (PRM)
     lazy_prm
 
 RRT-Connect (BiRRT)
-=====================
+----------------------------
+
+.. currentmodule:: .rrt_connect
 
 .. autosummary::
     :toctree: generated/

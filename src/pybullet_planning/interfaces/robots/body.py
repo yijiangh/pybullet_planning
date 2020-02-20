@@ -141,6 +141,7 @@ def dump_body(body):
 
 def dump_world():
     """print out information for all bodies that're currently in the scene
+
     """
     for body in get_bodies():
         dump_body(body)

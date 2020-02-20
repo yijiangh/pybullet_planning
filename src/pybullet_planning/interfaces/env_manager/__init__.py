@@ -38,6 +38,21 @@ Transformation operations
     tform_point
     apply_affine
 
+Create shapes
+--------------------------------
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    create_body
+    create_box
+    create_capsule
+    create_sphere
+    create_cylinder
+    create_plane
+    create_obj
+
 """
 
 from __future__ import absolute_import

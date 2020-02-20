@@ -58,6 +58,18 @@ def get_aabb_center(aabb):
     return (np.array(lower) + np.array(upper)) / 2.
 
 def get_aabb_extent(aabb):
+    """return the bounding box range in the x, y, z in the body's pose frame
+
+    Parameters
+    ----------
+    aabb : AABB
+        [description]
+
+    Returns
+    -------
+    np array of three float
+        [width, length, height]
+    """
     lower, upper = aabb
     return np.array(upper) - np.array(lower)
 

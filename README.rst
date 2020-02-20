@@ -27,7 +27,7 @@ pybullet_planning
 
 .. Write project description
 
-**pybullet_planning** is a suite of utility functions to facilitate robotic planning related research on the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
+**pybullet_planning** is a suite of utility functions to facilitate robotic planning related research on the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine. Planning research made easy.
 
 
 Main features
@@ -100,4 +100,4 @@ Credits
 -------------
 
 This package was initiated by Caelan Garrett <caelan@csail.mit.edu> `@caelan <https://github.com/caelan>`_,
-and other `contributors <./AUTHORS.rst>`_.
+and other `contributors <https://github.com/yijiangh/pybullet_planning/blob/dev/AUTHORS.rst>`_.

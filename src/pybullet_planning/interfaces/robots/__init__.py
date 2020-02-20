@@ -10,8 +10,6 @@ TODO: module description
 Body
 --------------
 
-.. currentmodule:: pybullet_planning.interfaces.robots
-
 .. autosummary::
     :toctree: generated/
     :nosignatures:
@@ -22,14 +20,32 @@ Body
 Body Approximation
 -------------------
 
-.. currentmodule:: pybullet_planning.interfaces.robots
-
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
     approximate_as_prism
     approximate_as_cylinder
+
+Dynamics
+-------------------
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    DynamicsInfo
+    set_static
+
+Verbose
+-------------------
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    dump_body
+    dump_world
 
 """
 
