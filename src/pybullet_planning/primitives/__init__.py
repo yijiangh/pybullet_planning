@@ -11,17 +11,26 @@ These modules are transported from `kuka_primitives`, `pr2_primitives` and `pr2_
 Grasp
 ------
 
+In ``pybullet_planning``, a grasp is modeled as an operator on the object frame, i.e.
+``world_from_object = world_from_gripper * grasp``, where ``grasp = gripper_from_object``.
+
+We provide some simple grasp generator based on bounding geometry (box, cylinder). Inside these
+generators' implementation, however, the modeling start from the object frame to the gripper's
+frame to obtain ``object_from_gripper`` and then we return its inverse ``gripper_from_object``.
+(Yijiang thinks this is more straightforward to think about.)
+
+.. currentmodule:: pybullet_planning.primitives.grasp
+
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    get_top_grasps
-    get_side_grasps
     get_side_cylinder_grasps
-    get_edge_cylinder_grasps
 
 Convenient classes
 ------------------
+
+.. currentmodule:: pybullet_planning.primitives.trajectory
 
 .. autosummary::
     :toctree: generated/
@@ -34,5 +43,6 @@ Convenient classes
 from __future__ import absolute_import
 
 from .grasp import *
+from .trajectory import *
 
 __all__ = [name for name in dir() if not name.startswith('_')]

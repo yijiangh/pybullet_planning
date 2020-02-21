@@ -77,20 +77,24 @@ def update_viewer():
     # time.sleep(1e-3) # Doesn't work
     # disable_gravity()
 
+
 def wait_for_duration(duration): #, dt=0):
     t0 = time.time()
     while elapsed_time(t0) <= duration:
         update_viewer()
+
 
 def simulate_for_duration(duration):
     dt = get_time_step()
     for i in range(int(duration / dt)):
         step_simulation()
 
+
 def get_time_step():
     # {'gravityAccelerationX', 'useRealTimeSimulation', 'gravityAccelerationZ', 'numSolverIterations',
     # 'gravityAccelerationY', 'numSubSteps', 'fixedTimeStep'}
     return p.getPhysicsEngineParameters(physicsClientId=CLIENT)['fixedTimeStep']
+
 
 def enable_separating_axis_test():
     p.setPhysicsEngineParameter(enableSAT=1, physicsClientId=CLIENT)
@@ -100,6 +104,7 @@ def enable_separating_axis_test():
     # enableFileCaching: Set to 0 to disable file caching, such as .obj wavefront file loading
     #p.getAPIVersion() # TODO: check that API is up-to-date
     #p.isNumpyEnabled()
+
 
 def simulate_for_sim_duration(sim_duration, real_dt=0, frequency=INF):
     t0 = time.time()
@@ -114,6 +119,7 @@ def simulate_for_sim_duration(sim_duration, real_dt=0, frequency=INF):
         sim_time += sim_dt
         time.sleep(real_dt)
 
+
 def wait_for_user(message='Press enter to continue'):
     if is_darwin():
         # OS X doesn't multi-thread the OpenGL visualizer
@@ -121,12 +127,15 @@ def wait_for_user(message='Press enter to continue'):
         return threaded_input(message)
     return user_input(message)
 
+
 def is_unlocked():
     return CLIENTS[CLIENT] is True
+
 
 def wait_if_unlocked(*args, **kwargs):
     if is_unlocked():
         wait_for_user(*args, **kwargs)
+
 
 def wait_for_interrupt(max_time=np.inf):
     """
@@ -143,6 +152,7 @@ def wait_for_interrupt(max_time=np.inf):
 
 def step_simulation():
     p.stepSimulation(physicsClientId=CLIENT)
+
 
 def threaded_input(*args, **kwargs):
     # OS X doesn't multi-thread the OpenGL visualizer

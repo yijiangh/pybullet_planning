@@ -294,6 +294,7 @@ def vertices_from_rigid(body, link=BASE_LINK):
         if ext == '.obj':
             if info.path not in OBJ_MESH_CACHE:
                 OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
+                # ! TODO: scale
             mesh = OBJ_MESH_CACHE[info.path]
             vertices = mesh.vertices
         else:

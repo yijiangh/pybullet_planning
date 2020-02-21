@@ -165,7 +165,7 @@ def create_body(collision_id=-1, visual_id=-1, mass=STATIC_MASS):
 
 
 def create_box(w, l, h, mass=STATIC_MASS, color=(1, 0, 0, 1)):
-    """
+    """create a box body
 
     .. image:: ../images/box.png
         :scale: 60 %
@@ -196,7 +196,7 @@ def create_box(w, l, h, mass=STATIC_MASS, color=(1, 0, 0, 1)):
 
 
 def create_cylinder(radius, height, mass=STATIC_MASS, color=(0, 0, 1, 1)):
-    """
+    """create a cylinder body
 
     .. image:: ../images/cylinder.png
         :scale: 60 %

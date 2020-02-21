@@ -26,6 +26,30 @@ def add_text(text, position=(0, 0, 0), color=(0, 0, 0), lifetime=None, parent=-1
                               physicsClientId=CLIENT)
 
 def add_line(start, end, color=(0, 0, 0), width=1, lifetime=None, parent=-1, parent_link=BASE_LINK):
+    """[summary]
+
+    Parameters
+    ----------
+    start : [type]
+        [description]
+    end : [type]
+        [description]
+    color : tuple, optional
+        [description], by default (0, 0, 0)
+    width : int, optional
+        [description], by default 1
+    lifetime : [type], optional
+        [description], by default None
+    parent : int, optional
+        [description], by default -1
+    parent_link : [type], optional
+        [description], by default BASE_LINK
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     return p.addUserDebugLine(start, end, lineColorRGB=color[:3], lineWidth=width,
                               lifeTime=get_lifetime(lifetime), parentObjectUniqueId=parent, parentLinkIndex=parent_link,
                               physicsClientId=CLIENT)
@@ -146,6 +170,15 @@ def get_body_from_pb_id(i):
     return p.getBodyUniqueId(i, physicsClientId=CLIENT)
 
 def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
+    """[summary]
+
+    Parameters
+    ----------
+    pb_closest_pt_output : [type]
+        [description]
+    viz_last_duration : int, optional
+        [description], by default -1
+    """
     from pybullet_planning.interfaces.env_manager.simulation import has_gui
     from pybullet_planning.interfaces.env_manager.user_io import HideOutput
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration

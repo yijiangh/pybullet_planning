@@ -24,7 +24,7 @@ Grid search:
 Probabilistic Roadmap (PRM)
 ----------------------------
 
-.. currentmodule:: .lazy_prm
+.. currentmodule:: pybullet_planning.motion_planners.lazy_prm
 
 .. autosummary::
     :toctree: generated/
@@ -35,7 +35,7 @@ Probabilistic Roadmap (PRM)
 RRT-Connect (BiRRT)
 ----------------------------
 
-.. currentmodule:: .rrt_connect
+.. currentmodule:: pybullet_planning.motion_planners.rrt_connect
 
 .. autosummary::
     :toctree: generated/

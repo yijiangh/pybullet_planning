@@ -9,8 +9,6 @@ from pybullet_planning.interfaces.robots.link import get_link_subtree, get_link_
 #####################################
 # Grasps
 
-GraspInfo = namedtuple('GraspInfo', ['get_grasps', 'approach_pose'])
-
 class Attachment(object):
     def __init__(self, parent, parent_link, grasp_pose, child):
         self.parent = parent
@@ -66,34 +64,87 @@ class Attachment(object):
     def __repr__(self):
         return '{}({},{})'.format(self.__class__.__name__, self.parent, self.child)
 
+
 def create_attachment(parent, parent_link, child):
     parent_link_pose = get_link_pose(parent, parent_link)
     child_pose = get_pose(child)
     grasp_pose = multiply(invert(parent_link_pose), child_pose)
     return Attachment(parent, parent_link, grasp_pose, child)
 
+######################################################################
+
+GraspInfo = namedtuple('GraspInfo', ['get_grasps', 'approach_pose'])
+
 def body_from_end_effector(end_effector_pose, grasp_pose):
+    """get world_from_brick pose from a given world_from_gripper and gripper_from_brick
+
+    Parameters
+    ----------
+    end_effector_pose : [type]
+        world_from_gripper
+    grasp_pose : [type]
+        gripper_from_brick
+
+    Returns
+    -------
+    Pose
+        world_from_brick
     """
-    world_from_parent * parent_from_child = world_from_child
-    """
+
     return multiply(end_effector_pose, grasp_pose)
 
+
 def end_effector_from_body(body_pose, grasp_pose):
-    """
-    grasp_pose: the body's pose in gripper's frame
-    world_from_child * (parent_from_child)^(-1) = world_from_parent
-    (parent: gripper, child: body to be grasped)
-    Pose_{world,gripper} = Pose_{world,block}*Pose_{block,gripper}
-                         = Pose_{world,block}*(Pose_{gripper,block})^{-1}
+    """get world_from_gripper from the target brick's pose and the grasp pose
+
+        world_from_child * (parent_from_child)^(-1) = world_from_parent
+        (parent: gripper, child: body to be grasped)
+        world_from_gripper = world_from_block * block_from_gripper
+                           = world_from_block * invert(gripper_from_block)
+
+    Parameters
+    ----------
+    body_pose : Pose
+        world_from_body
+    grasp_pose : Pose
+        gripper_from_body, the body's pose in gripper's frame
+
+    Returns
+    -------
+    Pose
+        world_from_gripper
     """
     return multiply(body_pose, invert(grasp_pose))
 
 def approach_from_grasp(approach_pose, end_effector_pose):
+    """get approach_from_brick
+
+    Parameters
+    ----------
+    approach_pose : [type]
+        approach_from_gripper
+    end_effector_pose : [type]
+        gripper_from_brick
+
+    Returns
+    -------
+    [type]
+        approach_from_brick
+    """
     return multiply(approach_pose, end_effector_pose)
 
 def get_grasp_pose(constraint):
-    """
-    Grasps are parent_from_child
+    """get grasp poses from a constraint
+
+    Parameters
+    ----------
+    constraint : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     from pybullet_planning.interfaces.task_modeling.constraint import get_constraint_info
     constraint_info = get_constraint_info(constraint)
