@@ -52,6 +52,9 @@ NULL_ID = -1
 TEMP_DIR = 'temp/'
 
 OBJ_MESH_CACHE = {}
+"""a cache keeping track of loaded obj objects
+
+"""
 
 def get_client(client=None):
     if client is None:

@@ -19,7 +19,7 @@ generators' implementation, however, the modeling start from the object frame to
 frame to obtain ``object_from_gripper`` and then we return its inverse ``gripper_from_object``.
 (Yijiang thinks this is more straightforward to think about.)
 
-.. currentmodule:: pybullet_planning.primitives.grasp
+.. currentmodule:: pybullet_planning.primitives.grasp_gen
 
 .. autosummary::
     :toctree: generated/
@@ -42,7 +42,7 @@ Convenient classes
 
 from __future__ import absolute_import
 
-from .grasp import *
+from .grasp_gen import *
 from .trajectory import *
 
 __all__ = [name for name in dir() if not name.startswith('_')]

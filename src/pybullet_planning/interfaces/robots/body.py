@@ -294,15 +294,16 @@ def vertices_from_rigid(body, link=BASE_LINK):
         if ext == '.obj':
             if info.path not in OBJ_MESH_CACHE:
                 OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
-                # ! TODO: scale
             mesh = OBJ_MESH_CACHE[info.path]
-            vertices = mesh.vertices
+            vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
         else:
             raise NotImplementedError(ext)
     return vertices
 
 def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
     """get the AABB bounding box of a body
+
+    Note: the generated AABB is not truly axis-aligned, bounding box under world axis x, y
 
     Parameters
     ----------
@@ -329,6 +330,9 @@ def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
 def approximate_as_cylinder(body, **kwargs):
     """get the bounding cylinder of the AABB bounding box of a body
 
+    Note: the generated AABB is not truly axis-aligned, bounding box under world axis x, y.
+    Thus, the estimated diameter and height might not be accurate in the longitude axis aligning sense.
+
     Parameters
     ----------
     body : int
@@ -340,7 +344,8 @@ def approximate_as_cylinder(body, **kwargs):
         [description]
     """
     center, (width, length, height) = approximate_as_prism(body, **kwargs)
-    diameter = (width + length) / 2  # TODO: check that these are close
+    diameter = np.sqrt(width**2 + length**2) # TODO: check that these are close
+    diameter = (width + length) / 2 # TODO: check that these are close
     return center, (diameter, height)
 
 #####################################
