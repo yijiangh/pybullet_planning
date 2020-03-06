@@ -172,6 +172,22 @@ def plan_waypoints_joint_motion(body, joints, waypoints, start_conf=None, obstac
     return path
 
 def plan_direct_joint_motion(body, joints, end_conf, **kwargs):
+    """plan a joint trajectory connecting the robot's current conf to the end_conf
+
+    Parameters
+    ----------
+    body : [type]
+        [description]
+    joints : [type]
+        [description]
+    end_conf : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     return plan_waypoints_joint_motion(body, joints, [end_conf], **kwargs)
 
 def check_initial_end(start_conf, end_conf, collision_fn):

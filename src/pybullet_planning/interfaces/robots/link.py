@@ -77,6 +77,22 @@ def get_link_pose(body, link):
     return link_state.worldLinkFramePosition, link_state.worldLinkFrameOrientation
 
 def get_relative_pose(body, link1, link2=BASE_LINK):
+    """compute relative transformation between two links of a body
+
+    Parameters
+    ----------
+    body : [type]
+        [description]
+    link1 : [type]
+        [description]
+    link2 : [type], optional
+        [description], by default BASE_LINK
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     from pybullet_planning.interfaces.env_manager.pose_transformation import multiply, invert
     world_from_link1 = get_link_pose(body, link1)
     world_from_link2 = get_link_pose(body, link2)

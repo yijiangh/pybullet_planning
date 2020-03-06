@@ -16,6 +16,15 @@ Body
 
     vertices_from_rigid
 
+Collision checking
+--------------------
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    get_collision_fn
+    get_floating_body_collision_fn
 
 Body Approximation
 -------------------

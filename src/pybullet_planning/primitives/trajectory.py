@@ -1,5 +1,5 @@
 from pybullet_planning.interfaces import get_relative_pose, get_link_subtree, clone_body, set_static, get_link_pose, \
-    set_pose, multiply
+    set_pose, multiply, get_pose, invert
 
 ##############################################
 
@@ -30,14 +30,33 @@ class EndEffector(object):
         set_static(self.body)
         # for link in get_all_links(tool_body):
         #    set_color(tool_body, np.zeros(4), link)
-    def get_tool_pose(self):
-        return get_link_pose(self.robot, self.tool_link)
+    def get_tool_pose(self, get_cloned_pose=True):
+        """[summary]
+
+        Parameters
+        ----------
+        get_cloned_pose : bool, optional
+            if True return the cloned floating EE's tool pose, the robot's tool pose otherwise, by default True
+
+        Returns
+        -------
+        [type]
+            [description]
+        """
+        if not clone_body:
+            return get_link_pose(self.robot, self.tool_link)
+        else:
+            ee_pose = get_pose(self.body)
+            return multiply(ee_pose, invert(self.tool_from_ee))
+
     def set_pose(self, tool_pose):
         pose = multiply(tool_pose, self.tool_from_ee)
         set_pose(self.body, pose)
         return pose
+
     @property
     def tool_from_root(self):
         return self.tool_from_ee
+
     def __repr__(self):
         return '{}({}, {})'.format(self.__class__.__name__, self.robot, self.body)
