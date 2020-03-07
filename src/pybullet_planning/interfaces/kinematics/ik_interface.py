@@ -3,9 +3,8 @@ from pybullet_planning.interfaces.env_manager.pose_transformation import multipl
     point_from_pose, quat_from_pose, get_distance, unit_pose
 from pybullet_planning.interfaces.robots.joint import joints_from_names, get_joint_positions, violates_limits
 from pybullet_planning.interfaces.robots.link import get_link_pose, link_from_name
-from pybullet_planning.utils.shared_const import BASE_LINK
 
-def get_ik_tool_link_pose(fk_fn, robot, ik_joints, base_link_name, \
+def get_ik_tool_link_pose(fk_fn, robot, ik_joints, base_link, \
                           joint_values=None, use_current=False):
     """Use the given forward_kinematics function to compute ik_tool_link pose
     based on current joint configurations in pybullet.
@@ -20,8 +19,8 @@ def get_ik_tool_link_pose(fk_fn, robot, ik_joints, base_link_name, \
     ik_joint : list of int
         a list of pybullet joint index that is registered for IK/FK
         can be obtained by e.g.: ``ik_joints = joints_from_names(robot, ik_joint_names)``
-    base_link_name : str
-        robot base link's name, usually it's 'base_link'
+    base_link : int
+        robot base link index, can be obtained from ``link_from_name(robot, base_link_name)``
     joint_values : list of float
         robot joint values for FK computation, value correponds to ik_joint_names, default to None
     use_current: bool
@@ -40,11 +39,11 @@ def get_ik_tool_link_pose(fk_fn, robot, ik_joints, base_link_name, \
         conf = joint_values
 
     base_from_tool = compute_forward_kinematics(fk_fn, conf)
-    world_from_base = get_link_pose(robot, link_from_name(robot, base_link_name))
+    world_from_base = get_link_pose(robot, base_link)
     return multiply(world_from_base, base_from_tool)
 
 
-def get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_from_tcp=None, **kwargs):
+def get_ik_generator(ik_fn, robot, base_link, world_from_tcp, ik_tool_link_from_tcp=None, **kwargs):
     """get an ik generator
 
     Parameters
@@ -54,8 +53,8 @@ def get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_
         point = [x,y,z]
         rot = 3x3 rotational matrix as a row-major list
     robot : pybullet robot
-    base_link_name : str
-        robot base link's name, usually it's 'base_link'
+    base_link : int
+        robot base link index, can be obtained from ``link_from_name(robot, base_link_name)``
     world_from_tcp : pybullet pose
         tcp pose in the world frame
     ik_tool_link_from_tcp : pybullet pose
@@ -66,7 +65,7 @@ def get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_
     generator
         use next() to get solutions
     """
-    world_from_base = get_link_pose(robot, link_from_name(robot, base_link_name))
+    world_from_base = get_link_pose(robot, base_link)
     base_from_tcp = multiply(invert(world_from_base), world_from_tcp)
     if ik_tool_link_from_tcp:
         base_from_ik_tool_link = multiply(base_from_tcp, invert(ik_tool_link_from_tcp))
@@ -75,7 +74,7 @@ def get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_
     yield compute_inverse_kinematics(ik_fn, base_from_ik_tool_link, **kwargs)
 
 
-def sample_tool_ik(ik_fn, robot, ik_joints, world_from_tcp, base_link_name=BASE_LINK,
+def sample_tool_ik(ik_fn, robot, ik_joints, world_from_tcp, base_link,
                    ik_tool_link_from_tcp=None,  closest_only=False, get_all=False, **kwargs):
     """ sample ik joints for a given tcp pose in the world frame
 
@@ -89,8 +88,8 @@ def sample_tool_ik(ik_fn, robot, ik_joints, world_from_tcp, base_link_name=BASE_
     ik_joint : list of int
         a list of pybullet joint index that is registered for IK/FK
         can be obtained by e.g.: ``ik_joints = joints_from_names(robot, ik_joint_names)``
-    base_link_name : str
-        robot base link's name, usually it's 'base_link'
+    base_link : int
+        robot base link index, can be obtained from ``link_from_name(robot, base_link_name)``
     world_from_tcp : pybullet pose
         tcp pose in the world frame
     ik_tool_link_from_tcp : pybullet pose
@@ -106,7 +105,7 @@ def sample_tool_ik(ik_fn, robot, ik_joints, world_from_tcp, base_link_name=BASE_
     a list of 6-list
         computed IK solutions that satisfy joint limits
     """
-    generator = get_ik_generator(ik_fn, robot, base_link_name, world_from_tcp, ik_tool_link_from_tcp, **kwargs)
+    generator = get_ik_generator(ik_fn, robot, base_link, world_from_tcp, ik_tool_link_from_tcp, **kwargs)
     sols = next(generator)
     if closest_only and sols:
         current_conf = get_joint_positions(robot, ik_joints)
