@@ -127,6 +127,10 @@ def wait_for_user(message='Press enter to continue'):
         return threaded_input(message)
     return user_input(message)
 
+def wait_if_gui(*args, **kwargs):
+    if has_gui():
+        wait_for_user(*args, **kwargs)
+
 
 def is_unlocked():
     return CLIENTS[CLIENT] is True
@@ -151,6 +155,15 @@ def wait_for_interrupt(max_time=np.inf):
 
 
 def step_simulation():
+    """stepSimulation will perform all the actions in a single forward dynamics simulation step
+    such as collision detection, constraint solving and integration. The default timestep is
+    1/240 second, it can be changed using the setTimeStep or setPhysicsEngineParameter API.
+
+    https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#heading=h.czaspku18mzs
+
+    Note: This also forces pybullet to update its bounding volume hierarchy. Ideally one would do this without calling
+    the physics simulator. But this is the only workaround that we've found so far.
+    """
     p.stepSimulation(physicsClientId=CLIENT)
 
 

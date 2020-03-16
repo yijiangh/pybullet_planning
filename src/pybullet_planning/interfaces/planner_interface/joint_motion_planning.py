@@ -190,11 +190,11 @@ def plan_direct_joint_motion(body, joints, end_conf, **kwargs):
     """
     return plan_waypoints_joint_motion(body, joints, [end_conf], **kwargs)
 
-def check_initial_end(start_conf, end_conf, collision_fn):
-    if collision_fn(start_conf):
+def check_initial_end(start_conf, end_conf, collision_fn, diagnosis=False):
+    if collision_fn(start_conf, diagnosis):
         print("Warning: initial configuration is in collision")
         return False
-    if collision_fn(end_conf):
+    if collision_fn(end_conf, diagnosis):
         print("Warning: end configuration is in collision")
         return False
     return True
@@ -202,6 +202,8 @@ def check_initial_end(start_conf, end_conf, collision_fn):
 def plan_joint_motion(body, joints, end_conf, obstacles=[], attachments=[],
                       self_collisions=True, disabled_collisions=set(), extra_disabled_collisions=set(),
                       weights=None, resolutions=None, max_distance=MAX_DISTANCE, custom_limits={}, **kwargs):
+    """call birrt to plan a joint trajectory from the robot's **current** conf to ``end_conf``.
+    """
     assert len(joints) == len(end_conf)
     sample_fn = get_sample_fn(body, joints, custom_limits=custom_limits)
     distance_fn = get_distance_fn(body, joints, weights=weights)

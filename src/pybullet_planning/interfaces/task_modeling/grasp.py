@@ -66,6 +66,21 @@ class Attachment(object):
 
 
 def create_attachment(parent, parent_link, child):
+    """create an Attachment between the parent body's parent_link and child body, based on their **current pose**
+
+    Parameters
+    ----------
+    parent : int
+        parent body's pb index
+    parent_link : int
+        parent body's attach link index
+    child : [type]
+        child body's pb index
+
+    Returns
+    -------
+    Attachment
+    """
     parent_link_pose = get_link_pose(parent, parent_link)
     child_pose = get_pose(child)
     grasp_pose = multiply(invert(parent_link_pose), child_pose)

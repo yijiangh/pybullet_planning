@@ -13,6 +13,8 @@ from pybullet_planning.utils import implies
 AABB = namedtuple('AABB', ['lower', 'upper'])
 """axis-aligned bounding box: https://en.wikipedia.org/wiki/Bounding_volume
 
+Notice that the world-axis is used here. We don't have support for OOBB (using the object's local coordinate system)?
+
 """
 
 def aabb_from_points(points):
@@ -95,6 +97,21 @@ def aabb_contains_point(point, container):
     #return np.all(lower <= point) and np.all(point <= upper)
 
 def get_bodies_in_region(aabb):
+    """This query will return all the unique ids of objects that have axis aligned bounding box overlap with a given axis aligned bounding box.
+
+    Note that the query is conservative and may return additional objects that don't have actual AABB overlap.
+    This happens because the acceleration structures have some heuristic that enlarges the AABBs a bit
+    (extra margin and extruded along the velocity vector).
+
+    Parameters
+    ----------
+    aabb : [type]
+        [description]
+
+    Returns
+    -------
+    a list of object unique ids.
+    """
     (lower, upper) = aabb
     return p.getOverlappingObjects(lower, upper, physicsClientId=CLIENT)
 

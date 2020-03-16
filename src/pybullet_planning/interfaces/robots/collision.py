@@ -376,6 +376,8 @@ def get_collision_fn(body, joints, obstacles=[],
         if attached.parent != body:
             continue
         # prune the main body link adjacent to the attachment and the ones in ignored collisions
+        # TODO: prune the link that's adjacent to the attach link as well?
+        # ? i.e. object attached to ee_tool_link, and ee geometry is attached to ee_base_link
         at_check_links = [ml for ml in moving_links if ml != attached.parent_link and
                                                        ((body, ml), (attached.child, BASE_LINK)) not in extra_disabled_collisions and
                                                        ((attached.child, BASE_LINK), (body, ml)) not in extra_disabled_collisions]
@@ -399,7 +401,6 @@ def get_collision_fn(body, joints, obstacles=[],
     lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
 
     # TODO: maybe prune the link adjacent to the robot
-    # // TODO: test self collision with the holding
     def collision_fn(q, diagnosis=False):
         # * joint limit check
         if not all_between(lower_limits, q, upper_limits):

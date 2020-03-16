@@ -172,6 +172,8 @@ def update_state():
     #p.getMouseEvents()
 
 def reset_simulation():
+    """resetSimulation will remove all objects from the world and reset the world to initial conditions.
+    """
     p.resetSimulation(physicsClientId=CLIENT)
 
 #####################################

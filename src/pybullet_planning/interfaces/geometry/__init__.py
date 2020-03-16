@@ -10,8 +10,6 @@ TODO: module description
 Main Types
 --------------
 
-.. currentmodule:: pybullet_planning.interfaces.geometry
-
 .. autosummary::
     :toctree: generated/
     :nosignatures:
@@ -21,13 +19,15 @@ Main Types
 Bounding box operations
 -----------------------
 
-.. currentmodule:: pybullet_planning.interfaces.geometry
+.. currentmodule:: pybullet_planning.interfaces.geometry.bounding_box
 
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    AABB
+    aabb_from_points
+    aabb_union
+    get_bodies_in_region
 
 """
 

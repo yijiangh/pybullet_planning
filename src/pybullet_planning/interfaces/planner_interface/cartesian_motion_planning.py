@@ -21,6 +21,28 @@ def get_null_space(robot, joints, custom_limits={}):
 
 def plan_cartesian_motion(robot, first_joint, target_link, waypoint_poses,
                           max_iterations=200, custom_limits={}, **kwargs):
+    """[summary]
+
+    Parameters
+    ----------
+    robot : [type]
+        [description]
+    first_joint : [type]
+        [description]
+    target_link : [type]
+        [description]
+    waypoint_poses : [type]
+        [description]
+    max_iterations : int, optional
+        [description], by default 200
+    custom_limits : dict, optional
+        [description], by default {}
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
     from pybullet_planning.interfaces.robots.link import get_link_subtree, prune_fixed_joints
     from pybullet_planning.interfaces.kinematics import inverse_kinematics_helper, is_pose_close
@@ -75,3 +97,5 @@ def sub_inverse_kinematics(robot, first_joint, target_link, target_pose, **kwarg
     if solutions:
         return solutions[0]
     return None
+
+#####################################
