@@ -113,7 +113,8 @@ def get_bodies_in_region(aabb):
     a list of object unique ids.
     """
     (lower, upper) = aabb
-    return p.getOverlappingObjects(lower, upper, physicsClientId=CLIENT)
+    bodies = p.getOverlappingObjects(lower, upper, physicsClientId=CLIENT)
+    return [] if bodies is None else bodies
 
 def get_aabb_volume(aabb):
     return np.prod(get_aabb_extent(aabb))
