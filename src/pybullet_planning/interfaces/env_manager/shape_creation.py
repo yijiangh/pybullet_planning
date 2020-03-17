@@ -5,9 +5,10 @@ from collections import defaultdict, namedtuple
 from itertools import count
 
 from pybullet_planning.utils import CLIENT, DEFAULT_EXTENTS, DEFAULT_HEIGHT, DEFAULT_RADIUS, \
-    DEFAULT_MESH, DEFAULT_SCALE, DEFAULT_NORMAL, BASE_LINK, INFO_FROM_BODY, STATIC_MASS, UNKNOWN_FILE, BASE_LINK, NULL_ID
+    DEFAULT_MESH, DEFAULT_SCALE, DEFAULT_NORMAL, BASE_LINK, INFO_FROM_BODY, STATIC_MASS, UNKNOWN_FILE, BASE_LINK, NULL_ID, \
+    RED, GREEN, BLUE, BLACK, GREY, CARTESIAN_TYPES
 from pybullet_planning.utils import get_client
-from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, multiply
+from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, multiply, unit_point, unit_quat
 
 #####################################
 # Shapes
@@ -94,7 +95,7 @@ def create_collision_shape(geometry, pose=unit_pose()):
     return p.createCollisionShape(**collision_args)
 
 
-def create_visual_shape(geometry, pose=unit_pose(), color=(1, 0, 0, 1), specular=None):
+def create_visual_shape(geometry, pose=unit_pose(), color=RED, specular=None):
     if (color is None):  # or not has_gui():
         return NULL_ID
     point, quat = pose
@@ -159,12 +160,12 @@ def create_shape_array(geoms, poses, colors=None):
 #####################################
 
 
-def create_body(collision_id=-1, visual_id=-1, mass=STATIC_MASS):
+def create_body(collision_id=NULL_ID, visual_id=NULL_ID, mass=STATIC_MASS):
     return p.createMultiBody(baseMass=mass, baseCollisionShapeIndex=collision_id,
                              baseVisualShapeIndex=visual_id, physicsClientId=CLIENT)
 
 
-def create_box(w, l, h, mass=STATIC_MASS, color=(1, 0, 0, 1)):
+def create_box(w, l, h, mass=STATIC_MASS, color=RED):
     """create a box body
 
     .. image:: ../images/box.png
@@ -182,7 +183,7 @@ def create_box(w, l, h, mass=STATIC_MASS, color=(1, 0, 0, 1)):
     mass : [type], optional
         by static_mass (0) assumes the body has infinite mass and will not be affected by gravity, by default STATIC_MASS
     color : tuple, optional
-        [description], by default (1, 0, 0, 1)
+        [description], by default RED
 
     Returns
     -------
@@ -195,7 +196,7 @@ def create_box(w, l, h, mass=STATIC_MASS, color=(1, 0, 0, 1)):
     # linkCollisionShapeIndices | linkVisualShapeIndices
 
 
-def create_cylinder(radius, height, mass=STATIC_MASS, color=(0, 0, 1, 1)):
+def create_cylinder(radius, height, mass=STATIC_MASS, color=BLUE):
     """create a cylinder body
 
     .. image:: ../images/cylinder.png
@@ -211,7 +212,7 @@ def create_cylinder(radius, height, mass=STATIC_MASS, color=(0, 0, 1, 1)):
     mass : [type], optional
         [description], by default STATIC_MASS
     color : tuple, optional
-        [description], by default (0, 0, 1, 1)
+        [description], by default BLUE
 
     Returns
     -------
@@ -222,17 +223,17 @@ def create_cylinder(radius, height, mass=STATIC_MASS, color=(0, 0, 1, 1)):
     return create_body(collision_id, visual_id, mass=mass)
 
 
-def create_capsule(radius, height, mass=STATIC_MASS, color=(0, 0, 1, 1)):
+def create_capsule(radius, height, mass=STATIC_MASS, color=BLUE):
     collision_id, visual_id = create_shape(get_capsule_geometry(radius, height), color=color)
     return create_body(collision_id, visual_id, mass=mass)
 
 
-def create_sphere(radius, mass=STATIC_MASS, color=(0, 0, 1, 1)):
+def create_sphere(radius, mass=STATIC_MASS, color=BLUE):
     collision_id, visual_id = create_shape(get_sphere_geometry(radius), color=color)
     return create_body(collision_id, visual_id, mass=mass)
 
 
-def create_plane(normal=[0, 0, 1], mass=STATIC_MASS, color=(0, 0, 0, 1)):
+def create_plane(normal=[0, 0, 1], mass=STATIC_MASS, color=BLACK):
     from pybullet_planning.interfaces.robots.body import set_texture, set_color
     # color seems to be ignored in favor of a texture
     collision_id, visual_id = create_shape(get_plane_geometry(normal), color=color)
@@ -242,12 +243,52 @@ def create_plane(normal=[0, 0, 1], mass=STATIC_MASS, color=(0, 0, 0, 1)):
     return body
 
 
-def create_obj(path, scale=1., mass=STATIC_MASS, collision=True, color=(0.5, 0.5, 0.5, 1)):
+def create_obj(path, scale=1., mass=STATIC_MASS, collision=True, color=GREY):
     collision_id, visual_id = create_shape(get_mesh_geometry(path, scale=scale), collision=collision, color=color)
     body = create_body(collision_id, visual_id, mass=mass)
     fixed_base = (mass == STATIC_MASS)
     INFO_FROM_BODY[CLIENT, body] = ModelInfo(None, path, fixed_base, scale)  # TODO: store geometry info instead?
     return body
+
+def create_flying_body(group, collision_id=NULL_ID, visual_id=NULL_ID, mass=STATIC_MASS):
+    # TODO: more generally clone the body
+    indices = list(range(len(group) + 1))
+    masses = len(group) * [STATIC_MASS] + [mass]
+    visuals = len(group) * [NULL_ID] + [visual_id]
+    collisions = len(group) * [NULL_ID] + [collision_id]
+    types = [CARTESIAN_TYPES[joint][0] for joint in group] + [p.JOINT_FIXED]
+    #parents = [BASE_LINK] + indices[:-1]
+    parents = indices
+
+    assert len(indices) == len(visuals) == len(collisions) == len(types) == len(parents)
+    link_positions = len(indices) * [unit_point()]
+    link_orientations = len(indices) * [unit_quat()]
+    inertial_positions = len(indices) * [unit_point()]
+    inertial_orientations = len(indices) * [unit_quat()]
+    axes = len(indices) * [unit_point()]
+    axes = [CARTESIAN_TYPES[joint][1] for joint in group] + [unit_point()]
+    # TODO: no way of specifying joint limits
+
+    return p.createMultiBody(
+        baseMass=STATIC_MASS,
+        baseCollisionShapeIndex=NULL_ID,
+        baseVisualShapeIndex=NULL_ID,
+        basePosition=unit_point(),
+        baseOrientation=unit_quat(),
+        baseInertialFramePosition=unit_point(),
+        baseInertialFrameOrientation=unit_quat(),
+        linkMasses=masses,
+        linkCollisionShapeIndices=collisions,
+        linkVisualShapeIndices=visuals,
+        linkPositions=link_positions,
+        linkOrientations=link_orientations,
+        linkInertialFramePositions=inertial_positions,
+        linkInertialFrameOrientations=inertial_orientations,
+        linkParentIndices=parents,
+        linkJointTypes=types,
+        linkJointAxis=axes,
+        physicsClientId=CLIENT,
+    )
 
 #####################################
 
@@ -296,7 +337,7 @@ def vertices_from_data(data):
 def visual_shape_from_data(data, client=None):
     client = get_client(client)
     if (data.visualGeometryType == p.GEOM_MESH) and (data.meshAssetFileName == UNKNOWN_FILE):
-        return -1
+        return NULL_ID
     # visualFramePosition: translational offset of the visual shape with respect to the link
     # visualFrameOrientation: rotational offset (quaternion x,y,z,w) of the visual shape with respect to the link frame
     #inertial_pose = get_joint_inertial_pose(data.objectUniqueId, data.linkIndex)
@@ -324,10 +365,10 @@ def get_visual_data(body, link=BASE_LINK):
 def clone_visual_shape(body, link, client=None):
     client = get_client(client)
     # if not has_gui(client):
-    #    return -1
+    #    return NULL_ID
     visual_data = get_visual_data(body, link)
     if not visual_data:
-        return -1
+        return NULL_ID
     assert (len(visual_data) == 1)
     return visual_shape_from_data(visual_data[0], client)
 
@@ -339,7 +380,7 @@ def collision_shape_from_data(data, body, link, client=None):
 
     client = get_client(client)
     if (data.geometry_type == p.GEOM_MESH) and (data.filename == UNKNOWN_FILE):
-        return -1
+        return NULL_ID
     pose = multiply(get_joint_inertial_pose(body, link), get_data_pose(data))
     point, quat = pose
     # TODO: the visual data seems affected by the collision data
@@ -362,7 +403,7 @@ def clone_collision_shape(body, link, client=None):
     client = get_client(client)
     collision_data = get_collision_data(body, link)
     if not collision_data:
-        return -1
+        return NULL_ID
     assert (len(collision_data) == 1)
     # TODO: can do CollisionArray
     return collision_shape_from_data(collision_data[0], body, link, client)

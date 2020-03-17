@@ -3,10 +3,11 @@ import numpy as np
 import pybullet as p
 from itertools import product, combinations
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED
+from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID
 
 from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, tform_point, unit_from_theta
 from pybullet_planning.interfaces.geometry.bounding_box import get_aabb
+from pybullet_planning.interfaces.geometry.camera import apply_alpha
 
 def get_lifetime(lifetime):
     if lifetime is None:
@@ -20,12 +21,12 @@ def add_debug_parameter():
     #maxForce = p.readUserDebugParameter(maxForceSlider)
     raise NotImplementedError()
 
-def add_text(text, position=(0, 0, 0), color=(0, 0, 0), lifetime=None, parent=-1, parent_link=BASE_LINK):
+def add_text(text, position=(0, 0, 0), color=BLACK, lifetime=None, parent=NULL_ID, parent_link=BASE_LINK):
     return p.addUserDebugText(str(text), textPosition=position, textColorRGB=color[:3], # textSize=1,
                               lifeTime=get_lifetime(lifetime), parentObjectUniqueId=parent, parentLinkIndex=parent_link,
                               physicsClientId=CLIENT)
 
-def add_line(start, end, color=(0, 0, 0), width=1, lifetime=None, parent=-1, parent_link=BASE_LINK):
+def add_line(start, end, color=BLACK, width=1, lifetime=None, parent=NULL_ID, parent_link=BASE_LINK):
     """[summary]
 
     Parameters
@@ -41,7 +42,7 @@ def add_line(start, end, color=(0, 0, 0), width=1, lifetime=None, parent=-1, par
     lifetime : [type], optional
         [description], by default None
     parent : int, optional
-        [description], by default -1
+        [description], by default NULL_ID
     parent_link : [type], optional
         [description], by default BASE_LINK
 
@@ -156,7 +157,7 @@ def draw_mesh(mesh, **kwargs):
 def draw_ray(ray, ray_result=None, visible_color=GREEN, occluded_color=RED, **kwargs):
     if ray_result is None:
         return [add_line(ray.start, ray.end, color=visible_color, **kwargs)]
-    if ray_result.objectUniqueId == -1:
+    if ray_result.objectUniqueId == NULL_ID:
         hit_position = ray.end
     else:
         hit_position = ray_result.hit_position
@@ -230,7 +231,7 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
         handles.append(draw_link_name(b1, l1))
         handles.append(draw_link_name(b2, l2))
 
-        handles.append(add_line(u_cr[5], u_cr[6], color=(0,0,1), width=5))
+        handles.append(add_line(u_cr[5], u_cr[6], color=BLUE, width=5))
         # camera_base_pt = u_cr[5]
         # camera_pt = np.array(camera_base_pt) + np.array([0.1, 0, 0.05])
         # set_camera_pose(tuple(camera_pt), camera_base_pt)
@@ -245,8 +246,8 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
         if not clone1_fail :
             remove_body(cloned_body1)
         else:
-            set_color(b1, (1,1,1,0.5))
+            set_color(b1, apply_alpha(WHITE, 0.5))
         if not clone2_fail :
             remove_body(cloned_body2)
         else:
-            set_color(b2, (1,1,1,0.5))
+            set_color(b2, apply_alpha(WHITE, 0.5))

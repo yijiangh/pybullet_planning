@@ -1,4 +1,5 @@
 import numpy as np
+import pybullet as p
 
 # constants
 INF = np.inf
@@ -55,6 +56,21 @@ OBJ_MESH_CACHE = {}
 """a cache keeping track of loaded obj objects
 
 """
+
+CARTESIAN_TYPES = {
+    'x': (p.JOINT_PRISMATIC, [1, 0, 0]),
+    'y': (p.JOINT_PRISMATIC, [0, 1, 0]),
+    'z': (p.JOINT_PRISMATIC, [0, 0, 1]),
+    'roll': (p.JOINT_REVOLUTE, [1, 0, 0]),
+    'pitch': (p.JOINT_REVOLUTE, [0, 1, 0]),
+    'yaw': (p.JOINT_REVOLUTE, [0, 0, 1]),
+}
+
+T2 = ['x', 'y']
+T3 = ['x', 'y', 'z']
+
+SE2 = T2 + ['yaw']
+SE3 = T3 + ['roll', 'pitch', 'yaw']
 
 def get_client(client=None):
     if client is None:

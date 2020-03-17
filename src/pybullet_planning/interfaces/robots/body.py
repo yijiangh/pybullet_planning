@@ -2,7 +2,7 @@ import numpy as np
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, OBJ_MESH_CACHE
+from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, OBJ_MESH_CACHE, NULL_ID
 from pybullet_planning.utils import implies
 from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, Point, Euler
 from pybullet_planning.interfaces.env_manager.pose_transformation import euler_from_quat, base_values_from_pose, \
@@ -109,32 +109,25 @@ def is_rigid_body(body):
 def is_fixed_base(body):
     return get_mass(body) == STATIC_MASS
 
-def dump_body(body):
-    """print out information of the given body. Notice this only prints out movable joints.
-
-    Parameters
-    ----------
-    body : int
-        body index for inspection
-    """
+def dump_body(body, fixed=False):
     print('Body id: {} | Name: {} | Rigid: {} | Fixed: {}'.format(
         body, get_body_name(body), is_rigid_body(body), is_fixed_base(body)))
     for joint in get_joints(body):
-        if is_movable(body, joint):
+        if fixed or is_movable(body, joint):
             print('Joint id: {} | Name: {} | Type: {} | Circular: {} | Limits: {}'.format(
                 joint, get_joint_name(body, joint), JOINT_TYPES[get_joint_type(body, joint)],
                 is_circular(body, joint), get_joint_limits(body, joint)))
-    link = -1
+    link = NULL_ID
     print('Link id: {} | Name: {} | Mass: {} | Collision: {} | Visual: {}'.format(
         link, get_base_name(body), get_mass(body),
-        len(get_collision_data(body, link)), -1)) # len(get_visual_data(body, link))))
+        len(get_collision_data(body, link)), NULL_ID)) # len(get_visual_data(body, link))))
     for link in get_links(body):
         joint = parent_joint_from_link(link)
         joint_name = JOINT_TYPES[get_joint_type(body, joint)] if is_fixed(body, joint) else get_joint_name(body, joint)
         print('Link id: {} | Name: {} | Joint: {} | Parent: {} | Mass: {} | Collision: {} | Visual: {}'.format(
             link, get_link_name(body, link), joint_name,
             get_link_name(body, get_link_parent(body, link)), get_mass(body, link),
-            len(get_collision_data(body, link)), -1)) # len(get_visual_data(body, link))))
+            len(get_collision_data(body, link)), NULL_ID)) # len(get_visual_data(body, link))))
         #print(get_joint_parent_frame(body, link))
         #print(map(get_data_geometry, get_visual_data(body, link)))
         #print(map(get_data_geometry, get_collision_data(body, link)))
@@ -161,7 +154,7 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
     #movable_joints = [joint for joint in links if is_movable(body, joint)]
     new_from_original = {}
     base_link = get_link_parent(body, links[0]) if links else BASE_LINK
-    new_from_original[base_link] = -1
+    new_from_original[base_link] = NULL_ID
 
     masses = []
     collision_shapes = []
@@ -178,8 +171,8 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
         joint_info = get_joint_info(body, link)
         dynamics_info = get_dynamics_info(body, link)
         masses.append(dynamics_info.mass)
-        collision_shapes.append(clone_collision_shape(body, link, client) if collision else -1)
-        visual_shapes.append(clone_visual_shape(body, link, client) if visual else -1)
+        collision_shapes.append(clone_collision_shape(body, link, client) if collision else NULL_ID)
+        visual_shapes.append(clone_visual_shape(body, link, client) if visual else NULL_ID)
         point, quat = get_local_link_pose(body, link)
         positions.append(point)
         orientations.append(quat)
@@ -193,8 +186,8 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
     base_dynamics_info = get_dynamics_info(body, base_link)
     base_point, base_quat = get_link_pose(body, base_link)
     new_body = p.createMultiBody(baseMass=base_dynamics_info.mass,
-                                 baseCollisionShapeIndex=clone_collision_shape(body, base_link, client) if collision else -1,
-                                 baseVisualShapeIndex=clone_visual_shape(body, base_link, client) if visual else -1,
+                                 baseCollisionShapeIndex=clone_collision_shape(body, base_link, client) if collision else NULL_ID,
+                                 baseVisualShapeIndex=clone_visual_shape(body, base_link, client) if visual else NULL_ID,
                                  basePosition=base_point,
                                  baseOrientation=base_quat,
                                  baseInertialFramePosition=base_dynamics_info.local_inertial_pos,
@@ -226,9 +219,9 @@ def clone_world(client=None, exclude=[]):
             mapping[body] = new_body
     return mapping
 
-def set_color(body, color, link=BASE_LINK, shape_index=-1):
+def set_color(body, color, link=BASE_LINK, shape_index=NULL_ID):
     """
-    Experimental for internal use, recommended ignore shapeIndex or leave it -1.
+    Experimental for internal use, recommended ignore shapeIndex or leave it NULL_ID.
     Intention was to let you pick a specific shape index to modify,
     since URDF (and SDF etc) can have more than 1 visual shape per link.
     This shapeIndex matches the list ordering returned by getVisualShapeData.
@@ -242,9 +235,9 @@ def set_color(body, color, link=BASE_LINK, shape_index=-1):
                                #textureUniqueId=None, specularColor=None,
                                physicsClientId=CLIENT)
 
-def set_texture(body, texture=None, link=BASE_LINK, shape_index=-1):
+def set_texture(body, texture=None, link=BASE_LINK, shape_index=NULL_ID):
     if texture is None:
-        texture = -1
+        texture = NULL_ID
     return p.changeVisualShape(body, link, shapeIndex=shape_index, textureUniqueId=texture,
                                physicsClientId=CLIENT)
 

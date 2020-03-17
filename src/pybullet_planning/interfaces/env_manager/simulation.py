@@ -75,9 +75,9 @@ def connect(use_gui=True, shadows=True, color=None, width=None, height=None):
     # Shared Memory: execute the physics simulation and rendering in a separate process
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/vrminitaur.py#L7
     # make sure to compile pybullet with PYBULLET_USE_NUMPY enabled
-    # if use_gui and not is_darwin() and ('DISPLAY' not in os.environ):
-    #     use_gui = False
-    #     print('No display detected!')
+    if use_gui and not is_darwin() and not is_windows() and ('DISPLAY' not in os.environ):
+        use_gui = False
+        print('No display detected!')
     method = p.GUI if use_gui else p.DIRECT
     with HideOutput():
         #  --window_backend=2 --render_device=0'
