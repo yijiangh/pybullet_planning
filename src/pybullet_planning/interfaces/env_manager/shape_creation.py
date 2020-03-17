@@ -233,11 +233,12 @@ def create_sphere(radius, mass=STATIC_MASS, color=(0, 0, 1, 1)):
 
 
 def create_plane(normal=[0, 0, 1], mass=STATIC_MASS, color=(0, 0, 0, 1)):
-    from pybullet_planning.interfaces.robots.body import set_texture
+    from pybullet_planning.interfaces.robots.body import set_texture, set_color
     # color seems to be ignored in favor of a texture
     collision_id, visual_id = create_shape(get_plane_geometry(normal), color=color)
     body = create_body(collision_id, visual_id, mass=mass)
     set_texture(body, texture=None) # otherwise 'plane.urdf'
+    set_color(body, color=color) # must perform after set_texture
     return body
 
 

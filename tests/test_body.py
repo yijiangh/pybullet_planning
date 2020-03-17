@@ -4,7 +4,7 @@ import pytest
 import pybullet
 import warnings
 from pybullet_planning import load_pybullet, connect, wait_for_user, LockRenderer, has_gui, WorldSaver, HideOutput, \
-    reset_simulation, disconnect, set_camera_pose, has_gui
+    reset_simulation, disconnect, set_camera_pose, has_gui, wait_if_gui
 from pybullet_planning import create_obj, create_attachment, Attachment
 from pybullet_planning import link_from_name, get_link_pose, get_moving_links, get_link_name
 from pybullet_planning import get_num_joints, get_joint_names, get_movable_joints
@@ -123,5 +123,4 @@ def test_clone_body(viewer, workspace_path, ee_path):
         c_ee_c = clone_body(ee_body, visual=False, collision=True)
         set_pose(c_ee_c, move_pose)
 
-    if has_gui():
-        wait_for_user()
+    wait_if_gui()

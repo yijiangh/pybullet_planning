@@ -4,3 +4,4 @@ pybullet
 imageio
 ghalton
 recordclass
+psutil

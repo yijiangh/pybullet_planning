@@ -4,7 +4,7 @@ import numpy as np
 
 import pytest
 from numpy.testing import assert_almost_equal
-from pybullet_planning import connect, wait_for_user, has_gui, HideOutput
+from pybullet_planning import connect, wait_if_gui, has_gui, HideOutput, wait_for_user
 from pybullet_planning import get_pose, draw_pose, set_color, set_pose, Pose, STATIC_MASS
 from pybullet_planning import create_cylinder, link_from_name, load_pybullet, approximate_as_cylinder, point_from_pose, \
     multiply, quat_from_euler, unit_pose, Euler, Point, end_effector_from_body, remove_handles, set_camera_pose, \
@@ -37,7 +37,7 @@ def focus_camera(centroid):
     camera_offset = 0.1 * np.array([1, 1, 1])
     set_camera_pose(camera_point=centroid + camera_offset, target_point=centroid)
 
-# @pytest.mark.wip_grasp
+@pytest.mark.wip_grasp
 def test_side_grasp(viewer, ee_path, ee_link_names, obj_path):
     connect(use_gui=viewer)
     focus_camera([0,0,0])
@@ -85,7 +85,5 @@ def test_side_grasp(viewer, ee_path, ee_link_names, obj_path):
             world_from_ee = end_effector_from_body(obj_pose, grasp)
             end_effector.set_pose(world_from_ee)
             handles.extend(draw_pose(world_from_ee))
-            if has_gui():
-                wait_for_user()
+            wait_if_gui()
             remove_handles(handles)
-

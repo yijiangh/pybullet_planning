@@ -2,11 +2,10 @@
 file I/O
 """
 
-import os, platform
+import os
 import pickle
 import json
 import datetime
-import inspect
 from .shared_const import DATE_FORMAT
 
 SEPARATOR = '\n' + 50*'-' + '\n'
@@ -17,16 +16,6 @@ SEPARATOR = '\n' + 50*'-' + '\n'
 
 def print_separator(n=50):
     print('\n' + n*'-' + '\n')
-
-def is_remote():
-    return 'SSH_CONNECTION' in os.environ
-
-def is_darwin(): # TODO: change loading accordingly
-    return platform.system() == 'Darwin' # platform.release()
-    #return sys.platform == 'darwin'
-
-def is_windows():
-    return platform.system() == 'Windows'
 
 def read(filename):
     with open(filename, 'r') as f:
@@ -76,18 +65,8 @@ def ensure_dir(f):
     if not os.path.exists(d):
         os.makedirs(d)
 
-def safe_zip(sequence1, sequence2):
-    assert len(sequence1) == len(sequence2)
-    return zip(sequence1, sequence2)
-
 def get_date():
     return datetime.datetime.now().strftime(DATE_FORMAT)
-
-def implies(p1, p2):
-    return not p1 or p2
-
-def get_function_name(depth=1):
-   return inspect.stack()[depth][3]
 
 def load_yaml(path):
     import yaml

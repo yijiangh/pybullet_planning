@@ -8,7 +8,7 @@ UNBOUNDED_LIMITS = -INF, INF
 DEFAULT_TIME_STEP = 1./240. # seconds
 
 # pybullet setup parameters
-CLIENTS = {}
+CLIENTS = {} # TODO: rename to include locked
 CLIENT = 0
 
 INFO_FROM_BODY = {}

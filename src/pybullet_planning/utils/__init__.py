@@ -26,6 +26,18 @@ Sampling functions
 
     randomize
 
+Iteration utilities
+===================
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    roundrobin
+    chunks
+    get_pairs
+
+
 Transformation functions
 ========================
 
@@ -41,6 +53,8 @@ from .shared_const import *
 from .file_io import *
 from .numeric_sample import *
 from .transformations import *
+from .iter_utils import *
+from .debug_utils import *
 # from ._file_path_archived import *
 
 __all__ = [name for name in dir() if not name.startswith('_')]

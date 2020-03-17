@@ -121,13 +121,16 @@ def simulate_for_sim_duration(sim_duration, real_dt=0, frequency=INF):
 
 
 def wait_for_user(message='Press enter to continue'):
-    if is_darwin():
+    from pybullet_planning.interfaces.env_manager.simulation import has_gui
+    if has_gui() and is_darwin():
         # OS X doesn't multi-thread the OpenGL visualizer
         #wait_for_interrupt()
         return threaded_input(message)
     return user_input(message)
 
+
 def wait_if_gui(*args, **kwargs):
+    from pybullet_planning.interfaces.env_manager.simulation import has_gui
     if has_gui():
         wait_for_user(*args, **kwargs)
 
