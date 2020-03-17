@@ -6,6 +6,8 @@ import os, platform
 import pickle
 import json
 import datetime
+import inspect
+from .shared_const import DATE_FORMAT
 
 SEPARATOR = '\n' + 50*'-' + '\n'
 
@@ -79,7 +81,20 @@ def safe_zip(sequence1, sequence2):
     return zip(sequence1, sequence2)
 
 def get_date():
-    return datetime.datetime.now().strftime('%y-%m-%d_%H-%M-%S')
+    return datetime.datetime.now().strftime(DATE_FORMAT)
 
 def implies(p1, p2):
     return not p1 or p2
+
+def get_function_name(depth=1):
+   return inspect.stack()[depth][3]
+
+def load_yaml(path):
+    import yaml
+    # grep -r --include="*.py" "yaml\." *
+    # yaml.dump()
+    with open(path, 'r') as f:
+        try:
+            return yaml.safe_load(f)
+        except yaml.YAMLError as exc:
+            raise exc

@@ -64,3 +64,5 @@ def get_client(client=None):
 def set_client(client):
     global CLIENT
     CLIENT = client
+
+DATE_FORMAT = '%y-%m-%d_%H-%M-%S'
