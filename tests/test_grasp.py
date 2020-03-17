@@ -37,7 +37,7 @@ def focus_camera(centroid):
     camera_offset = 0.1 * np.array([1, 1, 1])
     set_camera_pose(camera_point=centroid + camera_offset, target_point=centroid)
 
-@pytest.mark.wip_grasp
+# @pytest.mark.wip_grasp
 def test_side_grasp(viewer, ee_path, ee_link_names, obj_path):
     connect(use_gui=viewer)
     focus_camera([0,0,0])

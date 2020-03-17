@@ -70,18 +70,27 @@ class LockRenderer(Saver):
         if self.state != CLIENTS[self.client]:
            set_renderer(enable=self.state)
 
-def connect(use_gui=True, shadows=True):
+
+def connect(use_gui=True, shadows=True, color=None, width=None, height=None):
     # Shared Memory: execute the physics simulation and rendering in a separate process
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/vrminitaur.py#L7
     # make sure to compile pybullet with PYBULLET_USE_NUMPY enabled
-    if use_gui and not is_darwin() and not is_windows() and ('DISPLAY' not in os.environ):
-        use_gui = False
-        print('No display detected!')
+    # if use_gui and not is_darwin() and ('DISPLAY' not in os.environ):
+    #     use_gui = False
+    #     print('No display detected!')
     method = p.GUI if use_gui else p.DIRECT
     with HideOutput():
-        # options="--width=1024 --height=768"
         #  --window_backend=2 --render_device=0'
-        sim_id = p.connect(method)
+        # options="--width=1024 --height=768"
+        # options="--mp4=\"test.mp4\" --mp4fps=240"
+        options = ''
+        if color is not None:
+            options += '--background_color_red={} --background_color_green={} --background_color_blue={}'.format(*color)
+        if width is not None:
+            options += '--width={}'.format(width)
+        if height is not None:
+            options += '--height={}'.format(height)
+        sim_id = p.connect(method, options=options) # key=None,
         #sim_id = p.connect(p.GUI, options="--opengl2") if use_gui else p.connect(p.DIRECT)
     assert 0 <= sim_id
     #sim_id2 = p.connect(p.SHARED_MEMORY)
@@ -113,6 +122,7 @@ def connect(use_gui=True, shadows=True):
     #for pair in visualizer_options.items():
     #    p.configureDebugVisualizer(*pair)
     return sim_id
+
 
 def disconnect():
     # TODO: change CLIENT?
