@@ -1,6 +1,8 @@
+import time
+
 from .smoothing import smooth_path
 from .rrt import TreeNode, configs
-from .utils import irange, argmin, RRT_ITERATIONS, RRT_RESTARTS, RRT_SMOOTHING
+from .utils import irange, argmin, RRT_ITERATIONS, RRT_RESTARTS, RRT_SMOOTHING, INF, elapsed_time
 
 __all__ = [
     'rrt_connect',
@@ -15,12 +17,16 @@ def asymmetric_extend(q1, q2, extend_fn, backward=False):
         return reversed(list(extend_fn(q2, q1)))
     return extend_fn(q1, q2)
 
-def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn, iterations=RRT_ITERATIONS):
+def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
+                iterations=RRT_ITERATIONS, max_time=INF):
     # TODO: collision(q1, q2)
+    start_time = time.time()
     if collision_fn(q1) or collision_fn(q2):
         return None
     nodes1, nodes2 = [TreeNode(q1)], [TreeNode(q2)]
     for iteration in irange(iterations):
+        if max_time <= elapsed_time(start_time):
+            break
         swap = len(nodes1) > len(nodes2)
         tree1, tree2 = nodes1, nodes2
         if swap:
@@ -62,7 +68,8 @@ def direct_path(q1, q2, extend_fn, collision_fn):
 
 
 def birrt(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
-          restarts=RRT_RESTARTS, iterations=RRT_ITERATIONS, smooth=RRT_SMOOTHING):
+          restarts=RRT_RESTARTS, iterations=RRT_ITERATIONS, smooth=RRT_SMOOTHING, max_time=INF):
+    start_time = time.time()
     """birrt [summary]
 
     TODO: add citation to the algorithm.
@@ -103,8 +110,10 @@ def birrt(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
     if path is not None:
         return path
     for _ in irange(restarts + 1):
-        path = rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn,
-                           collision_fn, iterations=iterations)
+        if max_time <= elapsed_time(start_time):
+            break
+        path = rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
+                           iterations=iterations, max_time=max_time - elapsed_time(start_time))
         if path is not None:
             if smooth is None:
                 return path
