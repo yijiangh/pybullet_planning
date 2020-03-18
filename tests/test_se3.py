@@ -24,7 +24,7 @@ def test_se3_planning(viewer, parameters):
     connect(use_gui=viewer)
     set_camera_pose(camera_point=SIZE*np.array([1., -1., 1.]))
     # TODO: can also create all links and fix some joints
-    # TODO: SE(3) motion planner (like my SE(3) one) where some dimensions are fixed
+    # TODO: SE(3) motion planner (like my SE(2) one) where some dimensions are fixed
 
     obstacle = create_box(w=SIZE, l=SIZE, h=SIZE, color=RED)
     #robot = create_cylinder(radius=0.025, height=0.1, color=BLUE)
@@ -49,7 +49,6 @@ def test_se3_planning(viewer, parameters):
     # return
 
     initial_point = SIZE*np.array([-1., -1., 0])
-    #initial_point = -1.*np.ones(3)
     final_point = -initial_point
     initial_euler = np.zeros(3)
     add_line(initial_point, final_point, color=GREEN)
