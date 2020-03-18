@@ -18,9 +18,39 @@ def asymmetric_extend(q1, q2, extend_fn, backward=False):
     return extend_fn(q1, q2)
 
 def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
-                iterations=RRT_ITERATIONS, max_time=INF):
+                iterations=RRT_ITERATIONS, tree_frequency=1, max_time=INF):
+    """[summary]
+
+    Parameters
+    ----------
+    q1 : [type]
+        [description]
+    q2 : [type]
+        [description]
+    distance_fn : [type]
+        [description]
+    sample_fn : [type]
+        [description]
+    extend_fn : [type]
+        [description]
+    collision_fn : [type]
+        [description]
+    iterations : [type], optional
+        [description], by default RRT_ITERATIONS
+    tree_frequency : int, optional
+        the frequency of adding tree nodes when extending. For example, if tree_freq=2, then a tree node is added every three nodes,
+        by default 1
+    max_time : [type], optional
+        [description], by default INF
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
     # TODO: collision(q1, q2)
     start_time = time.time()
+    assert tree_frequency >= 1
     if collision_fn(q1) or collision_fn(q2):
         return None
     nodes1, nodes2 = [TreeNode(q1)], [TreeNode(q2)]
@@ -34,18 +64,24 @@ def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
         s = sample_fn()
 
         last1 = argmin(lambda n: distance_fn(n.config, s), tree1)
-        for q in asymmetric_extend(last1.config, s, extend_fn, swap):
+        extend1 = list(asymmetric_extend(last1.config, s, extend_fn, swap))
+        for i, q in enumerate(extend1):
             if collision_fn(q):
                 break
             last1 = TreeNode(q, parent=last1)
             tree1.append(last1)
+            if (i % tree_frequency == 0) or (i == len(extend1) - 1):
+                last1 = TreeNode(q, parent=last1)
+                tree1.append(last1)
 
         last2 = argmin(lambda n: distance_fn(n.config, last1.config), tree2)
-        for q in asymmetric_extend(last2.config, last1.config, extend_fn, not swap):
+        extend2 = asymmetric_extend(last2.config, last1.config, extend_fn, not swap)
+        for i, q in enumerate(extend2):
             if collision_fn(q):
                 break
-            last2 = TreeNode(q, parent=last2)
-            tree2.append(last2)
+            if (i % tree_frequency == 0) or (i == len(extend2) - 1):
+                last2 = TreeNode(q, parent=last2)
+                tree2.append(last2)
         else:
             path1, path2 = last1.retrace(), last2.retrace()
             if swap:
@@ -68,8 +104,7 @@ def direct_path(q1, q2, extend_fn, collision_fn):
 
 
 def birrt(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
-          restarts=RRT_RESTARTS, iterations=RRT_ITERATIONS, smooth=RRT_SMOOTHING, max_time=INF):
-    start_time = time.time()
+          restarts=RRT_RESTARTS, smooth=RRT_SMOOTHING, max_time=INF, **kwargs):
     """birrt [summary]
 
     TODO: add citation to the algorithm.
@@ -104,6 +139,7 @@ def birrt(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
     [type]
         [description]
     """
+    start_time = time.time()
     if collision_fn(q1) or collision_fn(q2):
         return None
     path = direct_path(q1, q2, extend_fn, collision_fn)
@@ -113,7 +149,7 @@ def birrt(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
         if max_time <= elapsed_time(start_time):
             break
         path = rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
-                           iterations=iterations, max_time=max_time - elapsed_time(start_time))
+                           max_time=max_time - elapsed_time(start_time), **kwargs)
         if path is not None:
             if smooth is None:
                 return path
