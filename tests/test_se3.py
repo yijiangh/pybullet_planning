@@ -6,7 +6,8 @@ from pybullet_planning import connect, disconnect, wait_for_user, create_box, du
     euler_from_quat, RED, set_camera_pose, create_flying_body, create_shape, get_cylinder_geometry, \
     BLUE, get_movable_joints, get_links, SE3, set_joint_positions, \
     plan_joint_motion, add_line, GREEN, wait_if_gui, create_cylinder, set_pose, apply_alpha, interval_generator, \
-    Pose, Euler, multiply, interpolate_poses, draw_pose, get_pose, remove_all_debug
+    Pose, Euler, multiply, interpolate_poses, draw_pose, get_pose, remove_all_debug, intrinsic_euler_from_quat, \
+    quat_from_euler
 
 @pytest.fixture()
 def parameters():
@@ -33,7 +34,7 @@ def get_path_gen_fn(pos_step_size=0.002, ori_step_size=np.pi/18):
         yield interpolate_poses(offset_pose, pose, pos_step_size=pos_step_size, ori_step_size=ori_step_size)
     return gen_fn
 
-@pytest.mark.wip_se3
+# @pytest.mark.wip_se3
 def test_flying_body(viewer):
     radius = 0.003
     height = 0.1
@@ -53,7 +54,7 @@ def test_flying_body(viewer):
         for p in poses:
             remove_all_debug()
             point, quat = p
-            euler = euler_from_quat(quat)
+            euler = intrinsic_euler_from_quat(quat)
             conf = np.concatenate([np.array(point), np.array(euler)])
             set_joint_positions(robot, joints, conf)
             set_pose(body, p)
@@ -62,7 +63,6 @@ def test_flying_body(viewer):
             link_pose = get_link_pose(robot, body_link)
             draw_pose(link_pose, length=0.1)
             assert LA.norm(np.array(point) - np.array(link_pose[0])) < 1e-6
-            print('quat diff: ', np.array(quat) - np.array(link_pose[1]))
             assert LA.norm(np.array(quat) - np.array(link_pose[1])) < 1e-6
 
             wait_if_gui()
@@ -70,7 +70,7 @@ def test_flying_body(viewer):
     wait_if_gui('Finish?')
     disconnect()
 
-# @pytest.mark.wip_se3
+@pytest.mark.wip_se3
 def test_se3_planning(viewer, parameters):
     group = SE3
     SIZE, CUSTOM_LIMITS = parameters
@@ -123,12 +123,13 @@ def test_se3_planning(viewer, parameters):
     for i, conf in enumerate(path):
         set_joint_positions(robot, joints, conf)
         point, quat = get_link_pose(robot, body_link)
-        euler = euler_from_quat(quat)
+        # euler = euler_from_quat(quat)
+        euler = intrinsic_euler_from_quat(quat)
         # set_pose(body, (point, quat))
         print('conf:', conf)
         print('pose:', point, euler)
         assert LA.norm(np.array(point) - conf[:3]) < 1e-6
-        # assert LA.norm(np.array(euler) - conf[3:]) < 1
+        assert LA.norm(np.array(quat_from_euler(euler)) - np.array(quat_from_euler(conf[3:]))) < 1e-5
         wait_if_gui('Step: {}/{}'.format(i, len(path)))
 
     wait_if_gui('Finish?')

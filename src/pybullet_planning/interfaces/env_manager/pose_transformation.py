@@ -2,7 +2,7 @@ import math
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, unit_vector, quaternion_from_matrix, clip
+from pybullet_planning.utils import CLIENT, unit_vector, quaternion_from_matrix, clip, euler_from_quaternion
 
 #####################################
 # Geometry
@@ -98,10 +98,14 @@ def unit_from_theta(theta):
     return np.array([np.cos(theta), np.sin(theta)])
 
 def quat_from_euler(euler):
-    return p.getQuaternionFromEuler(euler)
+    return p.getQuaternionFromEuler(euler) # TODO: extrinsic (static) vs intrinsic (rotating)
 
 def euler_from_quat(quat):
-    return p.getEulerFromQuaternion(quat)
+    return p.getEulerFromQuaternion(quat) # rotation around fixed axis
+
+def intrinsic_euler_from_quat(quat):
+    #axes = 'sxyz' if static else 'rxyz'
+    return euler_from_quaternion(quat, axes='rxyz')
 
 def unit_point():
     return (0., 0., 0.)
