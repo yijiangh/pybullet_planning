@@ -201,7 +201,7 @@ def check_initial_end(start_conf, end_conf, collision_fn, diagnosis=False):
 
 def plan_joint_motion(body, joints, end_conf, obstacles=[], attachments=[],
                       self_collisions=True, disabled_collisions=set(), extra_disabled_collisions=set(),
-                      weights=None, resolutions=None, max_distance=MAX_DISTANCE, custom_limits={}, **kwargs):
+                      weights=None, resolutions=None, max_distance=MAX_DISTANCE, custom_limits={}, diagnosis=False, **kwargs):
     """call birrt to plan a joint trajectory from the robot's **current** conf to ``end_conf``.
     """
     assert len(joints) == len(end_conf)
@@ -214,7 +214,7 @@ def plan_joint_motion(body, joints, end_conf, obstacles=[], attachments=[],
 
     start_conf = get_joint_positions(body, joints)
 
-    if not check_initial_end(start_conf, end_conf, collision_fn):
+    if not check_initial_end(start_conf, end_conf, collision_fn, diagnosis=diagnosis):
         return None
     return birrt(start_conf, end_conf, distance_fn, sample_fn, extend_fn, collision_fn, **kwargs)
     #return plan_lazy_prm(start_conf, end_conf, sample_fn, extend_fn, collision_fn)

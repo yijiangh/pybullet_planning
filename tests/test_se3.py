@@ -70,7 +70,7 @@ def test_flying_body(viewer):
     wait_if_gui('Finish?')
     disconnect()
 
-@pytest.mark.wip_se3
+# @pytest.mark.wip_se3
 def test_se3_planning(viewer, parameters):
     group = SE3
     SIZE, CUSTOM_LIMITS = parameters
@@ -90,7 +90,7 @@ def test_se3_planning(viewer, parameters):
     body_link = get_links(robot)[-1]
     joints = get_movable_joints(robot)
     joint_from_group = dict(zip(group, joints))
-    print(joint_from_group)
+    print('joint_from_group: ', joint_from_group)
     #print(get_aabb(robot, body_link))
     dump_body(robot, fixed=False)
     custom_limits = {joint_from_group[j]: l for j, l in CUSTOM_LIMITS.items()}
