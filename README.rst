@@ -95,9 +95,20 @@ Ready to release a new version of **pybullet_planning**? Here's how to do it:
 
 * Celebrate! 💃
 
+PyBullet Resources
+-------------------
+
+* Github - https://github.com/bulletphysics/bullet3
+* Quickstart - https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/
+* Forum - https://pybullet.org/Bullet/phpBB3/
+* Wordpress - https://pybullet.org/wordpress/
+* Examples - https://github.com/bulletphysics/bullet3/tree/master/examples/pybullet/examples
+* Bindings - https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/pybullet.c
 
 Credits
 -------------
 
-This package was initiated by Caelan Garrett <caelan@csail.mit.edu> `@caelan <https://github.com/caelan>`_,
+    Caelan Reed Garrett. PyBullet Planning. https://pypi.org/project/pybullet-planning/. 2020.
+
+This package was initiated and maintained by Caelan Garrett `@caelan <https://github.com/caelan>`_
 and other `contributors <https://github.com/yijiangh/pybullet_planning/blob/dev/AUTHORS.rst>`_.
