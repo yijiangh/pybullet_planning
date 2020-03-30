@@ -3,11 +3,11 @@ import numpy as np
 import pybullet as p
 from itertools import product, combinations
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID
+from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID, YELLOW
 
-from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, tform_point, unit_from_theta
+from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, tform_point, unit_from_theta, get_distance
 from pybullet_planning.interfaces.geometry.bounding_box import get_aabb
-from pybullet_planning.interfaces.geometry.camera import apply_alpha
+from pybullet_planning.interfaces.geometry.camera import apply_alpha, set_camera_pose
 
 def get_lifetime(lifetime):
     if lifetime is None:
@@ -170,7 +170,8 @@ def draw_ray(ray, ray_result=None, visible_color=GREEN, occluded_color=RED, **kw
 def get_body_from_pb_id(i):
     return p.getBodyUniqueId(i, physicsClientId=CLIENT)
 
-def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
+def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, line_color=YELLOW, \
+    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05])):
     """[summary]
 
     Parameters
@@ -223,18 +224,20 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1):
             clone2_fail = True
             cloned_body2 = b2
 
-        set_color(cloned_body1, (1, 0, 0, 0.2))
-        set_color(cloned_body2, (0, 1, 0, 0.2))
+        set_color(cloned_body1, apply_alpha(RED, 0.2))
+        set_color(cloned_body2, apply_alpha(GREEN, 0.2))
 
         handles.append(add_body_name(b1))
         handles.append(add_body_name(b2))
         handles.append(draw_link_name(b1, l1))
         handles.append(draw_link_name(b2, l2))
 
-        handles.append(add_line(u_cr[5], u_cr[6], color=BLUE, width=5))
-        # camera_base_pt = u_cr[5]
-        # camera_pt = np.array(camera_base_pt) + np.array([0.1, 0, 0.05])
-        # set_camera_pose(tuple(camera_pt), camera_base_pt)
+        handles.append(add_line(u_cr[5], u_cr[6], color=line_color, width=5))
+        print('Penetration depth: {:.2E}'.format(get_distance(u_cr[5], u_cr[6])))
+        if focus_camera:
+            camera_base_pt = u_cr[5]
+            camera_pt = np.array(camera_base_pt) + camera_ray
+            set_camera_pose(tuple(camera_pt), camera_base_pt)
 
         if viz_last_duration < 0:
             wait_for_user()
