@@ -1,7 +1,7 @@
 __title__ = 'pybullet_planning'
 __description__ = 'a suite of utility functions to facilitate robotic planning related research on the pybullet physics simulation engine.'
 __url__ = 'https://github.com/yijiangh/pybullet_planning'
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 __author__ = 'Caelan Garrett'
 __author_email__ = 'yijiangh@mit.edu' # this is only for the purpose of pypi...
 # __author_email__ = 'caelan@csail.mit.edu; '
