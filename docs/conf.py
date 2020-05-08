@@ -10,7 +10,7 @@ project = 'pybullet_planning'
 year = '2020'
 author = 'Caelan Garrett & Yijiang Huang'
 copyright = '{0}, {1}'.format(year, author)
-version = release = '0.2.0'
+version = release = '0.3.0'
 
 master_doc = 'index'
 source_suffix = '.rst'
