@@ -20,6 +20,7 @@ Grid search:
 
 - Breadth-First Search (BFS)
 - A*
+- Ladder graph DAG Search
 
 Probabilistic Roadmap (PRM)
 ----------------------------
@@ -44,6 +45,11 @@ RRT-Connect (BiRRT)
     rrt_connect
     birrt
     direct_path
+
+Ladder graph search
+---------------------------
+
+TODO
 
 """
 

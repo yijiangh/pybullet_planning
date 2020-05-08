@@ -3,9 +3,13 @@ from collections import namedtuple
 import numpy as np
 import pybullet as p
 
+from pybullet_planning.utils import MAX_DISTANCE
 from pybullet_planning.interfaces.robots.joint import get_joint_positions, get_custom_limits, get_movable_joints, set_joint_positions, \
     get_configuration
+from pybullet_planning.interfaces.robots.collision import get_collision_fn
 from pybullet_planning.interfaces.robots.body import clone_body, remove_body, get_link_pose
+from .ladder_graph import LadderGraph, EdgeBuilder
+from .dag_search import DAGSearch
 
 #####################################
 
@@ -99,3 +103,88 @@ def sub_inverse_kinematics(robot, first_joint, target_link, target_pose, **kwarg
     return None
 
 #####################################
+
+def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, collision_fn=None, **kwargs):
+    """ladder graph cartesian planning, better leveraging ikfast for sample_ik_fn
+
+    Parameters
+    ----------
+    robot : [type]
+        [description]
+    joints : [type]
+        [description]
+    waypoint_poses : [type]
+        [description]
+    sample_ik_fn : [type], optional
+        [description], by default None
+    collision_fn : [type], optional
+        [description], by default None
+    weights : [type], optional
+        [description], by default None
+    resolutions : [type], optional
+        [description], by default None
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+
+    assert sample_ik_fn is not None, 'Sample fn must be specified!'
+
+    ik_sols = []
+    # TODO automatically use current conf in the env as start_conf
+    # if self.target_conf:
+    #     jt_list = snap_sols(jt_list, self.target_conf, self.ik_joint_limits)
+    for i, task_pose in enumerate(waypoint_poses):
+        conf_list = sample_ik_fn(task_pose)
+        if collision_fn is None:
+            conf_list = [conf for conf in conf_list if conf and not collision_fn(conf, **kwargs)]
+        ik_sols.append(conf_list)
+
+    # assemble the ladder graph
+    dof = len(joints)
+    graph = LadderGraph(dof)
+    graph.resize(len(ik_sols))
+
+    # assign rung data
+    for pt_id, ik_confs_pt in enumerate(ik_sols):
+        graph.assign_rung(pt_id, ik_confs_pt)
+
+    # build edges within current pose family
+    for i in range(graph.get_rungs_size()-1):
+        st_id = i
+        end_id = i + 1
+        jt1_list = graph.get_data(st_id)
+        jt2_list = graph.get_data(end_id)
+        st_size = graph.get_rung_vert_size(st_id)
+        end_size = graph.get_rung_vert_size(end_id)
+        # if st_size == 0 or end_size == 0:
+        #     print(ik_sols)
+
+        assert st_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(st_id, graph.get_rungs_size())
+        assert end_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(end_id, graph.get_rungs_size())
+
+        # TODO: preference_cost
+        # fully-connected ladder graph
+        edge_builder = EdgeBuilder(st_size, end_size, dof, preference_cost=1.0)
+        for k in range(st_size):
+            st_id = k * dof
+            for j in range(end_size):
+                end_id = j * dof
+                edge_builder.consider(jt1_list[st_id : st_id+dof], jt2_list[end_id : end_id+dof], j)
+            edge_builder.next(k)
+        edges = edge_builder.result
+        # if not edge_builder.has_edges and verbose:
+        #     # TODO: more report information here
+        #     print('no edges!')
+        graph.assign_edges(i, edges)
+
+    # perform DAG search
+    dag_search = DAGSearch(graph)
+    min_cost = dag_search.run()
+    # list of confs
+    path = dag_search.shortest_path()
+    if len(path) == 0:
+        return None
+    return path, min_cost
