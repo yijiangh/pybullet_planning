@@ -1,7 +1,0 @@
-numpy
-scipy
-pybullet
-imageio
-ghalton
-recordclass
-psutil

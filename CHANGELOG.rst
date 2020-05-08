@@ -14,6 +14,16 @@ Unreleased
 **Changed**
 
 * Changed doc theme to sphinx-rtd-theme, doc hosted on readthedocs
+* Changed `motion_planners` to keep updated with https://github.com/caelan/motion-planners
+
+**Added**
+
+* Added `SE3` floating body motion planning
+* Added ladder graph cartesian planner
+
+**Removed**
+
+* Removed `requirments.txt`, moved dependencies into `setup.py`
 
 0.1.1
 ----------

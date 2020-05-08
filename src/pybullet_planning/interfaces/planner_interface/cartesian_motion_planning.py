@@ -1,4 +1,7 @@
 import os
+import warnings
+from itertools import tee
+from copy import copy
 from collections import namedtuple
 import numpy as np
 import pybullet as p
@@ -104,7 +107,10 @@ def sub_inverse_kinematics(robot, first_joint, target_link, target_pose, **kwarg
 
 #####################################
 
-def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, collision_fn=None, **kwargs):
+MAX_SAMPLE_ITER = int(1e4)
+
+def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, collision_fn=None, sample_ee_fn=None,
+    max_sample_ee_iter=MAX_SAMPLE_ITER, **kwargs):
     """ladder graph cartesian planning, better leveraging ikfast for sample_ik_fn
 
     Parameters
@@ -119,10 +125,8 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         [description], by default None
     collision_fn : [type], optional
         [description], by default None
-    weights : [type], optional
-        [description], by default None
-    resolutions : [type], optional
-        [description], by default None
+    ee_sample_fn : [type], optional
+        please please please remember to put an end to the sampling loop!
 
     Returns
     -------
@@ -131,16 +135,30 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     """
 
     assert sample_ik_fn is not None, 'Sample fn must be specified!'
+    # TODO sanity check samplers
 
-    ik_sols = []
+    ik_sols = [[] for _ in range(len(waypoint_poses))]
     # TODO automatically use current conf in the env as start_conf
     # if self.target_conf:
     #     jt_list = snap_sols(jt_list, self.target_conf, self.ik_joint_limits)
     for i, task_pose in enumerate(waypoint_poses):
-        conf_list = sample_ik_fn(task_pose)
-        if collision_fn is None:
-            conf_list = [conf for conf in conf_list if conf and not collision_fn(conf, **kwargs)]
-        ik_sols.append(conf_list)
+        candidate_poses = [task_pose]
+        if sample_ee_fn is not None:
+            # extra dof release, copy to reuse generator
+            current_ee_fn = copy(sample_ee_fn)
+            cnt = 0
+            for p in current_ee_fn(task_pose):
+                if cnt > max_sample_ee_iter:
+                    warnings.warn('EE dof release generator is called over {} times, likely that you forget to put an exit in the generator. ' + \
+                        'We stop generating here for you.')
+                    break
+                candidate_poses.append(p)
+                cnt += 1
+        for ee_pose in candidate_poses:
+            conf_list = sample_ik_fn(ee_pose)
+            if collision_fn is None:
+                conf_list = [conf for conf in conf_list if conf and not collision_fn(conf, **kwargs)]
+            ik_sols[i].extend(conf_list)
 
     # assemble the ladder graph
     dof = len(joints)

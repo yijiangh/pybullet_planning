@@ -19,9 +19,15 @@ def read(*names, **kwargs):
         encoding=kwargs.get('encoding', 'utf8')
     ).read()
 
-# NOTE: Write dependencies (i.e. http://python-packaging.readthedocs.io/en/latest/dependencies.html)
-requirements = read('requirements.txt').split('\n')
-# NOTE: Write a list of keywords (i.e. ['ros', 'ros-bridge', 'robotics', 'websockets'])
+requirements = [
+    'numpy',
+    'scipy',
+    'pybullet>=2.7.5',
+    'imageio',
+    'ghalton',
+    'recordclass',
+    'psutil',
+]
 keywords_list = ['robotic planning', 'pybullet']
 
 about = {}
