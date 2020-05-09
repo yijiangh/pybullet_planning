@@ -1,8 +1,8 @@
-from pybullet_planning.utils.shared_const import INF
 from copy import deepcopy
+import numpy as np
 
 class LadderGraphEdge(object):
-    def __init__(self, idx=None, cost=-INF):
+    def __init__(self, idx=None, cost=-np.inf):
         self.idx = idx # the id of the destination vert
         self.cost = cost
         # TODO: we ignore the timing constraint here
@@ -104,30 +104,41 @@ class EdgeBuilder(object):
     """edge builder for ladder graph, construct edges for fully connected biparte graph"""
     def __init__(self, n_start, n_end, dof, upper_tm=None, joint_vel_limits=None, preference_cost=1.0):
         self.result_edges_ = [[] for i in range(n_start)]
-        self.edge_scratch_ = [LadderGraphEdge(idx=None, cost=None) for i in range(n_end)] # preallocated space to work on
+        # self.edge_scratch_ = [LadderGraphEdge(idx=None, cost=None) for i in range(n_end)] # preallocated space to work on
+        self.edge_scratch_ = []
         self.dof_ = dof
-        self.count_ = 0
+        # self.count_ = 0
         self.has_edges_ = False
         self.preference_cost = preference_cost
+        self.delta_jt_ = np.zeros(self.dof_)
+        self.max_dtheta_ = np.array([np.inf for _ in range(self.dof_)])
+        if upper_tm is not None and joint_vel_limits is not None:
+            assert upper_tm > 0
+            for i in range(self.dof_):
+                self.max_dtheta_[i] = joint_vel_limits[i]*upper_tm
 
     def consider(self, st_jt, end_jt, index):
         """index: to_id"""
         # TODO check delta joint val exceeds the joint_vel_limits
         # TODO: use preference_cost here
-        cost = 0
+        self.delta_jt_.fill(0)
         for i in range(self.dof_):
-            cost += abs(st_jt[i] - end_jt[i])
-        cost *= self.preference_cost
-        assert(self.count_ < len(self.edge_scratch_))
-        self.edge_scratch_[self.count_].cost = cost
-        self.edge_scratch_[self.count_].idx = index
-        self.count_ += 1
+            self.delta_jt_[i] = abs(st_jt[i] - end_jt[i])
+            if self.delta_jt_[i] > self.max_dtheta_[i]:
+                self.delta_jt_[i] = np.inf
+                # return
+        cost = np.sum(self.delta_jt_) * self.preference_cost
+        # assert(self.count_ < len(self.edge_scratch_))
+        edge = LadderGraphEdge(idx=index, cost=cost)
+        self.edge_scratch_.append(edge)
+        # self.count_ += 1
 
     def next(self, i):
         #TODO: want to do std::move here to transfer memory...
         self.result_edges_[i] = deepcopy(self.edge_scratch_)
-        self.has_edges_ = self.has_edges_ or self.count_ > 0
-        self.count_ = 0
+        self.has_edges_ = self.has_edges_ or len(self.edge_scratch_) > 0
+        self.edge_scratch_ = []
+        # self.count_ = 0
 
     @property
     def result(self):
