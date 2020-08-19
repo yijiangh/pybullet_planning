@@ -408,6 +408,11 @@ def get_collision_fn(body, joints, obstacles=[],
                 warnings.warn('joint limit violation!', UserWarning)
                 cr = np.less_equal(q, lower_limits), np.less_equal(upper_limits, q)
                 print('joint limit violation : {} / {}'.format(cr[0], cr[1]))
+                for i, (cr_l, cr_u) in enumerate(zip(cr[0], cr[1])):
+                    if cr_l:
+                        print('J{}: {} < lower limit {}'.format(i, q[i], lower_limits[i]))
+                    if cr_u:
+                        print('J{}: {} > upper limit {}'.format(i, q[i], upper_limits[i]))
             return True
         # * set body & attachment positions
         set_joint_positions(body, joints, q)

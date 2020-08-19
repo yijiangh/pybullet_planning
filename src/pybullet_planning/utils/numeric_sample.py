@@ -8,14 +8,10 @@ def clip(value, min_value=-INF, max_value=+INF):
     """
     return min(max(min_value, value), max_value)
 
-def randomize(sequence): # TODO: bisect
-    indices = list(range(len(sequence)))
-    random.shuffle(indices)
-    for i in indices:
-        try:
-            yield sequence[i]
-        except TypeError:
-            yield list(sequence)[i]
+def randomize(iterable): # TODO: bisect
+    sequence = list(iterable)
+    random.shuffle(sequence)
+    return sequence
 
 def get_random_seed():
     return random.getstate()[1][0]

@@ -111,12 +111,12 @@ def draw_base_limits(limits, z=1e-2, **kwargs):
     return add_segments(vertices, closed=True, **kwargs)
 
 def draw_circle(center, radius, n=24, **kwargs):
-  vertices = []
-  for i in range(n):
-      theta = i*2*math.pi/n
-      unit = np.append(unit_from_theta(theta), [0])
-      vertices.append(center+radius*unit)
-  return add_segments(vertices, closed=True, **kwargs)
+    vertices = []
+    for i in range(n):
+        theta = i*2*math.pi/n
+        unit = np.append(unit_from_theta(theta), [0])
+        vertices.append(center+radius*unit)
+    return add_segments(vertices, closed=True, **kwargs)
 
 def draw_aabb(aabb, **kwargs):
     d = len(aabb[0])

@@ -11,7 +11,7 @@ from pybullet_planning.interfaces.robots.joint import get_joint_positions, get_c
     get_configuration
 from pybullet_planning.interfaces.robots.collision import get_collision_fn
 from pybullet_planning.interfaces.robots.body import clone_body, remove_body, get_link_pose
-from .ladder_graph import LadderGraph, EdgeBuilder
+from .ladder_graph import LadderGraph, EdgeBuilder, append_ladder_graph
 from .dag_search import DAGSearch
 
 #####################################
@@ -136,11 +136,8 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
 
     assert sample_ik_fn is not None, 'Sample fn must be specified!'
     # TODO sanity check samplers
-
     ik_sols = [[] for _ in range(len(waypoint_poses))]
-    # TODO automatically use current conf in the env as start_conf
-    # if self.target_conf:
-    #     jt_list = snap_sols(jt_list, self.target_conf, self.ik_joint_limits)
+
     for i, task_pose in enumerate(waypoint_poses):
         candidate_poses = [task_pose]
         if sample_ee_fn is not None:
@@ -198,11 +195,22 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         #     print('no edges!')
         graph.assign_edges(i, edges)
 
+    # * use current conf in the env as start_conf
+    start_conf = get_joint_positions(robot, joints)
+    st_graph = LadderGraph(graph.dof)
+    st_graph.resize(1)
+    st_graph.assign_rung(0, [start_conf])
+    unified_graph = append_ladder_graph(st_graph, graph)
+
     # perform DAG search
-    dag_search = DAGSearch(graph)
+    dag_search = DAGSearch(unified_graph)
     min_cost = dag_search.run()
     # list of confs
     path = dag_search.shortest_path()
+    # delete the start conf
+    del path[0]
+
+    assert len(path) == len(waypoint_poses)
     if len(path) == 0:
         return None
     return path, min_cost
