@@ -6,9 +6,10 @@ from collections import namedtuple
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import MAX_DISTANCE
+from pybullet_planning.interfaces.env_manager.pose_transformation import get_distance
+from pybullet_planning.utils import MAX_DISTANCE, EPS
 from pybullet_planning.interfaces.robots.joint import get_joint_positions, get_custom_limits, get_movable_joints, set_joint_positions, \
-    get_configuration
+    get_configuration, get_custom_max_velocity
 from pybullet_planning.interfaces.robots.collision import get_collision_fn
 from pybullet_planning.interfaces.robots.body import clone_body, remove_body, get_link_pose
 from .ladder_graph import LadderGraph, EdgeBuilder, append_ladder_graph
@@ -110,7 +111,7 @@ def sub_inverse_kinematics(robot, first_joint, target_link, target_pose, **kwarg
 MAX_SAMPLE_ITER = int(1e4)
 
 def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, collision_fn=None, sample_ee_fn=None,
-    max_sample_ee_iter=MAX_SAMPLE_ITER, **kwargs):
+    max_sample_ee_iter=MAX_SAMPLE_ITER, custom_vel_limits={}, ee_vel=None, **kwargs):
     """ladder graph cartesian planning, better leveraging ikfast for sample_ik_fn
 
     Parameters
@@ -137,11 +138,19 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     assert sample_ik_fn is not None, 'Sample fn must be specified!'
     # TODO sanity check samplers
     ik_sols = [[] for _ in range(len(waypoint_poses))]
-
+    upper_times = np.ones(len(waypoint_poses)) * np.inf
     for i, task_pose in enumerate(waypoint_poses):
         candidate_poses = [task_pose]
         if sample_ee_fn is not None:
-            # extra dof release, copy to reuse generator
+            # * extra dof release, copy to reuse generator
+
+            # yaw_sample_size = 20
+            # yaw_gen = np.linspace(0.0, 2*np.pi, num=yaw_sample_size)
+            # from pybullet_planning import multiply, Pose, Euler
+            # for yaw in yaw_gen:
+            #     new_p = multiply(task_pose, Pose(euler=Euler(yaw=yaw)))
+            #     candidate_poses.append(new_p)
+
             current_ee_fn = copy(sample_ee_fn)
             cnt = 0
             for p in current_ee_fn(task_pose):
@@ -156,6 +165,14 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
             if collision_fn is None:
                 conf_list = [conf for conf in conf_list if conf and not collision_fn(conf, **kwargs)]
             ik_sols[i].extend(conf_list)
+            if ee_vel is not None:
+                assert ee_vel > 0
+                upper_times[i] = get_distance(task_pose[0], waypoint_poses[i-1][0])/ee_vel if i>0 else np.inf
+                if abs(upper_times[i]) < EPS:
+                    upper_times[i] = np.inf
+            else:
+                upper_times[i] = np.inf
+                # upper_times[i] = 0.5
 
     # assemble the ladder graph
     dof = len(joints)
@@ -166,33 +183,41 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     for pt_id, ik_confs_pt in enumerate(ik_sols):
         graph.assign_rung(pt_id, ik_confs_pt)
 
+    joint_vel_limits = get_custom_max_velocity(robot, joints, custom_vel_limits)
+    print('joint vel limit: ', joint_vel_limits)
+
     # build edges within current pose family
     for i in range(graph.get_rungs_size()-1):
-        st_id = i
-        end_id = i + 1
-        jt1_list = graph.get_data(st_id)
-        jt2_list = graph.get_data(end_id)
-        st_size = graph.get_rung_vert_size(st_id)
-        end_size = graph.get_rung_vert_size(end_id)
+        st_rung_id = i
+        end_rung_id = i + 1
+        jt1_list = graph.get_data(st_rung_id)
+        jt2_list = graph.get_data(end_rung_id)
+        st_size = graph.get_rung_vert_size(st_rung_id)
+        end_size = graph.get_rung_vert_size(end_rung_id)
         # if st_size == 0 or end_size == 0:
         #     print(ik_sols)
 
-        assert st_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(st_id, graph.get_rungs_size())
-        assert end_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(end_id, graph.get_rungs_size())
+        assert st_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(st_rung_id, graph.get_rungs_size())
+        assert end_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(end_rung_id, graph.get_rungs_size())
 
         # TODO: preference_cost
         # fully-connected ladder graph
-        edge_builder = EdgeBuilder(st_size, end_size, dof, preference_cost=1.0)
+        edge_builder = EdgeBuilder(st_size, end_size, dof, upper_tm=upper_times[i], \
+            joint_vel_limits=joint_vel_limits, preference_cost=1.0)
         for k in range(st_size):
-            st_id = k * dof
+            st_jt_id = k * dof
             for j in range(end_size):
-                end_id = j * dof
-                edge_builder.consider(jt1_list[st_id : st_id+dof], jt2_list[end_id : end_id+dof], j)
+                end_jt_id = j * dof
+                edge_builder.consider(jt1_list[st_jt_id : st_jt_id+dof], jt2_list[end_jt_id : end_jt_id+dof], j)
             edge_builder.next(k)
         edges = edge_builder.result
-        # if not edge_builder.has_edges and verbose:
-        #     # TODO: more report information here
-        #     print('no edges!')
+
+        # TODO: more report information here
+        assert edge_builder.has_edges, 'no edge built between {}-{}'.format(st_rung_id, end_rung_id)
+        # if not edge_builder.has_edges:
+        #     print('no edge built between {}-{}'.format(st_id, end_id))
+        #     return None
+
         graph.assign_edges(i, edges)
 
     # * use current conf in the env as start_conf
@@ -200,7 +225,10 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     st_graph = LadderGraph(graph.dof)
     st_graph.resize(1)
     st_graph.assign_rung(0, [start_conf])
-    unified_graph = append_ladder_graph(st_graph, graph)
+    # TODO: upper_tim here
+    unified_graph = append_ladder_graph(st_graph, graph, upper_tm=0.5, joint_vel_limits=joint_vel_limits)
+    if unified_graph is None:
+        return None
 
     # perform DAG search
     dag_search = DAGSearch(unified_graph)

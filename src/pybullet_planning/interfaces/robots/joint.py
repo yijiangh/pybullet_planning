@@ -1,7 +1,7 @@
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, CIRCULAR_LIMITS, UNBOUNDED_LIMITS
+from pybullet_planning.utils import CLIENT, CIRCULAR_LIMITS, UNBOUNDED_LIMITS, INF
 
 #####################################
 # Joints
@@ -204,3 +204,12 @@ def get_custom_limits(body, joints, custom_limits={}, circular_limits=UNBOUNDED_
         else:
             joint_limits.append(get_joint_limits(body, joint))
     return zip(*joint_limits)
+
+def get_custom_max_velocity(body, joints, custom_vel_limits={}):
+    vel_limits = []
+    for joint in joints:
+        if joint in custom_vel_limits:
+            vel_limits.append(custom_vel_limits[joint])
+        else:
+            vel_limits.append(get_max_velocity(body, joint))
+    return vel_limits

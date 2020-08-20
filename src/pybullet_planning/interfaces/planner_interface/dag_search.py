@@ -1,6 +1,6 @@
 import warnings
 
-from pybullet_planning.utils.shared_const import INF
+import numpy as np
 from .ladder_graph import LadderGraph, EdgeBuilder
 
 class SolutionRung(object):
@@ -9,8 +9,10 @@ class SolutionRung(object):
         self.predecessor = []
 
     def extract_min(self):
-        min_dist = min(self.distance)
-        min_id = self.distance.index(min_dist)
+        # min_dist = min(self.distance)
+        # min_id = self.distance.index(min_dist)
+        min_id = np.argmin(self.distance)
+        min_dist = self.distance[min_id]
         return min_dist, min_id
 
     def __len__(self):
@@ -32,8 +34,8 @@ class DAGSearch(object):
         for i in range(graph.get_rungs_size()):
             n_verts = graph.get_rung_vert_size(i)
             assert(n_verts > 0)
-            self.solution[i].distance = [0] * n_verts
-            self.solution[i].predecessor = [0] * n_verts
+            self.solution[i].distance = np.zeros(n_verts)
+            self.solution[i].predecessor = np.zeros(n_verts, dtype=int)
 
     @classmethod
     def from_ladder_graph(cls, graph):
@@ -52,23 +54,28 @@ class DAGSearch(object):
 
         # TODO: add st_conf cost to SolutionRung 0
         # * first rung init to 0
-        self.solution[0].distance = [0] * len(self.solution[0])
+        self.solution[0].distance = np.zeros(len(self.solution[0]))
         # * other rungs init to inf
         for j in range(1, len(self.solution)):
-            self.solution[j].distance = [INF] * len(self.solution[j])
+            self.solution[j].distance = np.inf*np.ones(len(self.solution[j]))
 
         for r_id in range(0, len(self.solution)-1):
             n_verts = self.graph.get_rung_vert_size(r_id)
             next_r_id = r_id + 1
             # for each vert in the out edge list
+            max_rung_cost = np.inf
             for v_id in range(n_verts):
                 u_cost = self.distance(r_id, v_id)
                 edges = self.graph.get_edges(r_id)[v_id]
+                dv = np.inf
                 for edge in edges:
                     dv = u_cost + edge.cost
                     if dv < self.distance(next_r_id, edge.idx):
                         self.solution[next_r_id].distance[edge.idx] = dv
                         self.solution[next_r_id].predecessor[edge.idx] = v_id
+                if dv < max_rung_cost:
+                    max_rung_cost = dv
+            # print('Rung #{}: {}'.format(r_id, max_rung_cost))
 
         return min(self.solution[-1].distance)
 
@@ -78,7 +85,7 @@ class DAGSearch(object):
             raise ValueError('The initial solution is empty!')
 
         _, min_val_id = self.solution[-1].extract_min()
-        path_idx = [0] * len(self.solution)
+        path_idx = np.zeros(len(self.solution), dtype=int)
 
         current_v_id = min_val_id
         count = len(path_idx) - 1

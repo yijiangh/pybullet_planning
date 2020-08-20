@@ -4,6 +4,7 @@ import pybullet as p
 # constants
 INF = np.inf
 PI = np.pi
+EPS = 1e-12
 CIRCULAR_LIMITS = -PI, PI
 UNBOUNDED_LIMITS = -INF, INF
 DEFAULT_TIME_STEP = 1./240. # seconds
