@@ -108,7 +108,6 @@ class EdgeBuilder(object):
         self.edge_scratch_ = []
         self.dof_ = dof
         # self.count_ = 0
-        self.has_edges_ = False
         self.preference_cost = preference_cost
         self.delta_jt_ = np.zeros(self.dof_)
         self.max_dtheta_ = np.array([np.inf for _ in range(self.dof_)])
@@ -125,6 +124,7 @@ class EdgeBuilder(object):
         for i in range(self.dof_):
             self.delta_jt_[i] = abs(st_jt[i] - end_jt[i])
             if self.delta_jt_[i] > self.max_dtheta_[i]:
+                # print('delta_j {}: {} | max delta: {}'.format(i, self.delta_jt_[i], self.max_dtheta_[i]))
                 # self.delta_jt_[i] = np.inf
                 return
         cost = np.sum(self.delta_jt_) * self.preference_cost
@@ -136,7 +136,6 @@ class EdgeBuilder(object):
     def next(self, i):
         #TODO: want to do std::move here to transfer memory...
         self.result_edges_[i] = deepcopy(self.edge_scratch_)
-        self.has_edges_ = self.has_edges_ or len(self.edge_scratch_) > 0
         self.edge_scratch_ = []
         # self.count_ = 0
 
@@ -146,7 +145,7 @@ class EdgeBuilder(object):
 
     @property
     def has_edges(self):
-        return self.has_edges_
+        return len(self.edge_scratch_) > 0 or any([len(res)>0 for res in self.result])
 
 ######################################
 # ladder graph operations
@@ -187,7 +186,7 @@ def append_ladder_graph(current_graph, next_graph, upper_tm=None, joint_vel_limi
     n_st_vert = int(len(a_rung.data) / dof)
     n_end_vert = int(len(b_rung.data) / dof)
 
-    edge_builder = EdgeBuilder(n_st_vert, n_end_vert, dof, upper_tm=upper_tm, joint_vel_limits=joint_vel_limits)
+    edge_builder = EdgeBuilder(n_st_vert, n_end_vert, dof, upper_tm=upper_tm, joint_vel_limits=joint_vel_limits, preference_cost=1e3)
     for k in range(n_st_vert):
         st_jt_id = k * dof
         for j in range(n_end_vert):
@@ -196,9 +195,10 @@ def append_ladder_graph(current_graph, next_graph, upper_tm=None, joint_vel_limi
         edge_builder.next(k)
 
     # TODO: more report information here
-    assert edge_builder.has_edges, 'no edge built between {}-{}'.format(cur_size-1, cur_size)
-    # if edge_builder.has_edges:
-    #    print('no edge built between {}-{}'.format(cur_size-1, cur_size))
+    # assert edge_builder.has_edges, 'no edge built between {}-{}'.format(cur_size-1, cur_size)
+    if not edge_builder.has_edges:
+        print('Append ladder graph fails: no edge built between {}-{}'.format(cur_size-1, cur_size))
+        return None
 
     edges_list = edge_builder.result
     current_graph.assign_edges(cur_size - 1, edges_list)

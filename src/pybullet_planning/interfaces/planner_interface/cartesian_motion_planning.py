@@ -28,28 +28,38 @@ def get_null_space(robot, joints, custom_limits={}):
     return NullSpace(list(lower), list(upper), list(joint_ranges), list(rest_positions))
 
 def plan_cartesian_motion(robot, first_joint, target_link, waypoint_poses,
-                          max_iterations=200, custom_limits={}, **kwargs):
+                          max_iterations=200, custom_limits={}, get_sub_conf=False, **kwargs):
     """[summary]
 
     Parameters
     ----------
-    robot : [type]
-        [description]
-    first_joint : [type]
-        [description]
-    target_link : [type]
-        [description]
-    waypoint_poses : [type]
-        [description]
+    robot : int
+        robot body index
+    first_joint : int
+        the first joint index in the kinematics chain.
+    target_link : int
+        end effector link index.
+    waypoint_poses : a list of Pose
+        a list of end effector workspace poses in the world coord.
     max_iterations : int, optional
         [description], by default 200
     custom_limits : dict, optional
         [description], by default {}
+    get_sub_conf : bool, optional
+        return sub-kinematics chain configuration if set to True, by default False
 
     Returns
     -------
     [type]
         [description]
+
+    Example
+    -------
+    ```
+    ik_joints = joints_from_names(robot_uid, ik_joint_names)
+    ik_tool_link = link_from_name(robot_uid, tool_link_name)
+    cart_conf_vals = plan_cartesian_motion(robot_uid, ik_joints[0], ik_tool_link, world_from_ee_poses)
+    ```
     """
     from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
     from pybullet_planning.interfaces.robots.link import get_link_subtree, prune_fixed_joints
@@ -92,7 +102,10 @@ def plan_cartesian_motion(robot, first_joint, target_link, waypoint_poses,
                     remove_body(sub_robot)
                     return None
                 #print("IK iterations:", iteration)
-                solutions.append(kinematic_conf)
+                if not get_sub_conf:
+                    solutions.append(kinematic_conf)
+                else:
+                    solutions.append(sub_kinematic_conf)
                 break
         else:
             remove_body(sub_robot)
@@ -167,10 +180,15 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
             ik_sols[i].extend(conf_list)
             if ee_vel is not None:
                 assert ee_vel > 0
-                upper_times[i] = get_distance(task_pose[0], waypoint_poses[i-1][0])/ee_vel if i>0 else np.inf
-                if abs(upper_times[i]) < EPS:
-                    upper_times[i] = np.inf
+                # TODO: warning if ee_vel under EPS
+                dist = get_distance(ee_pose[0], waypoint_poses[i-1][0]) if i>0 else 0
+                if dist < 1e-3:
+                    # these two poses overlaps
+                    upper_times[i] = 1e-3
+                else:
+                    upper_times[i] = dist / ee_vel if ee_vel>EPS else np.inf
             else:
+                # no velocity constraint
                 upper_times[i] = np.inf
                 # upper_times[i] = 0.5
 
@@ -184,7 +202,6 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         graph.assign_rung(pt_id, ik_confs_pt)
 
     joint_vel_limits = get_custom_max_velocity(robot, joints, custom_vel_limits)
-    print('joint vel limit: ', joint_vel_limits)
 
     # build edges within current pose family
     for i in range(graph.get_rungs_size()-1):
@@ -204,20 +221,24 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         # fully-connected ladder graph
         edge_builder = EdgeBuilder(st_size, end_size, dof, upper_tm=upper_times[i], \
             joint_vel_limits=joint_vel_limits, preference_cost=1.0)
+        # print(edge_builder.max_dtheta_)
         for k in range(st_size):
             st_jt_id = k * dof
             for j in range(end_size):
                 end_jt_id = j * dof
                 edge_builder.consider(jt1_list[st_jt_id : st_jt_id+dof], jt2_list[end_jt_id : end_jt_id+dof], j)
             edge_builder.next(k)
-        edges = edge_builder.result
 
+        # print(edge_builder.max_dtheta_)
+        # print(edge_builder.edge_scratch_)
+        # print(edge_builder.result)
         # TODO: more report information here
-        assert edge_builder.has_edges, 'no edge built between {}-{}'.format(st_rung_id, end_rung_id)
-        # if not edge_builder.has_edges:
-        #     print('no edge built between {}-{}'.format(st_id, end_id))
-        #     return None
+        if not edge_builder.has_edges:
+            print('Ladder graph: no edge built between {}-{} |\nupper time {}, joint vel: {}, max delta jt: {}'.format(
+                st_rung_id, end_rung_id, upper_times[i], joint_vel_limits, edge_builder.max_dtheta_))
+            return None, None
 
+        edges = edge_builder.result
         graph.assign_edges(i, edges)
 
     # * use current conf in the env as start_conf
@@ -226,9 +247,9 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     st_graph.resize(1)
     st_graph.assign_rung(0, [start_conf])
     # TODO: upper_tim here
-    unified_graph = append_ladder_graph(st_graph, graph, upper_tm=0.5, joint_vel_limits=joint_vel_limits)
+    unified_graph = append_ladder_graph(st_graph, graph, upper_tm=0.5 if ee_vel is not None else None, joint_vel_limits=joint_vel_limits)
     if unified_graph is None:
-        return None
+        return None, None
 
     # perform DAG search
     dag_search = DAGSearch(unified_graph)
@@ -240,5 +261,5 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
 
     assert len(path) == len(waypoint_poses)
     if len(path) == 0:
-        return None
+        return None, None
     return path, min_cost
