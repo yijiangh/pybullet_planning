@@ -7,6 +7,15 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+Unreleased
+----------
+
+**Added**
+- Added `current_conf` to as the single-node ladder in the ladder graph Cartesian planning `plan_cartesian_motion_lg`
+
+**Changed**
+- Changed `Attachment.from_data` to construct parent and child bodies from body name data
+- Changed `EdgeBuilder` from using `upper_tm` and `joint_vel_limits` to directly using `jump_threshold`
 
 0.5.0
 ----------
