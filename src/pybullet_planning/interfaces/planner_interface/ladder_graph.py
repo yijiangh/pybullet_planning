@@ -102,7 +102,7 @@ class LadderGraph(object):
 
 class EdgeBuilder(object):
     """edge builder for ladder graph, construct edges for fully connected biparte graph"""
-    def __init__(self, n_start, n_end, dof, upper_tm=None, joint_vel_limits=None, preference_cost=1.0):
+    def __init__(self, n_start, n_end, dof, jump_threshold=None, preference_cost=1.0):
         self.result_edges_ = [[] for i in range(n_start)]
         # self.edge_scratch_ = [LadderGraphEdge(idx=None, cost=None) for i in range(n_end)] # preallocated space to work on
         self.edge_scratch_ = []
@@ -111,10 +111,13 @@ class EdgeBuilder(object):
         self.preference_cost = preference_cost
         self.delta_jt_ = np.zeros(self.dof_)
         self.max_dtheta_ = np.array([np.inf for _ in range(self.dof_)])
-        if upper_tm is not None and joint_vel_limits is not None:
-            assert upper_tm > 0
+        if jump_threshold is not None:
             for i in range(self.dof_):
-                self.max_dtheta_[i] = joint_vel_limits[i]*upper_tm
+                self.max_dtheta_[i] = jump_threshold[i]
+        # if upper_tm is not None and joint_vel_limits is not None:
+        #     assert upper_tm > 0
+        #     for i in range(self.dof_):
+        #         self.max_dtheta_[i] = joint_vel_limits[i]*upper_tm
 
     def consider(self, st_jt, end_jt, index):
         """index: to_id"""
@@ -150,7 +153,7 @@ class EdgeBuilder(object):
 ######################################
 # ladder graph operations
 
-def append_ladder_graph(current_graph, next_graph, upper_tm=None, joint_vel_limits=None):
+def append_ladder_graph(current_graph, next_graph, jump_threshold=None): #upper_tm=None,
     """Horizontally connect two given ladder graphs, edges are added between
     all the nodes in current_graph's last rung and next_graph's first rung.
     Note: this is typically used in connecting ladder graphs generated from
@@ -186,7 +189,8 @@ def append_ladder_graph(current_graph, next_graph, upper_tm=None, joint_vel_limi
     n_st_vert = int(len(a_rung.data) / dof)
     n_end_vert = int(len(b_rung.data) / dof)
 
-    edge_builder = EdgeBuilder(n_st_vert, n_end_vert, dof, upper_tm=upper_tm, joint_vel_limits=joint_vel_limits, preference_cost=1e3)
+    edge_builder = EdgeBuilder(n_st_vert, n_end_vert, dof,
+        jump_threshold=jump_threshold, preference_cost=1)
     for k in range(n_st_vert):
         st_jt_id = k * dof
         for j in range(n_end_vert):

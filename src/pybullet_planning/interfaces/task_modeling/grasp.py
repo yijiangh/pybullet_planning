@@ -40,25 +40,20 @@ class Attachment(object):
         data['child_name'] = get_name(self.child) if child_name == '' else child_name
         return data
     @classmethod
-    def from_data(cls, data):
+    def from_data(cls, data, parent=None, child=None):
         from pybullet_planning.interfaces.env_manager.simulation import is_connected
-        from pybullet_planning.interfaces.robots.body import body_from_name
+        from pybullet_planning.interfaces.robots.body import body_from_name, get_bodies
         from pybullet_planning.interfaces.robots.link import link_from_name
-        if not is_connected():
-            warnings.warn('Pybullet environment not connected or body/joints not found, robot and joints kept as names.', UserWarning)
-            parent = data['parent_name']
-            parent_link = data['parent_link_name']
-            child = data['child_name']
-            grasp_pose = data['grasp_pose']
-        else:
+        if parent is None:
             parent = body_from_name(data['parent_name'])
-            parent_link = link_from_name(parent, data['parent_link_name'])
-            try:
-                child = body_from_name(data['child_name'])
-            except ValueError:
-                warnings.warn('Cannot find body with name {}, keep child name as str'.format(data['child_name']), UserWarning)
-                child = data['child_name']
-            grasp_pose = data['grasp_pose']
+        else:
+            assert parent in get_bodies()
+        if child is None:
+            child = body_from_name(data['child_name'])
+        else:
+            assert child in get_bodies()
+        parent_link = link_from_name(parent, data['parent_link_name'])
+        grasp_pose = data['grasp_pose']
         return cls(parent, parent_link, grasp_pose, child)
 
     def __repr__(self):
