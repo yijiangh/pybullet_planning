@@ -2,7 +2,7 @@ from itertools import product, combinations
 from collections import defaultdict, deque, namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import BASE_LINK, CLIENT
+from pybullet_planning.utils import BASE_LINK, get_client
 from pybullet_planning.interfaces.robots.joint import get_num_joints, get_joints, get_joint_info, is_movable, prune_fixed_joints
 
 #####################################
@@ -58,7 +58,7 @@ def get_link_state(body, link, kinematics=True, velocity=True):
     # TODO: the defaults are set to False?
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/pybullet.c
     return LinkState(*p.getLinkState(body, link, #computeLinkVelocity=velocity, computeForwardKinematics=kinematics,
-                                     physicsClientId=CLIENT))
+                                     physicsClientId=get_client()))
 
 def get_com_pose(body, link): # COM = center of mass
     link_state = get_link_state(body, link)

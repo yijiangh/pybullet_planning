@@ -2,7 +2,7 @@ import numpy as np
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, OBJ_MESH_CACHE, NULL_ID
+from pybullet_planning.utils import get_client, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, OBJ_MESH_CACHE, NULL_ID
 from pybullet_planning.utils import implies
 from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, Point, Euler
 from pybullet_planning.interfaces.env_manager.pose_transformation import euler_from_quat, base_values_from_pose, \
@@ -19,13 +19,13 @@ from pybullet_planning.interfaces.robots.link import get_links, parent_joint_fro
 # Bodies
 
 def get_bodies():
-    return [p.getBodyUniqueId(i, physicsClientId=CLIENT)
-            for i in range(p.getNumBodies(physicsClientId=CLIENT))]
+    return [p.getBodyUniqueId(i, physicsClientId=get_client())
+            for i in range(p.getNumBodies(physicsClientId=get_client()))]
 
 BodyInfo = namedtuple('BodyInfo', ['base_name', 'body_name'])
 
 def get_body_info(body):
-    return BodyInfo(*p.getBodyInfo(body, physicsClientId=CLIENT))
+    return BodyInfo(*p.getBodyInfo(body, physicsClientId=get_client()))
 
 def get_base_name(body):
     return get_body_info(body).base_name.decode(encoding='UTF-8')
@@ -55,9 +55,9 @@ def body_from_name(name):
     raise ValueError(name)
 
 def remove_body(body):
-    if (CLIENT, body) in INFO_FROM_BODY:
-        del INFO_FROM_BODY[CLIENT, body]
-    return p.removeBody(body, physicsClientId=CLIENT)
+    if (get_client(), body) in INFO_FROM_BODY:
+        del INFO_FROM_BODY[get_client(), body]
+    return p.removeBody(body, physicsClientId=get_client())
 
 def get_point(body):
     return get_pose(body)[0]
@@ -91,14 +91,14 @@ def set_base_values(body, values):
     set_quat(body, z_rotation(theta))
 
 def get_velocity(body):
-    linear, angular = p.getBaseVelocity(body, physicsClientId=CLIENT)
+    linear, angular = p.getBaseVelocity(body, physicsClientId=get_client())
     return linear, angular # [x,y,z], [wx,wy,wz]
 
 def set_velocity(body, linear=None, angular=None):
     if linear is not None:
-        p.resetBaseVelocity(body, linearVelocity=linear, physicsClientId=CLIENT)
+        p.resetBaseVelocity(body, linearVelocity=linear, physicsClientId=get_client())
     if angular is not None:
-        p.resetBaseVelocity(body, angularVelocity=angular, physicsClientId=CLIENT)
+        p.resetBaseVelocity(body, angularVelocity=angular, physicsClientId=get_client())
 
 def is_rigid_body(body):
     for joint in get_joints(body):
@@ -233,13 +233,13 @@ def set_color(body, color, link=BASE_LINK, shape_index=NULL_ID):
     # specularColor
     return p.changeVisualShape(body, link, shapeIndex=shape_index, rgbaColor=color,
                                #textureUniqueId=None, specularColor=None,
-                               physicsClientId=CLIENT)
+                               physicsClientId=get_client())
 
 def set_texture(body, texture=None, link=BASE_LINK, shape_index=NULL_ID):
     if texture is None:
         texture = NULL_ID
     return p.changeVisualShape(body, link, shapeIndex=shape_index, textureUniqueId=texture,
-                               physicsClientId=CLIENT)
+                               physicsClientId=get_client())
 
 def vertices_from_link(body, link):
     from pybullet_planning.interfaces.env_manager.shape_creation import vertices_from_data

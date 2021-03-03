@@ -4,8 +4,7 @@ from itertools import product
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE, UNKNOWN_FILE
-from pybullet_planning.utils import get_client
+from pybullet_planning.utils import get_client, BASE_LINK, MAX_DISTANCE, UNKNOWN_FILE
 from pybullet_planning.interfaces.env_manager.user_io import step_simulation
 from pybullet_planning.interfaces.robots.body import get_all_links, get_bodies, get_links
 
@@ -20,7 +19,7 @@ def contact_collision():
         True if there is a collision, False otherwise
     """
     step_simulation()
-    return len(p.getContactPoints(physicsClientId=CLIENT)) != 0
+    return len(p.getContactPoints(physicsClientId=get_client())) != 0
 
 
 ContactResult = namedtuple('ContactResult', ['contactFlag', 'bodyUniqueIdA', 'bodyUniqueIdB',
@@ -86,7 +85,7 @@ def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_dista
     """
     return p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,
                               linkIndexA=link1, linkIndexB=link2,
-                              physicsClientId=CLIENT)
+                              physicsClientId=get_client())
 
 def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):
     """check pairwise collision between bodies
@@ -228,7 +227,7 @@ def any_link_pair_collision_info(body1, links1, body2, links2=None, **kwargs):
 def body_collision_info(body1, body2, max_distance=MAX_DISTANCE): # 10000
     # TODO: confirm that this doesn't just check the base link
     return p.getClosestPoints(bodyA=body1, bodyB=body2, distance=max_distance,
-                              physicsClientId=CLIENT) # getContactPoints`
+                              physicsClientId=get_client()) # getContactPoints`
 
 def body_collision(body1, body2, max_distance=MAX_DISTANCE):
     return len(body_collision_info(body1, body2, max_distance)) != 0
@@ -517,7 +516,7 @@ def ray_collision(ray):
     # TODO: be careful to disable gravity and set static masses for everything
     step_simulation() # Needed for some reason
     start, end = ray
-    result, = p.rayTest(start, end, physicsClientId=CLIENT)
+    result, = p.rayTest(start, end, physicsClientId=get_client())
     # TODO: assign hit_position to be the end?
     return RayResult(*result)
 
@@ -533,4 +532,4 @@ def batch_ray_collision(rays, threads=1):
         numThreads=threads,
         #parentObjectUniqueId=
         #parentLinkIndex=
-        physicsClientId=CLIENT)]
+        physicsClientId=get_client())]

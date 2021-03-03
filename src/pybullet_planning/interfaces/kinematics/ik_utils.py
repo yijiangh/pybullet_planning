@@ -2,7 +2,7 @@ import math
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT
+from pybullet_planning.utils import get_client
 
 def inverse_kinematics_helper(robot, link, target_pose, null_space=None):
     (target_point, target_quat) = target_pose
@@ -14,15 +14,15 @@ def inverse_kinematics_helper(robot, link, target_pose, null_space=None):
 
             kinematic_conf = p.calculateInverseKinematics(robot, link, target_point,
                                                           lowerLimits=lower, upperLimits=upper, jointRanges=ranges, restPoses=rest,
-                                                          physicsClientId=CLIENT)
+                                                          physicsClientId=get_client())
         elif target_quat is None:
             #ikSolver = p.IK_DLS or p.IK_SDLS
             kinematic_conf = p.calculateInverseKinematics(robot, link, target_point,
                                                           #lowerLimits=ll, upperLimits=ul, jointRanges=jr, restPoses=rp, jointDamping=jd,
                                                           # solver=ikSolver, maxNumIterations=-1, residualThreshold=-1,
-                                                          physicsClientId=CLIENT)
+                                                          physicsClientId=get_client())
         else:
-            kinematic_conf = p.calculateInverseKinematics(robot, link, target_point, target_quat, physicsClientId=CLIENT)
+            kinematic_conf = p.calculateInverseKinematics(robot, link, target_point, target_quat, physicsClientId=get_client())
     except p.error as e:
         kinematic_conf = None
     if (kinematic_conf is None) or any(map(math.isnan, kinematic_conf)):

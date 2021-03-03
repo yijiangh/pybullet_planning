@@ -4,7 +4,7 @@ from collections import defaultdict, deque, namedtuple
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, STATIC_MASS
+from pybullet_planning.utils import get_client, BASE_LINK, STATIC_MASS
 
 #####################################
 # https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit#
@@ -14,7 +14,7 @@ DynamicsInfo = namedtuple('DynamicsInfo', ['mass', 'lateral_friction',
                                            'contact_damping', 'contact_stiffness', 'body_type', 'collision_margin'])
 
 def get_dynamics_info(body, link=BASE_LINK):
-    return DynamicsInfo(*p.getDynamicsInfo(body, link, physicsClientId=CLIENT))
+    return DynamicsInfo(*p.getDynamicsInfo(body, link, physicsClientId=get_client()))
 
 get_link_info = get_dynamics_info
 
@@ -24,7 +24,7 @@ def get_mass(body, link=BASE_LINK):
 
 def set_dynamics(body, link=BASE_LINK, **kwargs):
     # TODO: iterate over all links
-    p.changeDynamics(body, link, physicsClientId=CLIENT, **kwargs)
+    p.changeDynamics(body, link, physicsClientId=get_client(), **kwargs)
 
 def set_mass(body, mass, link=BASE_LINK):
     set_dynamics(body, link=link, mass=mass)

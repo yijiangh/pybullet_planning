@@ -5,8 +5,8 @@ import numpy as np
 import pybullet as p
 from collections import namedtuple
 
-from pybullet_planning.utils import INF, CLIENT, CLIENTS
-from pybullet_planning.utils import is_darwin
+from pybullet_planning.utils import INF, CLIENTS
+from pybullet_planning.utils import is_darwin, get_client
 
 # from future_builtins import map, filter
 # from builtins import input # TODO - use future
@@ -64,7 +64,7 @@ def elapsed_time(start_time):
 MouseEvent = namedtuple('MouseEvent', ['eventType', 'mousePosX', 'mousePosY', 'buttonIndex', 'buttonState'])
 
 def get_mouse_events():
-    return list(MouseEvent(*event) for event in p.getMouseEvents(physicsClientId=CLIENT))
+    return list(MouseEvent(*event) for event in p.getMouseEvents(physicsClientId=get_client()))
 
 def update_viewer():
     # https://docs.python.org/2/library/select.html
@@ -93,11 +93,11 @@ def simulate_for_duration(duration):
 def get_time_step():
     # {'gravityAccelerationX', 'useRealTimeSimulation', 'gravityAccelerationZ', 'numSolverIterations',
     # 'gravityAccelerationY', 'numSubSteps', 'fixedTimeStep'}
-    return p.getPhysicsEngineParameters(physicsClientId=CLIENT)['fixedTimeStep']
+    return p.getPhysicsEngineParameters(physicsClientId=get_client())['fixedTimeStep']
 
 
 def enable_separating_axis_test():
-    p.setPhysicsEngineParameter(enableSAT=1, physicsClientId=CLIENT)
+    p.setPhysicsEngineParameter(enableSAT=1, physicsClientId=get_client())
     #p.setCollisionFilterPair()
     #p.setCollisionFilterGroupMask()
     #p.setInternalSimFlags()
@@ -136,7 +136,7 @@ def wait_if_gui(*args, **kwargs):
 
 
 def is_unlocked():
-    return CLIENTS[CLIENT] is True
+    return CLIENTS[get_client()] is True
 
 
 def wait_if_unlocked(*args, **kwargs):
@@ -167,7 +167,7 @@ def step_simulation():
     Note: This also forces pybullet to update its bounding volume hierarchy. Ideally one would do this without calling
     the physics simulator. But this is the only workaround that we've found so far.
     """
-    p.stepSimulation(physicsClientId=CLIENT)
+    p.stepSimulation(physicsClientId=get_client())
 
 
 def threaded_input(*args, **kwargs):

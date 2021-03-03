@@ -2,7 +2,7 @@ import math
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, unit_vector, quaternion_from_matrix, clip, euler_from_quaternion
+from pybullet_planning.utils import get_client, unit_vector, quaternion_from_matrix, clip, euler_from_quaternion
 
 #####################################
 # Geometry
@@ -146,7 +146,7 @@ def z_rotation(theta):
     return quat_from_euler([0, 0, theta])
 
 def matrix_from_quat(quat):
-    return np.array(p.getMatrixFromQuaternion(quat, physicsClientId=CLIENT)).reshape(3, 3)
+    return np.array(p.getMatrixFromQuaternion(quat, physicsClientId=get_client())).reshape(3, 3)
 
 def quat_from_matrix(mat):
     matrix = np.eye(4)
@@ -277,8 +277,8 @@ def apply_affine(affine, points):
 
 def set_pose(body, pose):
     (point, quat) = pose
-    p.resetBasePositionAndOrientation(body, point, quat, physicsClientId=CLIENT)
+    p.resetBasePositionAndOrientation(body, point, quat, physicsClientId=get_client())
 
 def get_pose(body):
-    return p.getBasePositionAndOrientation(body, physicsClientId=CLIENT)
+    return p.getBasePositionAndOrientation(body, physicsClientId=get_client())
     #return np.concatenate([point, quat])

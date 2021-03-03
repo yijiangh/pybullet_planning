@@ -3,8 +3,8 @@ from collections import namedtuple
 from itertools import product
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, UNKNOWN_FILE, OBJ_MESH_CACHE
-from pybullet_planning.utils import implies
+from pybullet_planning.utils import BASE_LINK, UNKNOWN_FILE, OBJ_MESH_CACHE
+from pybullet_planning.utils import implies, get_client
 
 
 #####################################
@@ -46,11 +46,11 @@ def get_aabb(body, link=None):
     # (extra margin and extruded along the velocity vector).
     # Contact points with distance exceeding this threshold are not processed by the LCP solver.
     # AABBs are extended by this number. Defaults to 0.02 in Bullet 2.x
-    #p.setPhysicsEngineParameter(contactBreakingThreshold=0.0, physicsClientId=CLIENT)
+    #p.setPhysicsEngineParameter(contactBreakingThreshold=0.0, physicsClientId=get_client())
     if link is None:
         aabb = aabb_union(get_aabbs(body))
     else:
-        aabb = p.getAABB(body, linkIndex=link, physicsClientId=CLIENT)
+        aabb = p.getAABB(body, linkIndex=link, physicsClientId=get_client())
     return aabb
 
 get_lower_upper = get_aabb
@@ -113,7 +113,7 @@ def get_bodies_in_region(aabb):
     a list of object unique ids.
     """
     (lower, upper) = aabb
-    bodies = p.getOverlappingObjects(lower, upper, physicsClientId=CLIENT)
+    bodies = p.getOverlappingObjects(lower, upper, physicsClientId=get_client())
     return [] if bodies is None else bodies
 
 def get_aabb_volume(aabb):

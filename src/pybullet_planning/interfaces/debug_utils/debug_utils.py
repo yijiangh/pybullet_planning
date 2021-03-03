@@ -3,7 +3,7 @@ import numpy as np
 import pybullet as p
 from itertools import product, combinations
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID, YELLOW
+from pybullet_planning.utils import get_client, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID, YELLOW
 
 from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, tform_point, unit_from_theta, get_distance
 from pybullet_planning.interfaces.geometry.bounding_box import get_aabb
@@ -24,7 +24,7 @@ def add_debug_parameter():
 def add_text(text, position=(0, 0, 0), color=BLACK, lifetime=None, parent=NULL_ID, parent_link=BASE_LINK):
     return p.addUserDebugText(str(text), textPosition=position, textColorRGB=color[:3], # textSize=1,
                               lifeTime=get_lifetime(lifetime), parentObjectUniqueId=parent, parentLinkIndex=parent_link,
-                              physicsClientId=CLIENT)
+                              physicsClientId=get_client())
 
 def add_line(start, end, color=BLACK, width=1, lifetime=None, parent=NULL_ID, parent_link=BASE_LINK):
     """[summary]
@@ -53,10 +53,10 @@ def add_line(start, end, color=BLACK, width=1, lifetime=None, parent=NULL_ID, pa
     """
     return p.addUserDebugLine(start, end, lineColorRGB=color[:3], lineWidth=width,
                               lifeTime=get_lifetime(lifetime), parentObjectUniqueId=parent, parentLinkIndex=parent_link,
-                              physicsClientId=CLIENT)
+                              physicsClientId=get_client())
 
 def remove_debug(debug):
-    p.removeUserDebugItem(debug, physicsClientId=CLIENT)
+    p.removeUserDebugItem(debug, physicsClientId=get_client())
 
 remove_handle = remove_debug
 
@@ -65,7 +65,7 @@ def remove_handles(handles):
         remove_debug(handle)
 
 def remove_all_debug():
-    p.removeAllUserDebugItems(physicsClientId=CLIENT)
+    p.removeAllUserDebugItems(physicsClientId=get_client())
 
 def add_body_name(body, name=None, **kwargs):
     from pybullet_planning.interfaces.env_manager.pose_transformation import set_pose
@@ -168,7 +168,7 @@ def draw_ray(ray, ray_result=None, visible_color=GREEN, occluded_color=RED, **kw
 
 
 def get_body_from_pb_id(i):
-    return p.getBodyUniqueId(i, physicsClientId=CLIENT)
+    return p.getBodyUniqueId(i, physicsClientId=get_client())
 
 def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, line_color=YELLOW, \
     focus_camera=True, camera_ray=np.array([0.1, 0, 0.05])):

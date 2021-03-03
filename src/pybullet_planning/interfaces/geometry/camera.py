@@ -3,16 +3,16 @@ import numpy as np
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT
+from pybullet_planning.utils import get_client
 
 CameraInfo = namedtuple('CameraInfo', ['width', 'height', 'viewMatrix', 'projectionMatrix', 'cameraUp', 'cameraForward',
                                        'horizontal', 'vertical', 'yaw', 'pitch', 'dist', 'target'])
 
 def get_camera():
-    return CameraInfo(*p.getDebugVisualizerCamera(physicsClientId=CLIENT))
+    return CameraInfo(*p.getDebugVisualizerCamera(physicsClientId=get_client()))
 
 def set_camera(yaw, pitch, distance, target_position=np.zeros(3)):
-    p.resetDebugVisualizerCamera(distance, yaw, pitch, target_position, physicsClientId=CLIENT)
+    p.resetDebugVisualizerCamera(distance, yaw, pitch, target_position, physicsClientId=get_client())
 
 def get_pitch(point):
     dx, dy, dz = point
@@ -28,7 +28,7 @@ def set_camera_pose(camera_point, target_point=np.zeros(3)):
     yaw = get_yaw(delta_point) - np.pi/2 # TODO: hack
     pitch = get_pitch(delta_point)
     p.resetDebugVisualizerCamera(distance, math.degrees(yaw), math.degrees(pitch),
-                                 target_point, physicsClientId=CLIENT)
+                                 target_point, physicsClientId=get_client())
 
 def set_camera_pose2(world_from_camera, distance=2):
     from pybullet_planning.interfaces.env_manager.pose_transformation import tform_point, point_from_pose
@@ -39,7 +39,7 @@ def set_camera_pose2(world_from_camera, distance=2):
     #roll, pitch, yaw = euler_from_quat(quat_from_pose(world_from_camera))
     # TODO: assert that roll is about zero?
     #p.resetDebugVisualizerCamera(cameraDistance=distance, cameraYaw=math.degrees(yaw), cameraPitch=math.degrees(-pitch),
-    #                             cameraTargetPosition=target_world, physicsClientId=CLIENT)
+    #                             cameraTargetPosition=target_world, physicsClientId=get_client())
 
 CameraImage = namedtuple('CameraImage', ['rgbPixels', 'depthPixels', 'segmentationMaskBuffer'])
 
@@ -82,8 +82,8 @@ def get_projection_matrix(width, height, vertical_fov, near, far):
     aspect = float(width) / height
     fov_degrees = math.degrees(vertical_fov)
     projection_matrix = p.computeProjectionMatrixFOV(fov=fov_degrees, aspect=aspect,
-                                                     nearVal=near, farVal=far, physicsClientId=CLIENT)
-    # projection_matrix = p.computeProjectionMatrix(0, width, height, 0, near, far, physicsClientId=CLIENT)
+                                                     nearVal=near, farVal=far, physicsClientId=get_client())
+    # projection_matrix = p.computeProjectionMatrix(0, width, height, 0, near, far, physicsClientId=get_client())
     return projection_matrix
     #return np.reshape(projection_matrix, [4, 4])
 
@@ -110,7 +110,7 @@ def get_image(camera_pos, target_pos, width=640, height=480, vertical_fov=60.0, 
               segment=False, segment_links=False):
     # computeViewMatrixFromYawPitchRoll
     view_matrix = p.computeViewMatrix(cameraEyePosition=camera_pos, cameraTargetPosition=target_pos,
-                                      cameraUpVector=[0, 0, 1], physicsClientId=CLIENT)
+                                      cameraUpVector=[0, 0, 1], physicsClientId=get_client())
     projection_matrix = get_projection_matrix(width, height, vertical_fov, near, far)
     if segment:
         if segment_links:
@@ -124,7 +124,7 @@ def get_image(camera_pos, target_pos, width=640, height=480, vertical_fov=60.0, 
                                           shadow=False,
                                           flags=flags,
                                           renderer=p.ER_TINY_RENDERER, # p.ER_BULLET_HARDWARE_OPENGL
-                                          physicsClientId=CLIENT)[2:])
+                                          physicsClientId=get_client())[2:])
     depth = far * near / (far - (far - near) * image.depthPixels)
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/pointCloudFromCameraImage.py
     # https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/examples/getCameraImageTest.py
