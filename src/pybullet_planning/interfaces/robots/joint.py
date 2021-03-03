@@ -1,7 +1,7 @@
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, CIRCULAR_LIMITS, UNBOUNDED_LIMITS, INF
+from pybullet_planning.utils import get_client, CIRCULAR_LIMITS, UNBOUNDED_LIMITS, INF
 
 #####################################
 # Joints
@@ -17,7 +17,7 @@ JOINT_TYPES = {
 }
 
 def get_num_joints(body):
-    return p.getNumJoints(body, physicsClientId=CLIENT)
+    return p.getNumJoints(body, physicsClientId=get_client())
 
 def get_joints(body):
     return list(range(get_num_joints(body)))
@@ -34,7 +34,7 @@ JointInfo = namedtuple('JointInfo', ['jointIndex', 'jointName', 'jointType',
                                      'parentFramePos', 'parentFrameOrn', 'parentIndex'])
 
 def get_joint_info(body, joint):
-    return JointInfo(*p.getJointInfo(body, joint, physicsClientId=CLIENT))
+    return JointInfo(*p.getJointInfo(body, joint, physicsClientId=get_client()))
 
 def get_joint_name(body, joint):
     return get_joint_info(body, joint).jointName # .decode('UTF-8')
@@ -63,7 +63,7 @@ JointState = namedtuple('JointState', ['jointPosition', 'jointVelocity',
                                        'jointReactionForces', 'appliedJointMotorTorque'])
 
 def get_joint_state(body, joint):
-    return JointState(*p.getJointState(body, joint, physicsClientId=CLIENT))
+    return JointState(*p.getJointState(body, joint, physicsClientId=get_client()))
 
 def get_joint_position(body, joint):
     return get_joint_state(body, joint).jointPosition
@@ -84,7 +84,7 @@ def get_joint_velocities(body, joints):
     return tuple(get_joint_velocity(body, joint) for joint in joints)
 
 def set_joint_position(body, joint, value):
-    p.resetJointState(body, joint, value, targetVelocity=0, physicsClientId=CLIENT)
+    p.resetJointState(body, joint, value, targetVelocity=0, physicsClientId=get_client())
 
 def set_joint_positions(body, joints, values):
     assert len(joints) == len(values)

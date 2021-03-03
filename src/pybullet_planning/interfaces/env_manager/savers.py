@@ -1,7 +1,7 @@
 import os
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, set_client
+from pybullet_planning.utils import get_client, set_client
 
 #####################################
 # Savers
@@ -18,7 +18,7 @@ class Saver(object):
 
 class ClientSaver(Saver):
     def __init__(self, new_client=None):
-        self.client = CLIENT
+        self.client = get_client()
         if new_client is not None:
             set_client(new_client)
 
@@ -38,7 +38,7 @@ class VideoSaver(Saver):
             assert ext == '.mp4'
             # STATE_LOGGING_PROFILE_TIMINGS, STATE_LOGGING_ALL_COMMANDS
             # p.submitProfileTiming("pythontest")
-            self.log_id = p.startStateLogging(p.STATE_LOGGING_VIDEO_MP4, fileName=path, physicsClientId=CLIENT)
+            self.log_id = p.startStateLogging(p.STATE_LOGGING_VIDEO_MP4, fileName=path, physicsClientId=get_client())
 
     def restore(self):
         if self.log_id is not None:

@@ -2,7 +2,6 @@ import warnings
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK
 from pybullet_planning.interfaces.env_manager.pose_transformation import multiply, invert, set_pose, get_pose
 from pybullet_planning.interfaces.robots.link import get_link_subtree, get_link_pose
 

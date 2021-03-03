@@ -2,7 +2,7 @@
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK
+from pybullet_planning.utils import get_client, BASE_LINK
 
 #####################################
 # Constraints - applies forces when not satisfied
@@ -12,11 +12,11 @@ def get_constraints():
     getConstraintUniqueId will take a serial index in range 0..getNumConstraints,  and reports the constraint unique id.
     Note that the constraint unique ids may not be contiguous, since you may remove constraints.
     """
-    return [p.getConstraintUniqueId(i, physicsClientId=CLIENT)
-            for i in range(p.getNumConstraints(physicsClientId=CLIENT))]
+    return [p.getConstraintUniqueId(i, physicsClientId=get_client())
+            for i in range(p.getNumConstraints(physicsClientId=get_client()))]
 
 def remove_constraint(constraint):
-    p.removeConstraint(constraint, physicsClientId=CLIENT)
+    p.removeConstraint(constraint, physicsClientId=get_client())
 
 ConstraintInfo = namedtuple('ConstraintInfo', ['parentBodyUniqueId', 'parentJointIndex',
                                                'childBodyUniqueId', 'childLinkIndex', 'constraintType',
@@ -25,7 +25,7 @@ ConstraintInfo = namedtuple('ConstraintInfo', ['parentBodyUniqueId', 'parentJoin
 
 def get_constraint_info(constraint): # getConstraintState
     # TODO: four additional arguments
-    return ConstraintInfo(*p.getConstraintInfo(constraint, physicsClientId=CLIENT)[:11])
+    return ConstraintInfo(*p.getConstraintInfo(constraint, physicsClientId=get_client())[:11])
 
 def get_fixed_constraints():
     fixed_constraints = []
@@ -60,9 +60,9 @@ def add_fixed_constraint(body, robot, robot_link, max_force=None):
                                     childFramePosition=unit_point(),
                                     parentFrameOrientation=quat,
                                     childFrameOrientation=unit_quat(),
-                                    physicsClientId=CLIENT)
+                                    physicsClientId=get_client())
     if max_force is not None:
-        p.changeConstraint(constraint, maxForce=max_force, physicsClientId=CLIENT)
+        p.changeConstraint(constraint, maxForce=max_force, physicsClientId=get_client())
     return constraint
 
 def remove_fixed_constraint(body, robot, robot_link):

@@ -3,7 +3,7 @@ from collections import namedtuple
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, CLIENTS, GRAVITY, INFO_FROM_BODY, STATIC_MASS
+from pybullet_planning.utils import CLIENTS, GRAVITY, INFO_FROM_BODY, STATIC_MASS
 from pybullet_planning.utils import is_darwin, is_windows, get_client
 
 from pybullet_planning.interfaces.env_manager.savers import Saver
@@ -37,18 +37,18 @@ from pybullet_planning.interfaces.env_manager.shape_creation import ModelInfo, c
 
 
 def disable_viewer():
-    p.configureDebugVisualizer(p.COV_ENABLE_GUI, False, physicsClientId=CLIENT)
-    p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, False, physicsClientId=CLIENT)
-    p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, False, physicsClientId=CLIENT)
-    p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, False, physicsClientId=CLIENT)
-    #p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, False, physicsClientId=CLIENT)
-    #p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING, True, physicsClientId=CLIENT)
-    #p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, False, physicsClientId=CLIENT)
-    #p.configureDebugVisualizer(p.COV_ENABLE_WIREFRAME, True, physicsClientId=CLIENT)
+    p.configureDebugVisualizer(p.COV_ENABLE_GUI, False, physicsClientId=get_client())
+    p.configureDebugVisualizer(p.COV_ENABLE_SEGMENTATION_MARK_PREVIEW, False, physicsClientId=get_client())
+    p.configureDebugVisualizer(p.COV_ENABLE_DEPTH_BUFFER_PREVIEW, False, physicsClientId=get_client())
+    p.configureDebugVisualizer(p.COV_ENABLE_RGB_BUFFER_PREVIEW, False, physicsClientId=get_client())
+    #p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, False, physicsClientId=get_client())
+    #p.configureDebugVisualizer(p.COV_ENABLE_SINGLE_STEP_RENDERING, True, physicsClientId=get_client())
+    #p.configureDebugVisualizer(p.COV_ENABLE_SHADOWS, False, physicsClientId=get_client())
+    #p.configureDebugVisualizer(p.COV_ENABLE_WIREFRAME, True, physicsClientId=get_client())
     #p.COV_ENABLE_MOUSE_PICKING, p.COV_ENABLE_KEYBOARD_SHORTCUTS
 
 def set_renderer(enable):
-    client = CLIENT
+    client = get_client()
     if not has_gui(client):
         return
     CLIENTS[client] = enable
@@ -57,7 +57,7 @@ def set_renderer(enable):
 class LockRenderer(Saver):
     # disabling rendering temporary makes adding objects faster
     def __init__(self, lock=True):
-        self.client = CLIENT
+        self.client = get_client()
         self.state = CLIENTS[self.client]
         # skip if the visualizer isn't active
         if has_gui(self.client) and lock:
@@ -125,14 +125,14 @@ def connect(use_gui=True, shadows=True, color=None, width=None, height=None):
 
 
 def disconnect():
-    # TODO: change CLIENT?
-    if CLIENT in CLIENTS:
-        del CLIENTS[CLIENT]
+    # TODO: change get_client()?
+    if get_client() in CLIENTS:
+        del CLIENTS[get_client()]
     with HideOutput():
-        return p.disconnect(physicsClientId=CLIENT)
+        return p.disconnect(physicsClientId=get_client())
 
 def is_connected():
-    return p.getConnectionInfo(physicsClientId=CLIENT)['isConnected']
+    return p.getConnectionInfo(physicsClientId=get_client())['isConnected']
 
 def get_connection(client=None):
     return p.getConnectionInfo(physicsClientId=get_client(client))['connectionMethod']
@@ -151,13 +151,13 @@ def add_data_path(data_path=None):
     return data_path
 
 def enable_gravity():
-    p.setGravity(0, 0, -GRAVITY, physicsClientId=CLIENT)
+    p.setGravity(0, 0, -GRAVITY, physicsClientId=get_client())
 
 def disable_gravity():
-    p.setGravity(0, 0, 0, physicsClientId=CLIENT)
+    p.setGravity(0, 0, 0, physicsClientId=get_client())
 
 def set_real_time(real_time):
-    p.setRealTimeSimulation(int(real_time), physicsClientId=CLIENT)
+    p.setRealTimeSimulation(int(real_time), physicsClientId=get_client())
 
 def enable_real_time():
     set_real_time(True)
@@ -184,7 +184,7 @@ def update_state():
 def reset_simulation():
     """resetSimulation will remove all objects from the world and reset the world to initial conditions.
     """
-    p.resetSimulation(physicsClientId=CLIENT)
+    p.resetSimulation(physicsClientId=get_client())
 
 #####################################
 
@@ -196,27 +196,27 @@ def load_pybullet(filename, fixed_base=False, scale=1., **kwargs):
         if filename.endswith('.urdf'):
             flags = get_urdf_flags(**kwargs)
             body = p.loadURDF(filename, useFixedBase=fixed_base, flags=flags,
-                              globalScaling=scale, physicsClientId=CLIENT)
+                              globalScaling=scale, physicsClientId=get_client())
         elif filename.endswith('.sdf'):
-            body = p.loadSDF(filename, physicsClientId=CLIENT)
+            body = p.loadSDF(filename, physicsClientId=get_client())
         elif filename.endswith('.xml'):
-            body = p.loadMJCF(filename, physicsClientId=CLIENT)
+            body = p.loadMJCF(filename, physicsClientId=get_client())
         elif filename.endswith('.bullet'):
-            body = p.loadBullet(filename, physicsClientId=CLIENT)
+            body = p.loadBullet(filename, physicsClientId=get_client())
         elif filename.endswith('.obj'):
             # TODO: fixed_base => mass = 0?
             body = create_obj(filename, scale=scale, **kwargs)
         else:
             raise ValueError(filename)
-    INFO_FROM_BODY[CLIENT, body] = ModelInfo(None, filename, fixed_base, scale)
+    INFO_FROM_BODY[get_client(), body] = ModelInfo(None, filename, fixed_base, scale)
     return body
 
 def set_caching(cache):
-    p.setPhysicsEngineParameter(enableFileCaching=int(cache), physicsClientId=CLIENT)
+    p.setPhysicsEngineParameter(enableFileCaching=int(cache), physicsClientId=get_client())
 
 def load_model_info(info):
     # TODO: disable file caching to reuse old filenames
-    # p.setPhysicsEngineParameter(enableFileCaching=0, physicsClientId=CLIENT)
+    # p.setPhysicsEngineParameter(enableFileCaching=0, physicsClientId=get_client())
     if info.path.endswith('.urdf'):
         return load_pybullet(info.path, fixed_base=info.fixed_base, scale=info.scale)
     if info.path.endswith('.obj'):
@@ -234,13 +234,13 @@ def get_model_path(rel_path): # TODO: add to search path
     return os.path.join(directory, '..', rel_path)
 
 def save_state():
-    return p.saveState(physicsClientId=CLIENT)
+    return p.saveState(physicsClientId=get_client())
 
 def restore_state(state_id):
-    p.restoreState(stateId=state_id, physicsClientId=CLIENT)
+    p.restoreState(stateId=state_id, physicsClientId=get_client())
 
 def save_bullet(filename):
-    p.saveBullet(filename, physicsClientId=CLIENT)
+    p.saveBullet(filename, physicsClientId=get_client())
 
 def restore_bullet(filename):
-    p.restoreState(fileName=filename, physicsClientId=CLIENT)
+    p.restoreState(fileName=filename, physicsClientId=get_client())

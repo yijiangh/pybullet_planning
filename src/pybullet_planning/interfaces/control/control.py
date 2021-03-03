@@ -2,7 +2,7 @@
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT
+from pybullet_planning.utils import get_client
 from pybullet_planning.interfaces.env_manager.pose_transformation import unit_point
 from pybullet_planning.interfaces.robots.joint import get_max_velocity, get_max_force, get_joint_positions, get_movable_joints, \
     movable_from_joints
@@ -34,7 +34,7 @@ def control_joint(body, joint, value):
                                    targetVelocity=0.0,
                                    maxVelocity=get_max_velocity(body, joint),
                                    force=get_max_force(body, joint),
-                                   physicsClientId=CLIENT)
+                                   physicsClientId=get_client())
 
 def control_joints(body, joints, positions):
     """[summary]
@@ -62,7 +62,7 @@ def control_joints(body, joints, positions):
     return p.setJointMotorControlArray(body, joints, p.POSITION_CONTROL,
                                        targetPositions=positions,
                                        targetVelocities=[0.0] * len(joints),
-                                       physicsClientId=CLIENT) #,
+                                       physicsClientId=get_client()) #,
                                         #positionGains=[kp] * len(joints),
                                         #velocityGains=[kv] * len(joints),)
                                         #forces=forces)
@@ -112,7 +112,7 @@ def joint_controller_hold2(body, joints, positions, velocities=None,
                                     positionGains=[position_gain] * len(movable_joints),
                                     #velocityGains=[velocity_gain] * len(movable_joints),
                                     #forces=forces,
-                                    physicsClientId=CLIENT)
+                                    physicsClientId=get_client())
         yield current_conf
         current_conf = get_joint_positions(body, movable_joints)
 
@@ -136,7 +136,7 @@ def velocity_control_joints(body, joints, velocities):
     #kv = 0.3
     return p.setJointMotorControlArray(body, joints, p.VELOCITY_CONTROL,
                                        targetVelocities=velocities,
-                                       physicsClientId=CLIENT) #,
+                                       physicsClientId=get_client()) #,
                                         #velocityGains=[kv] * len(joints),)
                                         #forces=forces)
 
@@ -150,7 +150,7 @@ def compute_jacobian(robot, link, positions=None):
     velocities = [0.0] * len(positions)
     accelerations = [0.0] * len(positions)
     translate, rotate = p.calculateJacobian(robot, link, unit_point(), positions,
-                                            velocities, accelerations, physicsClientId=CLIENT)
+                                            velocities, accelerations, physicsClientId=get_client())
     #movable_from_joints(robot, joints)
     return list(zip(*translate)), list(zip(*rotate)) # len(joints) x 3
 
