@@ -7,6 +7,7 @@ import pybullet as p
 from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE, UNKNOWN_FILE
 from pybullet_planning.utils import get_client
 from pybullet_planning.interfaces.env_manager.user_io import step_simulation
+from pybullet_planning.interfaces.env_manager.pose_transformation import get_distance
 from pybullet_planning.interfaces.robots.body import get_all_links, get_bodies, get_links
 
 #####################################
@@ -28,7 +29,7 @@ ContactResult = namedtuple('ContactResult', ['contactFlag', 'bodyUniqueIdA', 'bo
                                          'contactNormalOnB', 'contactDistance', 'normalForce'])
 
 
-def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE): # 10000
+def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE, distance_threshold=0.0): # 10000
     """check pairwise collision checking info between bodies
 
     See getClosestPoints in <pybullet documentation `https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit?usp=sharing`>_
@@ -88,7 +89,7 @@ def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_dista
                               linkIndexA=link1, linkIndexB=link2,
                               physicsClientId=CLIENT)
 
-def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE):
+def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE, distance_threshold=0.0):
     """check pairwise collision between bodies
 
     See getClosestPoints in <pybullet documentation `https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit?usp=sharing`>_
@@ -113,8 +114,14 @@ def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=M
     Bool
         True if there is a collision, False otherwise
     """
-    return len(pairwise_link_collision_info(body1, link1, body2, link2, max_distance)) != 0
-
+    if distance_threshold == 0.0:
+        return len(pairwise_link_collision_info(body1, link1, body2, link2, max_distance)) != 0
+    else:
+        pb_closest_pt_output = pairwise_link_collision_info(body1, link1, body2, link2, max_distance)
+        for u_cr in pb_closest_pt_output:
+            if get_distance(u_cr[5], u_cr[6]) > distance_threshold:
+                return True
+        return False
 
 def flatten_links(body, links=None):
     """util fn to get a list (body, link)
@@ -320,6 +327,7 @@ def link_pairs_collision_info(body1, links1, body2, links2=None, **kwargs):
     return False
 
 # TODO offer return distance and detailed collision info options
+# TODO
 def get_collision_fn(body, joints, obstacles=[],
                     attachments=[], self_collisions=True,
                     disabled_collisions={},

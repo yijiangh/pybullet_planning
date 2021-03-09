@@ -234,7 +234,7 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         handles.append(add_line(u_cr[5], u_cr[6], color=line_color, width=5))
         handles.extend(draw_point(u_cr[5], size=0.002, color=point_color))
         handles.extend(draw_point(u_cr[6], size=0.002, color=point_color))
-        print('Penetration depth: {:.2E} | point1 ({:.4f},{:.4f},{:.4f}), point2 ({:.4f},{:.4f},{:.4f})'.format(
+        print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
             get_distance(u_cr[5], u_cr[6]), *u_cr[5], *u_cr[6]))
         if focus_camera:
             camera_base_pt = u_cr[5]
