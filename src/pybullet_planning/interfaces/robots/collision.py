@@ -50,6 +50,9 @@ def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_dista
     max_distance : float, optional
         If the distance between objects exceeds this maximum distance, no points may be returned.
         by default MAX_DISTANCE (set in pybullet_planning.utils.shared_const)
+    distance_threshold : float, optional
+        this argument here is not used but rather to make `**kwargs` working without overhauling too many functions.
+        See `pairwise_link_collision`'s `distance_threshold` argument for real usage.
 
     Returns
     -------
@@ -108,6 +111,10 @@ def pairwise_link_collision(body1, link1, body2, link2=BASE_LINK, max_distance=M
     max_distance : float, optional
         If the distance between objects exceeds this maximum distance, no points may be returned.
         by default MAX_DISTANCE (set in pybullet_planning.utils.shared_const)
+    distance_threshold : float, optional
+        Ignore collision if the detected penetration distance is smaller than the given distance thredhold.
+        Useful especially when objects are in close contact and numerical errors might occur.
+        By default `distance_threshold = 0.0`.
 
     Returns
     -------
