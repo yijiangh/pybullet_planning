@@ -170,16 +170,14 @@ def draw_ray(ray, ray_result=None, visible_color=GREEN, occluded_color=RED, **kw
 def get_body_from_pb_id(i):
     return p.getBodyUniqueId(i, physicsClientId=CLIENT)
 
-def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, line_color=YELLOW, \
-    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05])):
+def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_color=BLACK, line_color=YELLOW, \
+    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None):
     """[summary]
 
     Parameters
     ----------
     pb_closest_pt_output : [type]
         [description]
-    viz_last_duration : int, optional
-        [description], by default -1
     """
     from pybullet_planning.interfaces.env_manager.simulation import has_gui
     from pybullet_planning.interfaces.env_manager.user_io import HideOutput
@@ -189,6 +187,7 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, line_co
 
     if not has_gui() and pb_closest_pt_output:
         return
+    body_name_from_id = body_name_from_id or {}
     # if paint_all_others:
     #     set_all_bodies_color()
         # for b in obstacles:
@@ -199,8 +198,8 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, line_co
         b2 = get_body_from_pb_id(u_cr[2])
         l1 = u_cr[3]
         l2 = u_cr[4]
-        b1_name = get_name(b1)
-        b2_name = get_name(b2)
+        b1_name = body_name_from_id[b1] if b1 in body_name_from_id else get_name(b1)
+        b2_name = body_name_from_id[b2] if b2 in body_name_from_id else get_name(b2)
         l1_name = get_link_name(b1, l1)
         l2_name = get_link_name(b2, l2)
 
@@ -233,14 +232,17 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, line_co
         handles.append(draw_link_name(b2, l2))
 
         handles.append(add_line(u_cr[5], u_cr[6], color=line_color, width=5))
-        print('Penetration depth: {:.2E}'.format(get_distance(u_cr[5], u_cr[6])))
+        handles.extend(draw_point(u_cr[5], size=0.002, color=point_color))
+        handles.extend(draw_point(u_cr[6], size=0.002, color=point_color))
+        print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
+            get_distance(u_cr[5], u_cr[6]), *u_cr[5], *u_cr[6]))
         if focus_camera:
             camera_base_pt = u_cr[5]
             camera_pt = np.array(camera_base_pt) + camera_ray
             set_camera_pose(tuple(camera_pt), camera_base_pt)
 
         if viz_last_duration < 0:
-            wait_for_user()
+            wait_for_user('Visualize collision. Press Enter to continue.')
         else:
             wait_for_duration(viz_last_duration)
 
