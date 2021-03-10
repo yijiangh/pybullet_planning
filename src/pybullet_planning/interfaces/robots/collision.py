@@ -340,7 +340,7 @@ def get_collision_fn(body, joints, obstacles=[],
                     disabled_collisions={},
                     extra_disabled_collisions={},
                     custom_limits={},
-                    body_name_from_id=None, **kwargs):
+                    body_name_from_id=None, debug=False, **kwargs):
     """get collision checking function collision_fn(joint_values) -> bool.
 
     * Note: This function might be one of the most heavily used function in this suite and
@@ -394,10 +394,15 @@ def get_collision_fn(body, joints, obstacles=[],
             continue
         # prune the main body link adjacent to the attachment and the ones in ignored collisions
         # TODO: prune the link that's adjacent to the attach link as well?
-        # ? i.e. object attached to ee_tool_link, and ee geometry is attached to ee_base_link
-        at_check_links = [ml for ml in moving_links if ml != attached.parent_link and
-                                                       ((body, ml), (attached.child, BASE_LINK)) not in extra_disabled_collisions and
-                                                       ((attached.child, BASE_LINK), (body, ml)) not in extra_disabled_collisions]
+        # i.e. object attached to ee_tool_link, and ee geometry is attached to ee_base_link
+        # TODO add attached object's link might not be BASE_LINK (i.e. actuated tool)
+        # get_all_links
+        at_check_links = []
+        for ml in moving_links:
+            if ml != attached.parent_link and \
+                ((body, ml), (attached.child, BASE_LINK)) not in extra_disabled_collisions and \
+                ((attached.child, BASE_LINK), (body, ml)) not in extra_disabled_collisions:
+                at_check_links.append(ml)
         attach_check_pairs.append((at_check_links, attached.child))
     # * body pairs
     check_body_pairs = list(product(moving_bodies, obstacles))  # + list(combinations(moving_bodies, 2))
@@ -416,6 +421,19 @@ def get_collision_fn(body, joints, obstacles=[],
     # print('extra disabled: ', extra_disabled_collisions)
     # * joint limits
     lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
+
+    # from pybullet_planning.interfaces.robots.link import link_from_name
+    # from pybullet_planning.interfaces.robots.body import get_name
+    # from pybullet_planning.interfaces.robots.link import get_link_name
+    # if debug:
+    #     print('collision fn: moving bodies: ', moving_bodies)
+    #     print('collision fn: check_body_link_pairs')
+    #     for (b1, l1), (b2, l2) in check_body_link_pairs:
+    #         b1_name = body_name_from_id[b1] if b1 in body_name_from_id else get_name(b1)
+    #         b2_name = body_name_from_id[b2] if b2 in body_name_from_id else get_name(b2)
+    #         l1_name = get_link_name(b1, l1)
+    #         l2_name = get_link_name(b2, l2)
+    #         print('\t({}-{}), ({}-{})'.format(b1_name,l1_name,b2_name,l2_name))
 
     # TODO: maybe prune the link adjacent to the robot
     def collision_fn(q, diagnosis=False):

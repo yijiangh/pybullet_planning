@@ -125,9 +125,9 @@ def birrt(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
         collision checking function
         see `pybullet_planning.interfaces.robots.collision.get_collision_fn` for an example
     restarts : int, optional
-        [description], by default RRT_RESTARTS
+        planning attempts, by default RRT_RESTARTS
     iterations : int, optional
-        [description], by default RRT_ITERATIONS
+        RRT_connect iterations, by default RRT_ITERATIONS
     smooth : int, optional
         smoothing iterations, by default RRT_SMOOTHING
 

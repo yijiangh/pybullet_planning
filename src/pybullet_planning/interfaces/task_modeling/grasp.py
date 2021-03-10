@@ -13,7 +13,7 @@ class Attachment(object):
     def __init__(self, parent, parent_link, grasp_pose, child):
         self.parent = parent
         self.parent_link = parent_link
-        self.grasp_pose = grasp_pose
+        self.grasp_pose = grasp_pose # gripper_from_object
         self.child = child
         #self.child_link = child_link # child_link=BASE_LINK
     @property
