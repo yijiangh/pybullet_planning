@@ -171,7 +171,7 @@ def get_body_from_pb_id(i):
     return p.getBodyUniqueId(i, physicsClientId=CLIENT)
 
 def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_color=BLACK, line_color=YELLOW, \
-    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None):
+    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None, viz_all=False):
     """[summary]
 
     Parameters
@@ -256,3 +256,6 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
             remove_body(cloned_body2)
         else:
             set_color(b2, apply_alpha(WHITE, 0.5))
+
+        if not viz_all:
+            break
