@@ -340,7 +340,7 @@ def get_collision_fn(body, joints, obstacles=[],
                     disabled_collisions={},
                     extra_disabled_collisions={},
                     custom_limits={},
-                    body_name_from_id=None, debug=False, **kwargs):
+                    body_name_from_id=None, **kwargs):
     """get collision checking function collision_fn(joint_values) -> bool.
 
     * Note: This function might be one of the most heavily used function in this suite and

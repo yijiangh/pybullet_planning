@@ -12,7 +12,8 @@ class Saver(object):
         raise NotImplementedError()
     def __enter__(self):
         # TODO: move the saving to enter?
-        pass
+        # pass
+        return self
     def __exit__(self, type, value, traceback):
         self.restore()
 
