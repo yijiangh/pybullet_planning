@@ -232,8 +232,8 @@ def quat_angle_between(quat0, quat1): # quaternion_slerp
     return angle
 
 def all_between(lower_limits, values, upper_limits):
-    assert len(lower_limits) == len(values)
-    assert len(values) == len(upper_limits)
+    assert len(lower_limits) == len(values), 'lower limit {}, values {}'.format(lower_limits, values)
+    assert len(values) == len(upper_limits), 'upper limit {}, values {}'.format(upper_limits, values)
     return np.less_equal(lower_limits, values).all() and \
            np.less_equal(values, upper_limits).all()
 

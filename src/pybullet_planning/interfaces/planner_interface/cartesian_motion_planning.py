@@ -74,6 +74,7 @@ def plan_cartesian_motion(robot, first_joint, target_link, waypoint_poses,
     # TODO: plan a path without needing to following intermediate waypoints
 
     lower_limits, upper_limits = get_custom_limits(robot, get_movable_joints(robot), custom_limits)
+    # TODO might have problem in a dual-arm setting, where the two arms share the same first joint
     selected_links = get_link_subtree(robot, first_joint) # TODO: child_link_from_joint?
     selected_movable_joints = prune_fixed_joints(robot, selected_links)
     assert(target_link in selected_links)
@@ -149,6 +150,7 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     [type]
         [description]
     """
+    from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
 
     assert sample_ik_fn is not None, 'Sample fn must be specified!'
     # TODO sanity check samplers
@@ -199,8 +201,12 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         # if st_size == 0 or end_size == 0:
         #     print(ik_sols)
 
-        assert st_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(st_rung_id, graph.get_rungs_size())
-        assert end_size > 0, 'Ladder graph not valid: rung {}/{} is a zero size rung'.format(end_rung_id, graph.get_rungs_size())
+        if st_size == 0:
+            print('Ladder graph not valid: rung {}/{} is a zero size rung'.format(st_rung_id, graph.get_rungs_size()))
+            return None, None
+        if end_size == 0:
+            print('Ladder graph not valid: rung {}/{} is a zero size rung'.format(end_rung_id, graph.get_rungs_size()))
+            return None, None
 
         # TODO: preference_cost using pose deviation
         # fully-connected ladder graph
