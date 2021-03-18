@@ -126,7 +126,7 @@ def sub_inverse_kinematics(robot, first_joint, target_link, target_pose, **kwarg
 MAX_SAMPLE_ITER = int(1e4)
 
 def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, collision_fn=None, sample_ee_fn=None,
-    max_sample_ee_iter=MAX_SAMPLE_ITER, custom_vel_limits={}, ee_vel=None, jump_threshold={}, **kwargs):
+    max_sample_ee_iter=MAX_SAMPLE_ITER, ee_vel=None, jump_threshold=None, **kwargs):
     """ladder graph cartesian planning, better leveraging ikfast for sample_ik_fn
 
     Parameters
@@ -151,28 +151,32 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         [description]
     """
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
+    from pybullet_planning.interfaces.env_manager.savers import WorldSaver
 
     assert sample_ik_fn is not None, 'Sample fn must be specified!'
+    jump_threshold = jump_threshold or {}
+
     # TODO sanity check samplers
-    ik_sols = [[] for _ in range(len(waypoint_poses))]
-    for i, task_pose in enumerate(waypoint_poses):
-        candidate_poses = [task_pose]
-        if sample_ee_fn is not None:
-            # extra dof release, copy to reuse generator
-            current_ee_fn = copy(sample_ee_fn)
-            cnt = 0
-            for p in current_ee_fn(task_pose):
-                if cnt > max_sample_ee_iter:
-                    warnings.warn('EE dof release generator is called over {} times, likely that you forget to put an exit in the generator. ' + \
-                        'We stop generating here for you.')
-                    break
-                candidate_poses.append(p)
-                cnt += 1
-        for ee_pose in candidate_poses:
-            conf_list = sample_ik_fn(ee_pose)
-            if collision_fn is not None:
-                conf_list = [conf for conf in conf_list if conf and not collision_fn(conf, **kwargs)]
-            ik_sols[i].extend(conf_list)
+    with WorldSaver():
+        ik_sols = [[] for _ in range(len(waypoint_poses))]
+        for i, task_pose in enumerate(waypoint_poses):
+            candidate_poses = [task_pose]
+            if sample_ee_fn is not None:
+                # extra dof release, copy to reuse generator
+                current_ee_fn = copy(sample_ee_fn)
+                cnt = 0
+                for p in current_ee_fn(task_pose):
+                    if cnt > max_sample_ee_iter:
+                        warnings.warn('EE dof release generator is called over {} times, likely that you forget to put an exit in the generator. ' + \
+                            'We stop generating here for you.')
+                        break
+                    candidate_poses.append(p)
+                    cnt += 1
+            for ee_pose in candidate_poses:
+                conf_list = sample_ik_fn(ee_pose)
+                if collision_fn is not None:
+                    conf_list = [conf for conf in conf_list if conf and not collision_fn(conf, **kwargs)]
+                ik_sols[i].extend(conf_list)
 
     # assemble the ladder graph
     dof = len(joints)
@@ -185,8 +189,8 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
 
     joint_jump_threshold = []
     for joint in joints:
-        if joint in custom_vel_limits:
-            joint_jump_threshold.append(custom_vel_limits[joint])
+        if joint in jump_threshold:
+            joint_jump_threshold.append(jump_threshold[joint])
         else:
             joint_jump_threshold.append(INF)
 
