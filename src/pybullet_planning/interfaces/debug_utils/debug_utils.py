@@ -72,8 +72,7 @@ def add_body_name(body, name=None, **kwargs):
     from pybullet_planning.interfaces.env_manager.savers import PoseSaver
     from pybullet_planning.interfaces.robots.body import get_name
 
-    if name is None:
-        name = get_name(body)
+    name = name or get_name(body)
     with PoseSaver(body):
         set_pose(body, unit_pose())
         lower, upper = get_aabb(body)
@@ -89,9 +88,9 @@ def add_segments(points, closed=False, **kwargs):
         lines.append(add_line(points[-1], points[0], **kwargs))
     return lines
 
-def draw_link_name(body, link=BASE_LINK):
+def draw_link_name(body, link=BASE_LINK, name=None):
     from pybullet_planning.interfaces.robots.link import get_link_name
-    return add_text(get_link_name(body, link), position=(0, 0.2, 0),
+    return add_text(name or get_link_name(body, link), position=(0, 0.2, 0),
                     parent=body, parent_link=link)
 
 def draw_pose(pose, length=0.1, **kwargs):
@@ -214,24 +213,24 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
                 with HideOutput():
                     cloned_body1 = clone_body(b1, links=[l1] if get_links(b1) else None, collision=True, visual=False)
             except:
-                print('cloning (body #{}, link #{}) fails.'.format(b1_name, l1_name))
+                # print('cloning (body #{}, link #{}) fails.'.format(b1_name, l1_name))
                 clone1_fail = True
                 cloned_body1 = b1
             try:
                 with HideOutput():
                     cloned_body2 = clone_body(b2, links=[l2] if get_links(b2) else None, collision=True, visual=False)
             except:
-                print('cloning (body #{}, link #{}) fails.'.format(b2_name, l2_name))
+                # print('cloning (body #{}, link #{}) fails.'.format(b2_name, l2_name))
                 clone2_fail = True
                 cloned_body2 = b2
 
             set_color(cloned_body1, apply_alpha(RED, 0.2))
             set_color(cloned_body2, apply_alpha(GREEN, 0.2))
 
-            handles.append(add_body_name(b1))
-            handles.append(add_body_name(b2))
-            handles.append(draw_link_name(b1, l1))
-            handles.append(draw_link_name(b2, l2))
+            handles.append(add_body_name(b1, name=b1_name))
+            handles.append(add_body_name(b2, name=b2_name))
+            handles.append(draw_link_name(b1, l1, name=l1_name))
+            handles.append(draw_link_name(b2, l2, name=l2_name))
 
             handles.append(add_line(u_cr[5], u_cr[6], color=line_color, width=5))
             handles.extend(draw_point(u_cr[5], size=0.002, color=point_color))
@@ -260,4 +259,4 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
                 set_color(b2, apply_alpha(WHITE, 0.5))
 
         if not viz_all:
-            break
+            return
