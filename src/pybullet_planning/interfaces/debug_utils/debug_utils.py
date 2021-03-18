@@ -184,9 +184,9 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration
     from pybullet_planning.interfaces.robots.link import get_link_name, get_links
     from pybullet_planning.interfaces.robots.body import set_color, remove_body, clone_body, get_name
-
-    if not has_gui() and pb_closest_pt_output:
+    if not pb_closest_pt_output:
         return
+
     body_name_from_id = body_name_from_id or {}
     # if paint_all_others:
     #     set_all_bodies_color()
@@ -204,58 +204,60 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         l2_name = get_link_name(b2, l2)
 
         print('*'*10)
-        print('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2} Link #{3})'.format(
+        print('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
             b1_name, l1_name, b2_name, l2_name))
-        clone1_fail = False
-        clone2_fail = False
-        try:
-            with HideOutput():
-                cloned_body1 = clone_body(b1, links=[l1] if get_links(b1) else None, collision=True, visual=False)
-        except:
-            print('cloning (body #{}, link #{}) fails.'.format(b1_name, l1_name))
-            clone1_fail = True
-            cloned_body1 = b1
-        try:
-            with HideOutput():
-                cloned_body2 = clone_body(b2, links=[l2] if get_links(b2) else None, collision=True, visual=False)
-        except:
-            print('cloning (body #{}, link #{}) fails.'.format(b2_name, l2_name))
-            clone2_fail = True
-            cloned_body2 = b2
 
-        set_color(cloned_body1, apply_alpha(RED, 0.2))
-        set_color(cloned_body2, apply_alpha(GREEN, 0.2))
+        if has_gui():
+            clone1_fail = False
+            clone2_fail = False
+            try:
+                with HideOutput():
+                    cloned_body1 = clone_body(b1, links=[l1] if get_links(b1) else None, collision=True, visual=False)
+            except:
+                print('cloning (body #{}, link #{}) fails.'.format(b1_name, l1_name))
+                clone1_fail = True
+                cloned_body1 = b1
+            try:
+                with HideOutput():
+                    cloned_body2 = clone_body(b2, links=[l2] if get_links(b2) else None, collision=True, visual=False)
+            except:
+                print('cloning (body #{}, link #{}) fails.'.format(b2_name, l2_name))
+                clone2_fail = True
+                cloned_body2 = b2
 
-        handles.append(add_body_name(b1))
-        handles.append(add_body_name(b2))
-        handles.append(draw_link_name(b1, l1))
-        handles.append(draw_link_name(b2, l2))
+            set_color(cloned_body1, apply_alpha(RED, 0.2))
+            set_color(cloned_body2, apply_alpha(GREEN, 0.2))
 
-        handles.append(add_line(u_cr[5], u_cr[6], color=line_color, width=5))
-        handles.extend(draw_point(u_cr[5], size=0.002, color=point_color))
-        handles.extend(draw_point(u_cr[6], size=0.002, color=point_color))
-        print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
-            get_distance(u_cr[5], u_cr[6]), *u_cr[5], *u_cr[6]))
-        if focus_camera:
-            camera_base_pt = u_cr[5]
-            camera_pt = np.array(camera_base_pt) + camera_ray
-            set_camera_pose(tuple(camera_pt), camera_base_pt)
+            handles.append(add_body_name(b1))
+            handles.append(add_body_name(b2))
+            handles.append(draw_link_name(b1, l1))
+            handles.append(draw_link_name(b2, l2))
 
-        if viz_last_duration < 0:
-            wait_for_user('Visualize collision. Press Enter to continue.')
-        else:
-            wait_for_duration(viz_last_duration)
+            handles.append(add_line(u_cr[5], u_cr[6], color=line_color, width=5))
+            handles.extend(draw_point(u_cr[5], size=0.002, color=point_color))
+            handles.extend(draw_point(u_cr[6], size=0.002, color=point_color))
+            print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
+                get_distance(u_cr[5], u_cr[6]), *u_cr[5], *u_cr[6]))
+            if focus_camera:
+                camera_base_pt = u_cr[5]
+                camera_pt = np.array(camera_base_pt) + camera_ray
+                set_camera_pose(tuple(camera_pt), camera_base_pt)
 
-        # restore lines and colors
-        for h in handles: remove_debug(h)
-        if not clone1_fail :
-            remove_body(cloned_body1)
-        else:
-            set_color(b1, apply_alpha(WHITE, 0.5))
-        if not clone2_fail :
-            remove_body(cloned_body2)
-        else:
-            set_color(b2, apply_alpha(WHITE, 0.5))
+            if viz_last_duration < 0:
+                wait_for_user('Visualize collision. Press Enter to continue.')
+            else:
+                wait_for_duration(viz_last_duration)
+
+            # restore lines and colors
+            for h in handles: remove_debug(h)
+            if not clone1_fail :
+                remove_body(cloned_body1)
+            else:
+                set_color(b1, apply_alpha(WHITE, 0.5))
+            if not clone2_fail :
+                remove_body(cloned_body2)
+            else:
+                set_color(b2, apply_alpha(WHITE, 0.5))
 
         if not viz_all:
             break
