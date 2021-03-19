@@ -87,7 +87,7 @@ def set_joint_position(body, joint, value):
     p.resetJointState(body, joint, value, targetVelocity=0, physicsClientId=CLIENT)
 
 def set_joint_positions(body, joints, values):
-    assert len(joints) == len(values)
+    assert len(joints) == len(values), 'joints {} | values {}'.format(joints, values)
     for joint, value in zip(joints, values):
         set_joint_position(body, joint, value)
 
