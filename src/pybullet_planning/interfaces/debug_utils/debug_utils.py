@@ -257,6 +257,8 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
                 remove_body(cloned_body2)
             else:
                 set_color(b2, apply_alpha(WHITE, 0.5))
+        else:
+            wait_for_user('Collision diagnosis. Press Enter to continue.')
 
         if not viz_all:
             return
