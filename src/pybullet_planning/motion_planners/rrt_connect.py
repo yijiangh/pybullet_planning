@@ -3,7 +3,7 @@ import time
 from itertools import takewhile
 from .smoothing import smooth_path
 from .rrt import TreeNode, configs
-from .utils import irange, argmin, RRT_ITERATIONS, RRT_RESTARTS, RRT_SMOOTHING, INF, elapsed_time, negate
+from .utils import irange, argmin, RRT_ITERATIONS, RRT_RESTARTS, RRT_SMOOTHING, INF, negate, elapsed_time
 
 __all__ = [
     'rrt_connect',

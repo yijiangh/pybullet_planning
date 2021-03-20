@@ -1,9 +1,12 @@
 import os
+import time
 import platform
 import math
 import inspect
 import signal
 from contextlib import contextmanager
+import pstats
+import cProfile
 
 from .shared_const import INF
 
@@ -53,6 +56,9 @@ def get_memory_in_kb():
     #print(psutil.swap_memory())
     #print(psutil.pids())
 
+def elapsed_time(start_time):
+    return time.time() - start_time
+
 def raise_timeout(signum, frame):
     raise TimeoutError()
 
@@ -89,3 +95,13 @@ def timeout(duration):
         # Unregister the signal so it won't be triggered
         # if the timeout is not reached
         signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+#######################################
+
+@contextmanager
+def profiler(field='tottime', num=10):
+    pr = cProfile.Profile()
+    pr.enable()
+    yield
+    pr.disable()
+    pstats.Stats(pr).sort_stats(field).print_stats(num) # cumtime | tottime

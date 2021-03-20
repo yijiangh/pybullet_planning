@@ -58,9 +58,6 @@ class HideOutput(object):
 
 #####################################
 
-def elapsed_time(start_time):
-    return time.time() - start_time
-
 MouseEvent = namedtuple('MouseEvent', ['eventType', 'mousePosX', 'mousePosY', 'buttonIndex', 'buttonState'])
 
 def get_mouse_events():
@@ -79,6 +76,7 @@ def update_viewer():
 
 
 def wait_for_duration(duration): #, dt=0):
+    from pybullet_planning.utils.debug_utils import elapsed_time
     t0 = time.time()
     while elapsed_time(t0) <= duration:
         update_viewer()

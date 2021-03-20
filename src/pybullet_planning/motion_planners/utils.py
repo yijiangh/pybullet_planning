@@ -1,6 +1,8 @@
+import numpy as np
 from random import shuffle
 from itertools import islice
 import time
+from pybullet_planning.interfaces.env_manager.pose_transformation import get_unit_vector
 
 INF = float('inf')
 
@@ -63,6 +65,51 @@ def enum(*sequential, **named):
     enums['names'] = sorted(enums.keys(), key=lambda k: enums[k])
     return type('Enum', (), enums)
 
-
 def elapsed_time(start_time):
     return time.time() - start_time
+
+######################################
+
+def inf_sequence():
+    return iter(int, 1)
+
+
+def compute_path_cost(path, cost_fn):
+    if path is None:
+        return INF
+    return sum(cost_fn(*pair) for pair in pairs(path))
+
+
+def remove_redundant(path, tolerance=1e-3):
+    assert path
+    new_path = [path[0]]
+    for conf in path[1:]:
+        difference = np.array(new_path[-1]) - np.array(conf)
+        if not np.allclose(np.zeros(len(difference)), difference, atol=tolerance, rtol=0):
+            new_path.append(conf)
+    return new_path
+
+
+def waypoints_from_path(path, tolerance=1e-3):
+    path = remove_redundant(path, tolerance=tolerance)
+    if len(path) < 2:
+        return path
+    difference_fn = lambda q2, q1: np.array(q2) - np.array(q1)
+    #difference_fn = get_difference_fn(body, joints)
+
+    waypoints = [path[0]]
+    last_conf = path[1]
+    last_difference = get_unit_vector(difference_fn(last_conf, waypoints[-1]))
+    for conf in path[2:]:
+        difference = get_unit_vector(difference_fn(conf, waypoints[-1]))
+        if not np.allclose(last_difference, difference, atol=tolerance, rtol=0):
+            waypoints.append(last_conf)
+            difference = get_unit_vector(difference_fn(conf, waypoints[-1]))
+        last_conf = conf
+        last_difference = difference
+    waypoints.append(last_conf)
+    return waypoints
+
+
+def convex_combination(x, y, w=0.5):
+    return (1-w)*np.array(x) + w*np.array(y)

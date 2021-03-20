@@ -123,6 +123,9 @@ def unit_pose():
 def get_length(vec, norm=2):
     return np.linalg.norm(vec, ord=norm)
 
+def get_delta(q1, q2):
+    return np.array(q2) - np.array(q1)
+
 def get_difference(p1, p2):
     return np.array(p2) - np.array(p1)
 
