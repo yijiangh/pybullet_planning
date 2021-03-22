@@ -134,35 +134,36 @@ def test_motion_planner(viewer):
     num_restarts=1
     max_time=0.1
     np.set_printoptions(precision=3)
+    pass
 
-    connect(use_gui=viewer)
-    create_plane(color=[0.8,0.8,0.8])
-    set_camera_pose(camera_point=np.array([0.5,0.5,2]))
-    draw_pose(unit_pose())
-    # step_simulation()
+    # connect(use_gui=viewer)
+    # create_plane(color=[0.8,0.8,0.8])
+    # set_camera_pose(camera_point=np.array([0.5,0.5,2]))
+    # draw_pose(unit_pose())
+    # # step_simulation()
 
-    h = 0.1
-    base_z = h/2
-    obstacles = [
-        create_aabb_box(center=(.35, .75, base_z), extents=(.25, .25, h)),
-        create_aabb_box(center=(.75, .35, base_z), extents=(.225, .225, h)),
-        create_aabb_box(center=(.5, .5, base_z), extents=(.225, .225, h)),
-    ]
+    # h = 0.1
+    # base_z = h/2
+    # obstacles = [
+    #     create_aabb_box(center=(.35, .75, base_z), extents=(.25, .25, h)),
+    #     create_aabb_box(center=(.75, .35, base_z), extents=(.225, .225, h)),
+    #     create_aabb_box(center=(.5, .5, base_z), extents=(.225, .225, h)),
+    # ]
 
-    # TODO: alternate sampling from a mix of regions
-    regions = {
-        'env':   create_aabb_box(center=(.5, .5, base_z), extents=(1., 1., h)),
-        'green': create_aabb_box(center=(.8, .8, base_z), extents=(.1, .1, h)),
-    }
+    # # TODO: alternate sampling from a mix of regions
+    # regions = {
+    #     'env':   create_aabb_box(center=(.5, .5, base_z), extents=(1., 1., h)),
+    #     'green': create_aabb_box(center=(.8, .8, base_z), extents=(.1, .1, h)),
+    # }
 
-    start = np.array([0., 0.])
-    goal = 'green'
-    if isinstance(goal, str) and (goal in regions):
-        goal = get_aabb_center(regions[goal])
-    else:
-        goal = np.array([1., 1., 0])
-    viewer = draw_environment(obstacles, regions)
-    wait_for_user()
+    # start = np.array([0., 0.])
+    # goal = 'green'
+    # if isinstance(goal, str) and (goal in regions):
+    #     goal = get_aabb_center(regions[goal])
+    # else:
+    #     goal = np.array([1., 1., 0])
+    # viewer = draw_environment(obstacles, regions)
+    # wait_for_user()
 
     #########################
 

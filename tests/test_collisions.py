@@ -2,6 +2,7 @@ import os
 import sys
 import pytest
 import numpy as np
+from termcolor import cprint
 from pybullet_planning import BASE_LINK
 from pybullet_planning import load_pybullet, connect, wait_for_user, LockRenderer, has_gui, WorldSaver, HideOutput, \
     reset_simulation, disconnect, set_camera_pose, has_gui
@@ -11,7 +12,7 @@ from pybullet_planning import create_obj, create_attachment, Attachment
 from pybullet_planning import link_from_name, get_link_pose, get_moving_links, get_link_name, get_disabled_collisions, \
     get_body_body_disabled_collisions, has_link, are_links_adjacent
 from pybullet_planning import get_num_joints, get_joint_names, get_movable_joints, set_joint_positions, joint_from_name
-from pybullet_planning import dump_world, set_pose
+from pybullet_planning import dump_world, set_pose, unit_pose
 from pybullet_planning import get_collision_fn, get_floating_body_collision_fn, expand_links
 
 
@@ -40,10 +41,15 @@ def obstacle_obj_path():
     here = os.path.dirname(__file__)
     return os.path.join(here, 'test_data', 'box_obstacle.obj')
 
-# @pytest.fixture
-# def collision_diagnosis():
-#     return True
-#     # return False
+@pytest.fixture
+def convex_collision_objects():
+    here = os.path.dirname(__file__)
+    test_dir = os.path.join(here, 'test_data')
+    link_4_group = os.path.join(test_dir, 'link_4.obj')
+    link_4_export = os.path.join(test_dir, 'link_4_export.obj')
+    link_4_unified = os.path.join(test_dir, 'link_4_unified.obj')
+    link_4_collider = os.path.join(test_dir, 'link_4_collider.obj')
+    return link_4_group, link_4_export, link_4_unified, link_4_collider
 
 def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_path, obstacle_obj_path):
     connect(use_gui=viewer)
@@ -123,8 +129,8 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                     attachments=attachments, self_collisions=True,
                                     disabled_collisions=self_collision_links)
     conf = [-1.029744, -1.623156, 2.844887, -0.977384, 1.58825, 0.314159]
-    with pytest.warns(UserWarning, match='moving body link - moving body link collision'):
-        assert collision_fn(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body link - moving body link collision'):
+    assert collision_fn(conf, diagnosis=has_gui())
 
     print('#'*10)
     print('robot links - holding attachment self-collision')
@@ -133,8 +139,8 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                     disabled_collisions=self_collision_links,
                                     extra_disabled_collisions=extra_disabled_collisions)
     conf = [0.03500, -2.26900, 2.44300, 1.117, 1.6579, 0.105]
-    with pytest.warns(UserWarning, match='moving body link - attachement collision'):
-        assert collision_fn(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body link - attachement collision'):
+    assert collision_fn(conf, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -144,8 +150,8 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                     disabled_collisions=self_collision_links,
                                     extra_disabled_collisions=extra_disabled_collisions)
     conf = [-0.105, -0.76800000000000002, 1.292, -0.61099999999999999, 1.484, 0.105]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -155,8 +161,8 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                     disabled_collisions=self_collision_links,
                                     extra_disabled_collisions=extra_disabled_collisions)
     conf = [-0.17499999999999999, -3.194, 0.33200000000000002, -1.6579999999999999, 1.431, 0.105]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -166,8 +172,8 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                     disabled_collisions=self_collision_links,
                                     extra_disabled_collisions=extra_disabled_collisions)
     conf = [-2.8100000000000001, -1.484, -1.9199999999999999, -1.6579999999999999, 1.431, 0.105]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -177,8 +183,8 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                     disabled_collisions=self_collision_links,
                                     extra_disabled_collisions=extra_disabled_collisions)
     conf = [-0.17499999999999999, -2.4780000000000002, 0.33200000000000002, -1.6579999999999999, 1.431, 0.105]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
     print('\n')
 
     # * collision checking exoneration
@@ -187,7 +193,7 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
     collision_fn = get_collision_fn(robot, ik_joints, obstacles=[],
                                     attachments=[], self_collisions=False)
     conf = [-1.029744, -1.623156, 2.844887, -0.977384, 1.58825, 0.314159]
-    assert not collision_fn(conf, diagnosis=True)
+    assert not collision_fn(conf, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -204,9 +210,9 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                                   (box_body, BASE_LINK))]),
                                             )
     conf = [-3.2639999999999998, -2.6880000000000002, -0.85499999999999998, -1.536, 3.0369999999999999, -0.070000000000000007]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
-    assert not collision_fn_disable(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
+    assert not collision_fn_disable(conf, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -224,9 +230,9 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                                   (workspace, link_from_name(workspace, 'MIT_3412_robot_base_plate')))]),
                                             )
     conf = [-3.0019999999999998, -1.8680000000000001, 0.33200000000000002, -1.6579999999999999, 1.431, 0.105]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
-    assert not collision_fn_disable(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
+    assert not collision_fn_disable(conf, diagnosis=has_gui())
     set_pose(workspace, Pose(point=(0,0,0)))
     print('\n')
 
@@ -243,9 +249,9 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                                         [((ee_attach.child, BASE_LINK), (box_body, BASE_LINK))]),
                                             )
     conf = [-3.0369999999999999, -1.6060000000000001, -1.99, -0.92500000000000004, 1.78, 0.105]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
-    assert not collision_fn_disable(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
+    assert not collision_fn_disable(conf, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -262,9 +268,9 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
                                                           (ee_attach.child, BASE_LINK))]),
                                             )
     conf = [-2.8450000000000002, -2.1469999999999998, -1.99, -0.92500000000000004, 1.78, 0.105]
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert collision_fn(conf, diagnosis=True)
-    assert not collision_fn_disable(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert collision_fn(conf, diagnosis=has_gui())
+    assert not collision_fn_disable(conf, diagnosis=has_gui())
     print('\n')
 
     # * joint value overflow checking & exoneration
@@ -276,12 +282,11 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
     collision_fn = get_collision_fn(robot, ik_joints)
     collision_fn_disable = get_collision_fn(robot, ik_joints, custom_limits=custom_limits)
     conf = [-7.8450000000000002, -2.1469999999999998, -7.99, -0.92500000000000004, 1.78, 0.105]
-    with pytest.warns(UserWarning, match='joint limit violation!'):
-        assert collision_fn(conf, diagnosis=True)
-    assert not collision_fn_disable(conf, diagnosis=True)
+    # with pytest.warns(UserWarning, match='joint limit violation!'):
+    assert collision_fn(conf, diagnosis=has_gui())
+    assert not collision_fn_disable(conf, diagnosis=has_gui())
     print('\n')
 
-@pytest.mark.wip
 def test_floating_collsion_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_path, obstacle_obj_path):
     connect(use_gui=viewer)
     with HideOutput():
@@ -316,9 +321,9 @@ def test_floating_collsion_fn(viewer, robot_path, ee_path, workspace_path, attac
     fb_collision_fn_disable = get_floating_body_collision_fn(ee_body, obstacles=[box_body],
                                                      attachments=[], disabled_collisions=
                                                      {((box_body, BASE_LINK), (ee_body, BASE_LINK))})
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert fb_collision_fn(world_from_tool0, diagnosis=True)
-    assert not fb_collision_fn_disable(world_from_tool0, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert fb_collision_fn(world_from_tool0, diagnosis=has_gui())
+    assert not fb_collision_fn_disable(world_from_tool0, diagnosis=has_gui())
     print('\n')
 
     print('#'*10)
@@ -332,7 +337,40 @@ def test_floating_collsion_fn(viewer, robot_path, ee_path, workspace_path, attac
                                                      attachments=[], disabled_collisions=
                                                      {((workspace, link_from_name(workspace, 'MIT_3412_fab_table')),
                                                        (ee_body, BASE_LINK))})
-    with pytest.warns(UserWarning, match='moving body - body collision!'):
-        assert fb_collision_fn(world_from_tool0, diagnosis=True)
-    assert not fb_collision_fn_disable(world_from_tool0, diagnosis=True)
+    # with pytest.warns(UserWarning, match='moving body - body collision!'):
+    assert fb_collision_fn(world_from_tool0, diagnosis=has_gui())
+    assert not fb_collision_fn_disable(world_from_tool0, diagnosis=has_gui())
     print('\n')
+
+
+@pytest.mark.convex_collision
+def test_convex_collision(convex_collision_objects, viewer):
+    link_4_group, link_4_export, link_4_unified, link_4_collider = convex_collision_objects
+    connect(use_gui=viewer)
+    with HideOutput():
+        group_body = create_obj(link_4_group)
+        export_body = create_obj(link_4_export)
+        unified_body = create_obj(link_4_unified)
+        collider_body = create_obj(link_4_collider)
+    # dump_world()
+
+    # * VHACD exported
+    cprint('VHACD exported')
+    fb_collision_fn = get_floating_body_collision_fn(collider_body, obstacles=[group_body],
+                                                     attachments=[], disabled_collisions=[])
+    assert not fb_collision_fn(unit_pose(), diagnosis=has_gui())
+    cprint('Decomposed, convexified objects exported as individual objects in one file not in collision.', 'green')
+
+    # * Rhino exported, wrong settings
+    cprint('rhino exported, wrong setting')
+    fb_collision_fn = get_floating_body_collision_fn(collider_body, obstacles=[export_body],
+                                                     attachments=[], disabled_collisions=[])
+    assert fb_collision_fn(unit_pose(), diagnosis=has_gui())
+    cprint('Convexified object concatenated in one file in collision. (without`o xxx` as separator)', 'red')
+
+    cprint('unified mesh')
+    fb_collision_fn = get_floating_body_collision_fn(collider_body, obstacles=[unified_body],
+                                                     attachments=[], disabled_collisions=[])
+    assert fb_collision_fn(unit_pose(), diagnosis=has_gui())
+    cprint('Concave object will be auto-convexified as one object in collision.', 'red')
+

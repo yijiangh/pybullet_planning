@@ -425,7 +425,7 @@ def get_collision_fn(body, joints, obstacles=[],
         # * joint limit check
         if not all_between(lower_limits, q, upper_limits):
             if diagnosis:
-                warnings.warn('joint limit violation!', UserWarning)
+                # warnings.warn('joint limit violation!', UserWarning)
                 cr = np.less_equal(q, lower_limits), np.less_equal(upper_limits, q)
                 print('joint limit violation : {} / {}'.format(cr[0], cr[1]))
                 for i, (cr_l, cr_u) in enumerate(zip(cr[0], cr[1])):
@@ -442,7 +442,7 @@ def get_collision_fn(body, joints, obstacles=[],
         for link1, link2 in self_check_link_pairs:
             if pairwise_link_collision(body, link1, body, link2):
                 if diagnosis:
-                    warnings.warn('moving body link - moving body link collision!', UserWarning)
+                    # warnings.warn('moving body link - moving body link collision!', UserWarning)
                     cr = pairwise_link_collision_info(body, link1, body, link2)
                     draw_collision_diagnosis(cr, body_name_from_id=body_name_from_id)
                 return True
@@ -450,7 +450,7 @@ def get_collision_fn(body, joints, obstacles=[],
         for body_check_links, attached_body in attach_check_pairs:
             if any_link_pair_collision(body, body_check_links, attached_body, **kwargs):
                 if diagnosis:
-                    warnings.warn('moving body link - attachement collision!', UserWarning)
+                    # warnings.warn('moving body link - attachement collision!', UserWarning)
                     cr = any_link_pair_collision_info(body, body_check_links, attached_body, **kwargs)
                     draw_collision_diagnosis(cr, body_name_from_id=body_name_from_id)
                 return True
@@ -458,7 +458,7 @@ def get_collision_fn(body, joints, obstacles=[],
         for (body1, link1), (body2, link2) in check_body_link_pairs:
             if pairwise_link_collision(body1, link1, body2, link2, **kwargs):
                 if diagnosis:
-                    warnings.warn('moving body - body collision!', UserWarning)
+                    # warnings.warn('moving body - body collision!', UserWarning)
                     cr = pairwise_link_collision_info(body1, link1, body2, link2)
                     draw_collision_diagnosis(cr, body_name_from_id=body_name_from_id)
                 return True
@@ -515,7 +515,7 @@ def get_floating_body_collision_fn(body, obstacles=[], attachments=[], disabled_
         for (body1, link1), (body2, link2) in check_body_link_pairs:
             if pairwise_link_collision(body1, link1, body2, link2, **kwargs):
                 if diagnosis:
-                    warnings.warn('moving body - body collision!', UserWarning)
+                    # warnings.warn('moving body - body collision!', UserWarning)
                     cr = pairwise_link_collision_info(body1, link1, body2, link2)
                     draw_collision_diagnosis(cr)
                 return True
