@@ -126,7 +126,7 @@ def sub_inverse_kinematics(robot, first_joint, target_link, target_pose, **kwarg
 MAX_SAMPLE_ITER = int(1e4)
 
 def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, collision_fn=None, sample_ee_fn=None,
-    max_sample_ee_iter=MAX_SAMPLE_ITER, ee_vel=None, jump_threshold=None, **kwargs):
+    max_sample_ee_iter=MAX_SAMPLE_ITER, jump_threshold=None, **kwargs):
     """ladder graph cartesian planning, better leveraging ikfast for sample_ik_fn
 
     Parameters
@@ -154,7 +154,6 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     from pybullet_planning.interfaces.env_manager.savers import WorldSaver
 
     assert sample_ik_fn is not None, 'Sample fn must be specified!'
-    jump_threshold = jump_threshold or {}
 
     # TODO sanity check samplers
     with WorldSaver():
@@ -187,12 +186,12 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     for pt_id, ik_confs_pt in enumerate(ik_sols):
         graph.assign_rung(pt_id, ik_confs_pt)
 
-    joint_jump_threshold = []
-    for joint in joints:
-        if joint in jump_threshold:
-            joint_jump_threshold.append(jump_threshold[joint])
-        else:
-            joint_jump_threshold.append(INF)
+    joint_jump_threshold = None
+    if jump_threshold:
+        joint_jump_threshold = []
+        for joint in joints:
+            if joint in jump_threshold:
+                joint_jump_threshold.append(jump_threshold[joint])
 
     # build edges within current pose family
     for i in range(graph.get_rungs_size()-1):
@@ -224,9 +223,10 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
                 edge_builder.consider(jt1_list[st_jt_id : st_jt_id+dof], jt2_list[end_jt_id : end_jt_id+dof], j)
             edge_builder.next(k)
 
-        # print(edge_builder.max_dtheta_)
-        # print(edge_builder.edge_scratch_)
-        # print(edge_builder.result)
+        # print('({}) rung'.format(i))
+        # print('max_dtheta_: ', edge_builder.max_dtheta_)
+        # print('edge_scratch_: ', edge_builder.edge_scratch_)
+        # print('result: ', edge_builder.result)
         # TODO: more report information here
         if not edge_builder.has_edges:
             print('Ladder graph: no edge built between {}-{} | joint threshold: {}, max delta jt: {}'.format(
@@ -241,7 +241,6 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     st_graph = LadderGraph(graph.dof)
     st_graph.resize(1)
     st_graph.assign_rung(0, [start_conf])
-    # TODO: upper_tim here
     unified_graph = append_ladder_graph(st_graph, graph, jump_threshold=joint_jump_threshold)
     if unified_graph is None:
         return None, None
@@ -255,6 +254,6 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
     del path[0]
 
     assert len(path) == len(waypoint_poses)
-    if len(path) == 0:
+    if len(path) == 0 or min_cost == np.inf:
         return None, None
     return path, min_cost

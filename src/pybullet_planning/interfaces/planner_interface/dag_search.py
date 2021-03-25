@@ -63,19 +63,23 @@ class DAGSearch(object):
             n_verts = self.graph.get_rung_vert_size(r_id)
             next_r_id = r_id + 1
             # for each vert in the out edge list
-            max_rung_cost = np.inf
+            # min_rung_cost = np.inf
             for v_id in range(n_verts):
                 u_cost = self.distance(r_id, v_id)
+                # outgoing edges
                 edges = self.graph.get_edges(r_id)[v_id]
+                # find the minimal distance edge in all the outgoing edges from v_id
                 dv = np.inf
                 for edge in edges:
                     dv = u_cost + edge.cost
+                    # print('out v# ', edge.idx, ', dist ', self.distance(next_r_id, edge.idx), ', dv: ', dv)
                     if dv < self.distance(next_r_id, edge.idx):
                         self.solution[next_r_id].distance[edge.idx] = dv
                         self.solution[next_r_id].predecessor[edge.idx] = v_id
-                if dv < max_rung_cost:
-                    max_rung_cost = dv
-            # print('Rung #{}: {}'.format(r_id, max_rung_cost))
+                    # update the minimal distance for the current rung
+                    # if dv < min_rung_cost:
+                    #     min_rung_cost = dv
+            # print('Rung #{}: {}'.format(r_id, min_rung_cost))
 
         return min(self.solution[-1].distance)
 

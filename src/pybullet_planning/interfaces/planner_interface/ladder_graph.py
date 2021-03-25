@@ -1,8 +1,10 @@
 from copy import deepcopy
 import numpy as np
 
+DEFAULT_DTHETA = np.pi
+
 class LadderGraphEdge(object):
-    def __init__(self, idx=None, cost=-np.inf):
+    def __init__(self, idx=None, cost=np.inf):
         self.idx = idx # the id of the destination vert
         self.cost = cost
         # TODO: we ignore the timing constraint here
@@ -12,11 +14,11 @@ class LadderGraphEdge(object):
 
 
 class LadderGraphRung(object):
-    def __init__(self, id=None, data=[], edges=[]):
+    def __init__(self, id=None, data=None, edges=None):
         self.id = id
         # joint_data: joint values are stored in one contiguous list
-        self.data = data
-        self.edges = edges
+        self.data = data or []
+        self.edges = edges or []
 
     def __repr__(self):
         return 'id {0}, data {1}, edge num {2}'.format(self.id, len(self.data), len(self.edges))
@@ -103,17 +105,17 @@ class LadderGraph(object):
 class EdgeBuilder(object):
     """edge builder for ladder graph, construct edges for fully connected biparte graph"""
     def __init__(self, n_start, n_end, dof, jump_threshold=None, preference_cost=1.0):
-        self.result_edges_ = [[] for i in range(n_start)]
+        self.result_edges_ = [[] for _ in range(n_start)]
         # self.edge_scratch_ = [LadderGraphEdge(idx=None, cost=None) for i in range(n_end)] # preallocated space to work on
         self.edge_scratch_ = []
         self.dof_ = dof
         # self.count_ = 0
         self.preference_cost = preference_cost
         self.delta_jt_ = np.zeros(self.dof_)
-        self.max_dtheta_ = np.array([np.inf for _ in range(self.dof_)])
-        if jump_threshold is not None:
-            for i in range(self.dof_):
-                self.max_dtheta_[i] = jump_threshold[i]
+        # * default dtheta
+        self.max_dtheta_ = [DEFAULT_DTHETA for _ in range(self.dof_)] if not jump_threshold else\
+            [jump_threshold[i] for i in range(self.dof_)]
+
         # if upper_tm is not None and joint_vel_limits is not None:
         #     assert upper_tm > 0
         #     for i in range(self.dof_):
@@ -203,6 +205,11 @@ def append_ladder_graph(current_graph, next_graph, jump_threshold=None): #upper_
     if not edge_builder.has_edges:
         print('Append ladder graph fails: no edge built between {}-{}'.format(cur_size-1, cur_size))
         return None
+
+    # print('====')
+    # print('max_dtheta_: ', edge_builder.max_dtheta_)
+    # print('edge_scratch_: ', edge_builder.edge_scratch_)
+    # print('result: ', edge_builder.result)
 
     edges_list = edge_builder.result
     current_graph.assign_edges(cur_size - 1, edges_list)
