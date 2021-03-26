@@ -205,6 +205,8 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         print('*'*10)
         print('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
             b1_name, l1_name, b2_name, l2_name))
+        print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
+            get_distance(u_cr[5], u_cr[6]), *u_cr[5], *u_cr[6]))
 
         if has_gui():
             clone1_fail = False
@@ -235,8 +237,6 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
             handles.append(add_line(u_cr[5], u_cr[6], color=line_color, width=5))
             handles.extend(draw_point(u_cr[5], size=0.002, color=point_color))
             handles.extend(draw_point(u_cr[6], size=0.002, color=point_color))
-            print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
-                get_distance(u_cr[5], u_cr[6]), *u_cr[5], *u_cr[6]))
             if focus_camera:
                 camera_base_pt = u_cr[5]
                 camera_pt = np.array(camera_base_pt) + camera_ray
