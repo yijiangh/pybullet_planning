@@ -254,7 +254,7 @@ def vertices_from_link(body, link):
     return vertices
 
 def vertices_from_rigid(body, link=BASE_LINK):
-    """compute all vertices of given body
+    """get all vertices of given body
 
     Parameters
     ----------
@@ -277,20 +277,25 @@ def vertices_from_rigid(body, link=BASE_LINK):
     from pybullet_planning.interfaces.env_manager import get_model_info
     from pybullet_planning.interfaces.geometry.mesh import read_obj
     from pybullet_planning.interfaces.robots.link import get_num_links
-    assert implies(link == BASE_LINK, get_num_links(body) == 0)
+    assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
     try:
         vertices = vertices_from_link(body, link)
     except RuntimeError:
-        info = get_model_info(body)
-        assert info is not None
-        _, ext = os.path.splitext(info.path)
-        if ext == '.obj':
-            if info.path not in OBJ_MESH_CACHE:
-                OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
-            mesh = OBJ_MESH_CACHE[info.path]
-            vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
-        else:
-            raise NotImplementedError(ext)
+        vertices = []
+        for data in get_collision_data(body, link):
+            # this will return the convexified objects
+            mesh_data = p.getMeshData(body, link, collisionShapeIndex=data.object_unique_id, flags=p.MESH_DATA_SIMULATION_MESH)
+            vertices.extend(mesh_data[1])
+        # info = get_model_info(body)
+        # assert info is not None
+        # _, ext = os.path.splitext(info.path)
+        # if ext == '.obj':
+        #     if info.path not in OBJ_MESH_CACHE:
+        #         OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
+        #     mesh = OBJ_MESH_CACHE[info.path]
+        #     vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
+        # else:
+        #     raise NotImplementedError(ext)
     return vertices
 
 def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):

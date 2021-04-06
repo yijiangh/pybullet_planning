@@ -65,6 +65,8 @@ def get_connected_components(vertices, edges):
             clusters.append(frozenset(cluster))
     return clusters
 
+# TODO consider using: https://github.com/nschloe/meshio ?
+# ! doesn't work if there's no line starts with 'o'
 def read_obj(path, decompose=True):
     mesh = Mesh([], [])
     meshes = {}

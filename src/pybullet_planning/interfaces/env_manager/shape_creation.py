@@ -318,12 +318,16 @@ def vertices_from_data(data):
         aabb = AABB(-half_extents, +half_extents)
         vertices = get_aabb_vertices(aabb)
     elif geometry_type == p.GEOM_MESH:
-        from pybullet_planning.interfaces.geometry.mesh import read_obj
+        from pybullet_planning.interfaces.geometry.mesh import Mesh, read_obj
+        import meshio
         filename, scale = get_data_filename(data), get_data_scale(data)
-        if filename == UNKNOWN_FILE:
-            raise RuntimeError(filename)
-        mesh = read_obj(filename, decompose=False)
-        vertices = [scale*np.array(vertex) for vertex in mesh.vertices]
+        if filename != UNKNOWN_FILE:
+            mio_mesh = meshio.read(filename)
+            mesh = Mesh(list(mio_mesh.points), list([list(cell_group.data) for cell_group in mio_mesh.cells]))
+            # mesh = read_obj(filename, decompose=False)
+            vertices = [scale*np.array(vertex) for vertex in mesh.vertices]
+        else:
+            raise RuntimeError('Unknown file from data {}'.format(data))
         # TODO: could compute AABB here for improved speed at the cost of being conservative
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]

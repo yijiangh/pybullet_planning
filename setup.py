@@ -27,6 +27,7 @@ requirements = [
     'ghalton',
     'recordclass',
     'psutil',
+    'meshio>=4.3.11',
 ]
 keywords_list = ['robotic planning', 'pybullet']
 
