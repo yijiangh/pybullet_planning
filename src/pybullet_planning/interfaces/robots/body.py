@@ -250,11 +250,12 @@ def vertices_from_link(body, link):
     #    vertices.extend(vertices_from_data(data))
     # Pybullet creates multiple collision elements (with unknown_file) when noncovex
     for data in get_collision_data(body, link):
+        # the current pose transformation is done within `vertices_from_data`
         vertices.extend(vertices_from_data(data))
     return vertices
 
 def vertices_from_rigid(body, link=BASE_LINK):
-    """get all vertices of given body
+    """get all vertices of given body in its current pose.
 
     Parameters
     ----------
@@ -274,10 +275,11 @@ def vertices_from_rigid(body, link=BASE_LINK):
         only supports body created from a `.obj` file
     """
     import os
+    from pybullet_planning.interfaces.env_manager.pose_transformation import get_pose
     from pybullet_planning.interfaces.env_manager import get_model_info
     from pybullet_planning.interfaces.geometry.mesh import read_obj
     from pybullet_planning.interfaces.robots.link import get_num_links
-    assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
+    # assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
     try:
         vertices = vertices_from_link(body, link)
     except RuntimeError:
@@ -286,6 +288,8 @@ def vertices_from_rigid(body, link=BASE_LINK):
             # this will return the convexified objects
             mesh_data = p.getMeshData(body, link, collisionShapeIndex=data.object_unique_id, flags=p.MESH_DATA_SIMULATION_MESH)
             vertices.extend(mesh_data[1])
+        vertices = apply_affine(get_pose(body), vertices)
+        # ! archived method for getting vertices from the mesh_cache
         # info = get_model_info(body)
         # assert info is not None
         # _, ext = os.path.splitext(info.path)
