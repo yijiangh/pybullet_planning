@@ -329,6 +329,11 @@ def vertices_from_data(data):
         else:
             raise RuntimeError('Unknown file from data {}'.format(data))
         # TODO: could compute AABB here for improved speed at the cost of being conservative
+
+        # mesh_data = p.getMeshData(data.object_unique_id, data.linkIndex, collisionShapeIndex=data.object_unique_id,
+        #     flags=p.MESH_DATA_SIMULATION_MESH)
+        # vertices = mesh_data[1]
+
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]
     else:
@@ -426,6 +431,17 @@ def get_data_filename(data):
             else data.meshAssetFileName).decode(encoding='UTF-8')
 
 def get_data_pose(data):
+    """Get the local frame pose of the original shape.
+
+    Parameters
+    ----------
+    data : CollisionShapeData
+        usually the return of `get_collision_data`
+
+    Returns
+    -------
+    Pose
+    """
     if isinstance(data, CollisionShapeData):
         return (data.local_frame_pos, data.local_frame_orn)
     return (data.localVisualFrame_position, data.localVisualFrame_orientation)

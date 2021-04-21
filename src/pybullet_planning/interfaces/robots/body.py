@@ -241,21 +241,30 @@ def set_texture(body, texture=None, link=BASE_LINK, shape_index=NULL_ID):
     return p.changeVisualShape(body, link, shapeIndex=shape_index, textureUniqueId=texture,
                                physicsClientId=CLIENT)
 
-def vertices_from_link(body, link):
-    from pybullet_planning.interfaces.env_manager.shape_creation import vertices_from_data
+def vertices_from_link(body, link, collision=True):
+    """get body link geometry's vertices in local frame
+
+    Parameters
+    ----------
+    body : int
+    link : int
+
+    Returns
+    -------
+    list(np.array())
+        vertices of the geometry
+    """
+    from pybullet_planning.interfaces.env_manager.shape_creation import vertices_from_data, get_visual_data
     # In local frame
     vertices = []
-    # TODO: requires the viewer to be active
-    #for data in get_visual_data(body, link):
-    #    vertices.extend(vertices_from_data(data))
-    # Pybullet creates multiple collision elements (with unknown_file) when noncovex
-    for data in get_collision_data(body, link):
-        # the current pose transformation is done within `vertices_from_data`
+    # ! PyBullet creates multiple collision elements (with unknown_file) when nonconvex
+    get_data = get_collision_data if collision else get_visual_data
+    for data in get_data(body, link):
         vertices.extend(vertices_from_data(data))
     return vertices
 
 def vertices_from_rigid(body, link=BASE_LINK):
-    """get all vertices of given body in its current pose.
+    """get all vertices of given body in its local frame.
 
     Parameters
     ----------
@@ -268,11 +277,6 @@ def vertices_from_rigid(body, link=BASE_LINK):
     -------
     list of three-float lists
         body vertices
-
-    Raises
-    ------
-    NotImplementedError
-        only supports body created from a `.obj` file
     """
     import os
     from pybullet_planning.interfaces.env_manager.pose_transformation import get_pose
@@ -288,7 +292,6 @@ def vertices_from_rigid(body, link=BASE_LINK):
             # this will return the convexified objects
             mesh_data = p.getMeshData(body, link, collisionShapeIndex=data.object_unique_id, flags=p.MESH_DATA_SIMULATION_MESH)
             vertices.extend(mesh_data[1])
-        vertices = apply_affine(get_pose(body), vertices)
         # ! archived method for getting vertices from the mesh_cache
         # info = get_model_info(body)
         # assert info is not None

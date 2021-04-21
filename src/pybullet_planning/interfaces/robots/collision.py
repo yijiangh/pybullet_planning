@@ -545,7 +545,7 @@ def batch_ray_collision(rays, threads=1):
     assert 1 <= threads <= p.MAX_RAY_INTERSECTION_BATCH_SIZE
     if not rays:
         return []
-    step_simulation() # Needed for some reason
+    # step_simulation() # Needed for some reason
     ray_starts = [start for start, _ in rays]
     ray_ends = [end for _, end in rays]
     return [RayResult(*tup) for tup in p.rayTestBatch(
