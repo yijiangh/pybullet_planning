@@ -35,9 +35,14 @@ class HideOutput(object):
         if not self.enable:
             return
         sys.stdout.flush()
-        self._origstdout = sys.stdout
-        self._oldstdout_fno = os.dup(sys.stdout.fileno())
-        self._devnull = os.open(os.devnull, os.O_WRONLY)
+        try:
+            self._origstdout = sys.stdout
+            self._oldstdout_fno = os.dup(sys.stdout.fileno())
+            self._devnull = os.open(os.devnull, os.O_WRONLY)
+        except:
+            # catch for usage in jupyter notebook, which doesn't support fileno
+            self.enable = False
+            return
 
     def __enter__(self):
         if not self.enable:
