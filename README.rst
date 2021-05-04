@@ -112,3 +112,7 @@ Credits
 
 This package was initiated and maintained by Caelan Garrett `@caelan <https://github.com/caelan>`_
 and other `contributors <https://github.com/yijiangh/pybullet_planning/blob/dev/AUTHORS.rst>`_.
+
+This repo is a stable and documented fork of Caelan's `pybullet-planning <https://github.com/caelan/pybullet-planning>`_
+(previously called `ss-pybullet`) and `motion-planners <https://github.com/caelan/motion-planners>`_.
+New features will continue to be introduced first through these separate repos, and integrated into the current package later.
