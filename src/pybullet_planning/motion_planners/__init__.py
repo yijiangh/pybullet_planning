@@ -5,7 +5,10 @@ motion_planners
 
 .. currentmodule:: pybullet_planning.motion_planners
 
-Python implementations of several robotic motion planners
+Python implementations of several robotic motion planners. This is a fork of Caelan's
+`motion-planners <https://github.com/caelan/motion-planners>`_ repo, which is designed
+to be flexible and independent of simulation platforms. `pybullet_planning` includes
+this package as a built-in component as it is frequently used.
 
 Sampling-based:
 
@@ -55,7 +58,7 @@ TODO
 
 from .rrt_connect import *
 from .lazy_prm import *
-from .prm import prm
+from .prm import *
 from .utils import compute_path_cost
 
 __all__ = [name for name in dir() if not name.startswith('_')]

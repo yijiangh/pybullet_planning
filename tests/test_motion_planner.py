@@ -2,29 +2,23 @@ import pytest
 import numpy as np
 import time
 
-# from motion_planners.tkinter.viewer import sample_box, is_collision_free, \
-#     create_box, draw_environment, point_collides, sample_line, add_points, \
-#     add_roadmap, get_box_center, add_path, get_distance_fn
 import pybullet_planning as pp
 from pybullet_planning import INF
-from pybullet_planning import wait_for_user, connect, set_camera_pose
+from pybullet_planning import wait_for_user, connect, set_camera_pose, LockRenderer, wait_if_gui
 from pybullet_planning import create_plane, unit_pose, draw_pose
 
-# compute_path_cost
-from pybullet_planning import birrt, compute_path_cost
-# from pybullet_planning import score_portfolio, exhaustively_select_portfolio
+from pybullet_planning import compute_path_cost
 
-import motion_planner_utils as mp_utils
-from motion_planner_utils import create_aabb_box, get_aabb_center, draw_environment
-from pybullet_planning.interfaces.env_manager.simulation import LockRenderer
-from pybullet_planning.interfaces.env_manager.user_io import wait_if_gui
+import planner_2D_utils as mp_utils
+from planner_2D_utils import create_aabb_box, get_aabb_center, draw_environment
 
 ##################################################
 
 @pytest.mark.motion_planning
 @pytest.mark.parametrize("algorithm",[
     # ('prm'),
-    ('birrt'),
+    # ('birrt'),
+    ('lazy_prm'),
     ]
 )
 def test_motion_planner(viewer, algorithm):
@@ -35,9 +29,9 @@ def test_motion_planner(viewer, algorithm):
     max_time=2
     # np.set_printoptions(precision=3)
 
-    connect(use_gui=viewer)
-    create_plane(color=[0.8,0.8,0.8])
-    set_camera_pose(camera_point=np.array([0.5,0.5,2]))
+    connect(use_gui=viewer, shadows=False)
+    # create_plane(color=[0.8,0.8,0.8])
+    set_camera_pose(camera_point=np.array([0.5,0.5,1.5]))
     draw_pose(unit_pose())
 
     h = 0.1
@@ -75,17 +69,17 @@ def test_motion_planner(viewer, algorithm):
         if algorithm == 'prm':
             path = pp.prm(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
                        num_samples=200)
-        # elif algorithm == 'lazy_prm':
-        #     path = pp.lazy_prm(start, goal, sample_fn, extend_fn, collision_fn,
-        #                     num_samples=200, max_time=max_time)[0]
-        # elif algorithm == 'rrt':
-        #     path = pp.rrt(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-        #                iterations=INF, max_time=max_time)
-        # elif algorithm == 'rrt_connect':
-        #     path = pp.rrt_connect(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-        #                        max_time=max_time)
+        elif algorithm == 'lazy_prm':
+            path = pp.lazy_prm(start, goal, sample_fn, extend_fn, collision_fn,
+                            num_samples=200, max_time=max_time)[0]
+        elif algorithm == 'rrt':
+            path = pp.rrt(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
+                       iterations=INF, max_time=max_time)
+        elif algorithm == 'rrt_connect':
+            path = pp.rrt_connect(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
+                               max_time=max_time)
         elif algorithm == 'birrt':
-            path = birrt(start, goal, distance_fn=distance_fn, sample_fn=sample_fn,
+            path = pp.birrt(start, goal, distance_fn=distance_fn, sample_fn=sample_fn,
                          extend_fn=extend_fn, collision_fn=collision_fn,
                          max_time=max_time, smooth=100)
         # elif algorithm == 'rrt_star':
@@ -103,12 +97,12 @@ def test_motion_planner(viewer, algorithm):
         if viewer:
             with LockRenderer():
                 # roadmap = samples = cfree = []
-                mp_utils.add_roadmap(roadmap, color=pp.BLACK)
-                mp_utils.add_points(samples, color=pp.RED, size=0.001)
+                mp_utils.add_roadmap(roadmap, color=pp.BLACK, width=2.0)
+                mp_utils.add_points(samples, color=pp.RED, size=0.003)
                 #add_points(cfree, color='blue', radius=2)
 
                 for path in paths:
-                    mp_utils.add_path(path, color=pp.GREEN)
+                    mp_utils.add_path(path, color=pp.GREEN, width=2.0)
 
         # if args.smooth:
         #     for path in paths:

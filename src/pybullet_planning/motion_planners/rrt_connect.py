@@ -31,22 +31,22 @@ def extend_towards(tree, target, distance_fn, extend_fn, collision_fn, swap, tre
 
 def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
                 iterations=RRT_ITERATIONS, tree_frequency=1, max_time=INF):
-    """[summary]
+    """RRT connect algorithm: http://www.kuffner.org/james/papers/kuffner_icra2000.pdf
 
     Parameters
     ----------
-    q1 : [type]
-        [description]
-    q2 : [type]
-        [description]
-    distance_fn : [type]
-        [description]
-    sample_fn : [type]
-        [description]
-    extend_fn : [type]
-        [description]
-    collision_fn : [type]
-        [description]
+    q1 : list
+        start configuration
+    q2 : list
+        end configuration
+    distance_fn : function handle
+        Distance function - distance_fn(q1, q2)->float
+    sample_fn : function handle
+        Sample function - sample_fn()->conf
+    extend_fn : function handle
+        Extension function - extend_fn(q1, q2)->[q', ..., q"]
+    collision_fn : function handle
+        Collision function - collision_fn(q)->bool
     iterations : [type], optional
         [description], by default RRT_ITERATIONS
     tree_frequency : int, optional

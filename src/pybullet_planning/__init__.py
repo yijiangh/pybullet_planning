@@ -5,7 +5,8 @@ pybullet_planning
 
 .. currentmodule:: pybullet_planning
 
-This library is a suite of utility functions to facilitate robotic planning related research on the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
+This library is a suite of utility functions to facilitate robotic planning related research on the
+`pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
 
 .. toctree::
     :maxdepth: 1

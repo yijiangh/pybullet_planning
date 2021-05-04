@@ -5,8 +5,10 @@ import time
 
 from .utils import INF, pairs, merge_dicts, flatten
 
-
-# TODO - Lazy-PRM, Visibility-PRM, PRM*
+__all__ = [
+    'prm',
+    ]
+# TODO - Visibility-PRM, PRM*
 
 class Vertex(object):
 
@@ -19,6 +21,7 @@ class Vertex(object):
         self._handle = None
 
     def draw(self, env, color=(1, 0, 0, .5)):
+        # https://github.mit.edu/caelan/lis-openrave
         from manipulation.primitives.display import draw_node
         self._handle = draw_node(env, self.q, color=color)
 
@@ -158,19 +161,22 @@ class Roadmap(Mapping, object):
 
 class PRM(Roadmap):
 
-    def __init__(self, distance, extend, collision, samples=[]):
+    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[]):
         super(PRM, self).__init__()
-        self.distance = distance
-        self.extend = extend
-        self.collision = collision
+        self.distance_fn = distance_fn
+        self.extend = extend_fn
+        self.collision = collision_fn
         self.grow(samples)
+
+    def grow(self, samples):
+        raise NotImplementedError()
 
     def __call__(self, q1, q2):
         self.grow([q1, q2])
         if q1 not in self or q2 not in self:
             return None
         start, goal = self[q1], self[q2]
-        heuristic = lambda v: self.distance(v.q, goal.q)  # lambda v: 0
+        heuristic = lambda v: self.distance_fn(v.q, goal.q)  # lambda v: 0
 
         queue = [(heuristic(start), start)]
         nodes, processed = {start: SearchNode(0, None)}, set()
@@ -188,7 +194,7 @@ class PRM(Roadmap):
             if cv == goal:
                 return retrace(cv)
             for nv in cv.edges:
-                cost = nodes[cv].cost + self.distance(cv.q, nv.q)
+                cost = nodes[cv].cost + self.distance_fn(cv.q, nv.q)
                 if nv not in nodes or cost < nodes[nv].cost:
                     nodes[nv] = SearchNode(cost, cv)
                     heappush(queue, (cost + heuristic(nv), nv))
@@ -197,16 +203,16 @@ class PRM(Roadmap):
 
 class DistancePRM(PRM):
 
-    def __init__(self, distance, extend, collision, samples=[], connect_distance=.5):
+    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[], connect_distance=.5):
         self.connect_distance = connect_distance
         super(self.__class__, self).__init__(
-            distance, extend, collision, samples=samples)
+            distance_fn, extend_fn, collision_fn, samples=samples)
 
     def grow(self, samples):
         old_vertices, new_vertices = self.vertices.keys(), self.add(samples)
         for i, v1 in enumerate(new_vertices):
             for v2 in new_vertices[i + 1:] + old_vertices:
-                if self.distance(v1.q, v2.q) <= self.connect_distance:
+                if self.distance_fn(v1.q, v2.q) <= self.connect_distance:
                     path = list(self.extend(v1.q, v2.q))[:-1]
                     if not any(self.collision(q) for q in path):
                         self.connect(v1, v2, path)
@@ -215,11 +221,11 @@ class DistancePRM(PRM):
 
 class DegreePRM(PRM):
 
-    def __init__(self, distance, extend, collision, samples=[], target_degree=4, connect_distance=INF):
+    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[], target_degree=4, connect_distance=INF):
         self.target_degree = target_degree
         self.connect_distance = connect_distance
         super(self.__class__, self).__init__(
-            distance, extend, collision, samples=samples)
+            distance_fn, extend_fn, collision_fn, samples=samples)
 
     def grow(self, samples):
         # TODO: do sorted edges version
@@ -228,9 +234,9 @@ class DegreePRM(PRM):
             return new_vertices
         for v1 in new_vertices:
             degree = 0
-            for _, v2 in sorted(filter(lambda d, v2: v2 != v1 and d <= self.connect_distance,
-                                       map(lambda v: (self.distance(v1.q, v.q), v), self.vertices.values())),  # TODO - slow, use nearest neighbors
-                                key=operator.itemgetter(0)):
+            for _, v2 in sorted(filter(lambda pair: (pair[1] != v1) and (pair[0] <= self.connect_distance),
+                                       map(lambda v: (self.distance_fn(v1.q, v.q), v), self.vertices.values())),
+                                key=operator.itemgetter(0)): # TODO - slow, use nearest neighbors
                 if self.target_degree <= degree:
                     break
                 if v2 not in v1.edges:

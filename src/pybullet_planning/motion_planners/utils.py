@@ -6,6 +6,7 @@ from pybullet_planning.interfaces.env_manager.pose_transformation import get_uni
 
 INF = float('inf')
 
+# default RRT configurations
 RRT_ITERATIONS = 20
 RRT_RESTARTS = 2
 RRT_SMOOTHING = 20
