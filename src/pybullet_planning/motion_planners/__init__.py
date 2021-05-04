@@ -55,5 +55,7 @@ TODO
 
 from .rrt_connect import *
 from .lazy_prm import *
+from .prm import prm
+from .utils import compute_path_cost
 
 __all__ = [name for name in dir() if not name.startswith('_')]

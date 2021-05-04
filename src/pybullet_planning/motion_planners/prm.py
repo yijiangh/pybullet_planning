@@ -1,6 +1,7 @@
 from collections import namedtuple, Mapping
 from heapq import heappop, heappush
 import operator
+import time
 
 from .utils import INF, pairs, merge_dicts, flatten
 
@@ -240,3 +241,29 @@ class DegreePRM(PRM):
                 else:
                     degree += 1
         return new_vertices
+
+##################################################
+
+def prm(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
+        target_degree=4, connect_distance=INF, num_samples=100): #, max_time=INF):
+    """
+    :param start: Start configuration - conf
+    :param goal: End configuration - conf
+    :param distance_fn: Distance function - distance_fn(q1, q2)->float
+    :param sample_fn: Sample function - sample_fn()->conf
+    :param extend_fn: Extension function - extend_fn(q1, q2)->[q', ..., q"]
+    :param collision_fn: Collision function - collision_fn(q)->bool
+    :return: Path [q', ..., q"] or None if unable to find a solution
+    """
+    # TODO: compute_graph
+    start_time = time.time()
+    start = tuple(start)
+    goal = tuple(goal)
+    samples = [start, goal] + [tuple(sample_fn()) for _ in range(num_samples)]
+    if target_degree is None:
+        roadmap = DistancePRM(distance_fn, extend_fn, collision_fn, samples=samples,
+                              connect_distance=connect_distance)
+    else:
+        roadmap = DegreePRM(distance_fn, extend_fn, collision_fn, samples=samples,
+                            target_degree=target_degree, connect_distance=connect_distance)
+    return roadmap(start, goal)
