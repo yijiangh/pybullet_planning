@@ -49,16 +49,26 @@ RRT-Connect (BiRRT)
     birrt
     direct_path
 
-Ladder graph search
+Smoothing
 ---------------------------
 
-TODO
+.. currentmodule:: pybullet_planning.motion_planners.smoothing
+
+.. autosummary::
+    :toctree: generated/
+    :nosignatures:
+
+    rrt_connect
 
 """
 
-from .rrt_connect import *
-from .lazy_prm import *
 from .prm import *
-from .utils import compute_path_cost
+from .lazy_prm import *
+from .rrt_connect import *
+from .rrt import *
+from .rrt_star import *
+from .lattice import *
+from .smoothing import *
+from .utils import *
 
 __all__ = [name for name in dir() if not name.startswith('_')]

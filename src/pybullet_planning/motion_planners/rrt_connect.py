@@ -40,25 +40,30 @@ def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
     q2 : list
         end configuration
     distance_fn : function handle
-        Distance function - distance_fn(q1, q2)->float
+        Distance function - `distance_fn(q1, q2)->float`
+        see `pybullet_planning.interfaces.planner_interface.joint_motion_planning.get_difference_fn` for an example
     sample_fn : function handle
-        Sample function - sample_fn()->conf
+        configuration space sampler - `sample_fn()->conf`
+        see `pybullet_planning.interfaces.planner_interface.joint_motion_planning.get_sample_fn` for an example
     extend_fn : function handle
-        Extension function - extend_fn(q1, q2)->[q', ..., q"]
+        Extension function - `extend_fn(q1, q2)->[q', ..., q"]`
+        see `pybullet_planning.interfaces.planner_interface.joint_motion_planning.get_extend_fn` for an example
     collision_fn : function handle
-        Collision function - collision_fn(q)->bool
-    iterations : [type], optional
-        [description], by default RRT_ITERATIONS
+        Collision function - `collision_fn(q)->bool`
+        see `pybullet_planning.interfaces.robots.collision.get_collision_fn` for an example
+    iterations : int, optional
+        rrt iterations, by default RRT_ITERATIONS
     tree_frequency : int, optional
-        the frequency of adding tree nodes when extending. For example, if tree_freq=2, then a tree node is added every three nodes,
-        by default 1
-    max_time : [type], optional
-        [description], by default INF
+        The frequency of adding tree nodes when extending.
+        For example, if tree_freq=2, then a tree node is added every three nodes, by default 1
+    max_time : float, optional
+        maximal allowed runtime, by default INF
 
     Returns
     -------
-    [type]
-        [description]
+    list(list(float))
+        the computed path, i.e. a list of configurations
+        return None if no plan is found.
     """
     # TODO: collision(q1, q2)
     start_time = time.time()
@@ -124,6 +129,7 @@ def birrt(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
     collision_fn : function handle
         collision checking function
         see `pybullet_planning.interfaces.robots.collision.get_collision_fn` for an example
+
     restarts : int, optional
         planning attempts, by default RRT_RESTARTS
     iterations : int, optional

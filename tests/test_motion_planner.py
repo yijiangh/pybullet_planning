@@ -16,17 +16,21 @@ from planner_2D_utils import create_aabb_box, get_aabb_center, draw_environment
 
 @pytest.mark.motion_planning
 @pytest.mark.parametrize("algorithm",[
-    # ('prm'),
-    # ('birrt'),
+    ('prm'),
     ('lazy_prm'),
+    ('rrt'),
+    ('rrt_connect'),
+    ('birrt'),
+    ('rrt_star'),
+    ('lattice'),
     ]
 )
 def test_motion_planner(viewer, algorithm):
     # TODO: 3D work and CSpace
     # TODO: visualize just the tool frame of an end effector
-    smooth=True
+    # smooth=True
     num_restarts=0
-    max_time=2
+    max_time=30
     # np.set_printoptions(precision=3)
 
     connect(use_gui=viewer, shadows=False)
@@ -54,7 +58,8 @@ def test_motion_planner(viewer, algorithm):
         goal = get_aabb_center(regions[goal])[0:2]
     else:
         goal = np.array([1., 1.])
-    draw_environment(obstacles, regions)
+    if viewer:
+        draw_environment(obstacles, regions)
     # wait_for_user('env initiated.')
 
     # connected_test, roadmap = mp_utils.get_connected_test(obstacles)
@@ -66,29 +71,30 @@ def test_motion_planner(viewer, algorithm):
         sample_fn, samples = mp_utils.get_box_sample_fn(regions['env'], obstacles=[]) # obstacles
         extend_fn, roadmap = mp_utils.get_box_extend_fn(obstacles=obstacles)  # obstacles | []
 
-        if algorithm == 'prm':
-            path = pp.prm(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-                       num_samples=200)
-        elif algorithm == 'lazy_prm':
-            path = pp.lazy_prm(start, goal, sample_fn, extend_fn, collision_fn,
-                            num_samples=200, max_time=max_time)[0]
-        elif algorithm == 'rrt':
-            path = pp.rrt(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-                       iterations=INF, max_time=max_time)
-        elif algorithm == 'rrt_connect':
-            path = pp.rrt_connect(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-                               max_time=max_time)
-        elif algorithm == 'birrt':
-            path = pp.birrt(start, goal, distance_fn=distance_fn, sample_fn=sample_fn,
-                         extend_fn=extend_fn, collision_fn=collision_fn,
-                         max_time=max_time, smooth=100)
-        # elif algorithm == 'rrt_star':
-        #     path = pp.rrt_star(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-        #                     radius=1, max_iterations=INF, max_time=max_time)
-        # elif algorithm == 'lattice':
-        #     path = pp.lattice(start, goal, extend_fn, collision_fn, distance_fn=distance_fn)
-        else:
-            raise NotImplementedError(algorithm)
+        with LockRenderer():
+            if algorithm == 'prm':
+                path = pp.prm(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
+                           num_samples=200)
+            elif algorithm == 'lazy_prm':
+                path = pp.lazy_prm(start, goal, sample_fn, extend_fn, collision_fn,
+                                num_samples=200, max_time=max_time)[0]
+            elif algorithm == 'rrt':
+                path = pp.rrt(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
+                           iterations=INF, max_time=max_time)
+            elif algorithm == 'rrt_connect':
+                path = pp.rrt_connect(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
+                                   max_time=max_time)
+            elif algorithm == 'birrt':
+                path = pp.birrt(start, goal, distance_fn=distance_fn, sample_fn=sample_fn,
+                             extend_fn=extend_fn, collision_fn=collision_fn,
+                             max_time=max_time, smooth=100)
+            elif algorithm == 'rrt_star':
+                path = pp.rrt_star(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
+                                radius=1, max_iterations=INF, max_time=max_time)
+            elif algorithm == 'lattice':
+                path = pp.lattice(start, goal, extend_fn, collision_fn, distance_fn=distance_fn)
+            else:
+                raise NotImplementedError(algorithm)
         paths = [] if path is None else [path]
 
         print('Solutions ({}): {} | Time: {:.3f}'.format(len(paths), [(len(path), round(compute_path_cost(
@@ -97,17 +103,25 @@ def test_motion_planner(viewer, algorithm):
         if viewer:
             with LockRenderer():
                 # roadmap = samples = cfree = []
-                mp_utils.add_roadmap(roadmap, color=pp.BLACK, width=2.0)
+                mp_utils.add_roadmap(roadmap, color=pp.BLACK, width=1.0)
                 mp_utils.add_points(samples, color=pp.RED, size=0.003)
                 #add_points(cfree, color='blue', radius=2)
 
                 for path in paths:
-                    mp_utils.add_path(path, color=pp.GREEN, width=2.0)
+                    mp_utils.add_path(path, color=pp.GREEN, width=3.0)
 
-        # if args.smooth:
-        #     for path in paths:
-        #         extend_fn, roadmap = get_extend_fn(obstacles=obstacles)  # obstacles | []
-        #         smoothed = smooth_path(path, extend_fn, collision_fn, iterations=INF, max_time=args.time)
-        #         print('Smoothed distance_fn: {:.3f}'.format(compute_path_cost(smoothed, distance_fn)))
-        #         add_path(smoothed, color='red')
+        # * smoothing
+        for path in paths:
+            start_time = time.time()
+            extend_fn, roadmap = mp_utils.get_box_extend_fn(obstacles=obstacles)  # obstacles | []
+            smoothed = pp.smooth_path(path, extend_fn, collision_fn, iterations=INF, max_time=max_time)
+            print('Smoothed distance_fn: {:.3f} | Time: {:.3f}'.format(
+                compute_path_cost(smoothed, distance_fn), pp.elapsed_time(start_time)))
+            if viewer:
+                with LockRenderer():
+                    mp_utils.add_path(smoothed, color=pp.YELLOW, width=2.0)
+
         wait_if_gui('Finish?')
+
+    pp.reset_simulation()
+    pp.disconnect()
