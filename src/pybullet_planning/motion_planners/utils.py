@@ -1,8 +1,13 @@
 import numpy as np
 from random import shuffle
 from itertools import islice
+from collections import deque
 import time
 from pybullet_planning.interfaces.env_manager.pose_transformation import get_unit_vector
+
+__all__ = [
+    'compute_path_cost',
+]
 
 INF = float('inf')
 
@@ -53,6 +58,24 @@ def randomize(sequence):
     return sequence
 
 
+def bisect(sequence):
+    sequence = list(sequence)
+    indices = set()
+    queue = deque([(0, len(sequence)-1)])
+    while queue:
+        lower, higher = queue.popleft()
+        if lower > higher:
+            continue
+        index = int((lower + higher) / 2.)
+        assert index not in indices
+        #if is_even(higher - lower):
+        yield sequence[index]
+        queue.extend([
+            (lower, index-1),
+            (index+1, higher),
+        ])
+
+
 def take(iterable, n=INF):
     if n == INF:
         n = None  # NOTE - islice takes None instead of INF
@@ -76,12 +99,28 @@ def inf_sequence():
 
 
 def compute_path_cost(path, cost_fn):
+    """compute the total cost of a given path using the given cost function
+
+    Parameters
+    ----------
+    path :
+        input path
+    cost_fn : function handle
+        cost function - ``cost_fn(q)->float``
+
+    Returns
+    -------
+    float
+        total cost
+    """
     if path is None:
         return INF
     return sum(cost_fn(*pair) for pair in pairs(path))
 
 
 def remove_redundant(path, tolerance=1e-3):
+    """Remove redundant waypoints in a given path if consecutive points are too close under L2 norm.
+    """
     assert path
     new_path = [path[0]]
     for conf in path[1:]:
@@ -92,6 +131,8 @@ def remove_redundant(path, tolerance=1e-3):
 
 
 def waypoints_from_path(path, tolerance=1e-3):
+    """Remove redundant waypoints in a given path if consecutive points are too close under L2 norm.
+    """
     path = remove_redundant(path, tolerance=tolerance)
     if len(path) < 2:
         return path
@@ -114,3 +155,23 @@ def waypoints_from_path(path, tolerance=1e-3):
 
 def convex_combination(x, y, w=0.5):
     return (1-w)*np.array(x) + w*np.array(y)
+
+##################################################
+
+def forward_selector(path):
+    return path
+
+
+def backward_selector(path):
+    return reversed(list(path))
+
+
+def random_selector(path):
+    return randomize(path)
+
+
+def bisect_selector(path):
+    return bisect(path)
+
+
+default_selector = bisect_selector
