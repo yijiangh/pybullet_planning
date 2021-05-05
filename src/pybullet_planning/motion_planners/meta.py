@@ -5,7 +5,8 @@ from .utils import RRT_RESTARTS, RRT_SMOOTHING, INF, irange, elapsed_time, compu
 
 
 def direct_path(start, goal, extend_fn, collision_fn):
-    """
+    """direct linear path connnecting start and goal using the extension fn.
+
     :param start: Start configuration - conf
     :param goal: End configuration - conf
     :param extend_fn: Extension function - extend_fn(q1, q2)->[q', ..., q"]
@@ -30,7 +31,7 @@ def direct_path(start, goal, extend_fn, collision_fn):
 
 def random_restarts(solve_fn, start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
                     restarts=RRT_RESTARTS, smooth=RRT_SMOOTHING,
-                    success_cost=0., max_time=INF, max_solutions=1, **kwargs):
+                    success_cost=0., max_time=INF, max_solutions=1, verbose=False, **kwargs):
     """
     :param start: Start configuration - conf
     :param goal: End configuration - conf
@@ -64,8 +65,9 @@ def random_restarts(solve_fn, start, goal, distance_fn, sample_fn, extend_fn, co
         if compute_path_cost(path, distance_fn) < success_cost:
             break
     solutions = sorted(solutions, key=lambda path: compute_path_cost(path, distance_fn))
-    print('Solutions ({}): {} | Time: {:.3f}'.format(len(solutions), [(len(path), round(compute_path_cost(
-        path, distance_fn), 3)) for path in solutions], elapsed_time(start_time)))
+    if verbose:
+        print('Solutions ({}): {} | Time: {:.3f}'.format(len(solutions), [(len(path), round(compute_path_cost(
+            path, distance_fn), 3)) for path in solutions], elapsed_time(start_time)))
     return solutions
 
 def solve_and_smooth(solve_fn, q1, q2, distance_fn, sample_fn, extend_fn, collision_fn, **kwargs):

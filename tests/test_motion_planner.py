@@ -30,7 +30,7 @@ def test_motion_planner(viewer, algorithm):
     # TODO: visualize just the tool frame of an end effector
     smooth=True
     num_restarts=0
-    max_time=5
+    max_time=10
     # np.set_printoptions(precision=3)
 
     connect(use_gui=viewer, shadows=False)
@@ -78,7 +78,9 @@ def test_motion_planner(viewer, algorithm):
                            num_samples=200)
             elif algorithm == 'lazy_prm':
                 path = pp.lazy_prm(start, goal, sample_fn, extend_fn, collision_fn,
-                                num_samples=200, max_time=max_time)[0]
+                                num_samples=200, max_time=max_time, verbose=True)[0]
+                # path = pp.replan_loop(start, goal, sample_fn, extend_fn, collision_fn,
+                #                 [200,300,400], max_time=max_time, verbose=True)[0]
             elif algorithm == 'rrt':
                 path = pp.rrt(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
                            iterations=INF, max_time=max_time)
@@ -100,6 +102,7 @@ def test_motion_planner(viewer, algorithm):
 
         print('Solutions ({}): {} | Time: {:.3f}'.format(len(paths), [(len(path), round(compute_path_cost(
             path, distance_fn), 3)) for path in paths], pp.elapsed_time(start_time)))
+        assert len(paths) > 0
 
         if viewer:
             with LockRenderer():

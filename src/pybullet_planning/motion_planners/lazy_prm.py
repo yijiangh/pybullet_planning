@@ -12,7 +12,8 @@ import time
 import numpy as np
 
 __all__ = [
-    'lazy_prm'
+    'lazy_prm',
+    'replan_loop',
     ]
 
 Node = namedtuple('Node', ['g', 'parent'])
@@ -101,6 +102,28 @@ def check_path(path, colliding_vertices, colliding_edges, samples, extend_fn, co
 
 ##################################################
 
+def compute_graph(samples, weights=None, p_norm=2, max_degree=10, max_distance=INF, approximate_eps=0.):
+    vertices = list(range(len(samples)))
+    edges = set()
+    if not vertices:
+        return vertices, edges
+    if weights is None:
+        weights = np.ones(len(samples[0]))
+    embed_fn = get_embed_fn(weights)
+    embedded = list(map(embed_fn, samples))
+    kd_tree = KDTree(embedded)
+    for v1 in vertices:
+        # TODO: could dynamically compute distances
+        distances, neighbors = kd_tree.query(embedded[v1], k=max_degree + 1, eps=approximate_eps,
+                                             p=p_norm, distance_upper_bound=max_distance)
+        for d, v2 in zip(distances, neighbors):
+            if (d < max_distance) and (v1 != v2):
+                edges.update([(v1, v2), (v2, v1)])
+    # print(time.time() - start_time, len(edges), float(len(edges))/len(samples))
+    return vertices, edges
+
+##################################################
+
 def lazy_prm(start, goal, sample_fn, extend_fn, collision_fn, num_samples=100,
              weights=None, p_norm=2, lazy=False, max_cost=INF, max_time=INF, verbose=False, **kwargs): #, max_paths=INF):
     """
@@ -175,36 +198,14 @@ def lazy_prm(start, goal, sample_fn, extend_fn, collision_fn, num_samples=100,
 
 ##################################################
 
-def compute_graph(samples, weights=None, p_norm=2, max_degree=10, max_distance=INF, approximate_eps=0.):
-    vertices = list(range(len(samples)))
-    edges = set()
-    if not vertices:
-        return vertices, edges
-    if weights is None:
-        weights = np.ones(len(samples[0]))
-    embed_fn = get_embed_fn(weights)
-    embedded = list(map(embed_fn, samples))
-    kd_tree = KDTree(embedded)
-    for v1 in vertices:
-        # TODO: could dynamically compute distances
-        distances, neighbors = kd_tree.query(embedded[v1], k=max_degree + 1, eps=approximate_eps,
-                                             p=p_norm, distance_upper_bound=max_distance)
-        for d, v2 in zip(distances, neighbors):
-            if (d < max_distance) and (v1 != v2):
-                edges.update([(v1, v2), (v2, v1)])
-    # print(time.time() - start_time, len(edges), float(len(edges))/len(samples))
-    return vertices, edges
-
-##################################################
-
-def replan_loop(start_conf, end_conf, sample_fn, extend_fn, collision_fn, params_list, smooth=0, **kwargs):
+def replan_loop(start_conf, end_conf, sample_fn, extend_fn, collision_fn, params_list=[100], smooth=0, **kwargs):
     if collision_fn(start_conf) or collision_fn(end_conf):
         return None
     path = direct_path(start_conf, end_conf, extend_fn, collision_fn)
     if path is not None:
         return path
     for num_samples in params_list:
-        path = lazy_prm(start_conf, end_conf, sample_fn, extend_fn, collision_fn,
+        path, _, _, _ = lazy_prm(start_conf, end_conf, sample_fn, extend_fn, collision_fn,
                         num_samples=num_samples, **kwargs)
         if path is not None:
             return smooth_path(path, extend_fn, collision_fn, iterations=smooth)
