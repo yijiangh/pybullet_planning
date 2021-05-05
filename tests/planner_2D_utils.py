@@ -7,6 +7,7 @@ import pybullet_planning as pp
 from pybullet_planning import get_delta, get_distance, unit_quat, set_pose, interval_generator
 from pybullet_planning import AABB, get_aabb_extent, aabb_contains_point, get_aabb_center, is_connected
 from pybullet_planning import draw_aabb, BROWN, GREEN, create_box, HideOutput, INF
+from pybullet_planning.interfaces.env_manager.simulation import LockRenderer
 
 DRAW_Z = 0.0
 
@@ -131,7 +132,7 @@ def get_euclidean_distance_fn(weights):
 
 def draw_environment(obstacles, regions):
     assert is_connected()
-    with HideOutput():
+    with LockRenderer():
         for box in obstacles:
             draw_aabb(box, color=BROWN)
             body = create_box(*get_aabb_extent(box), color=BROWN)

@@ -1,12 +1,12 @@
 import pytest
 import numpy as np
 import time
+from termcolor import cprint
 
 import pybullet_planning as pp
 from pybullet_planning import INF
-from pybullet_planning import wait_for_user, connect, set_camera_pose, LockRenderer, wait_if_gui
-from pybullet_planning import create_plane, unit_pose, draw_pose
-
+from pybullet_planning import connect, set_camera_pose, LockRenderer, wait_if_gui
+from pybullet_planning import unit_pose, draw_pose
 from pybullet_planning import compute_path_cost
 
 import planner_2D_utils as mp_utils
@@ -16,21 +16,21 @@ from planner_2D_utils import create_aabb_box, get_aabb_center, draw_environment
 
 @pytest.mark.motion_planning_2D
 @pytest.mark.parametrize("algorithm",[
-    ('prm'),
+    # ('prm'),
     ('lazy_prm'),
-    ('rrt'),
-    ('rrt_connect'),
-    ('birrt'),
-    ('rrt_star'),
-    ('lattice'),
+    # ('rrt'),
+    # ('rrt_connect'),
+    # ('birrt'),
+    # ('rrt_star'),
+    # ('lattice'),
     ]
 )
 def test_motion_planner(viewer, algorithm):
     # TODO: 3D work and CSpace
     # TODO: visualize just the tool frame of an end effector
-    # smooth=True
+    smooth=True
     num_restarts=0
-    max_time=30
+    max_time=5
     # np.set_printoptions(precision=3)
 
     connect(use_gui=viewer, shadows=False)
@@ -65,6 +65,7 @@ def test_motion_planner(viewer, algorithm):
     # connected_test, roadmap = mp_utils.get_connected_test(obstacles)
     distance_fn = mp_utils.get_euclidean_distance_fn(weights=[1, 1])
 
+    cprint('Algorithm: {}'.format(algorithm), 'cyan')
     for _ in range(num_restarts+1):
         start_time = time.time()
         collision_fn, cfree = mp_utils.get_box_collision_fn(obstacles)
@@ -111,15 +112,16 @@ def test_motion_planner(viewer, algorithm):
                     mp_utils.add_path(path, color=pp.GREEN, width=3.0)
 
         # * smoothing
-        for path in paths:
-            start_time = time.time()
-            extend_fn, roadmap = mp_utils.get_box_extend_fn(obstacles=obstacles)  # obstacles | []
-            smoothed = pp.smooth_path(path, extend_fn, collision_fn, iterations=INF, max_time=max_time)
-            print('Smoothed distance_fn: {:.3f} | Time: {:.3f}'.format(
-                compute_path_cost(smoothed, distance_fn), pp.elapsed_time(start_time)))
-            if viewer:
-                with LockRenderer():
-                    mp_utils.add_path(smoothed, color=pp.YELLOW, width=2.0)
+        if smooth:
+            for path in paths:
+                start_time = time.time()
+                extend_fn, roadmap = mp_utils.get_box_extend_fn(obstacles=obstacles)  # obstacles | []
+                smoothed = pp.smooth_path(path, extend_fn, collision_fn, iterations=INF, max_time=max_time)
+                print('Smoothed path cost: {:.3f} | Time: {:.3f}'.format(
+                    compute_path_cost(smoothed, distance_fn), pp.elapsed_time(start_time)))
+                if viewer:
+                    with LockRenderer():
+                        mp_utils.add_path(smoothed, color=pp.YELLOW, width=2.0)
 
         wait_if_gui('Finish?')
 

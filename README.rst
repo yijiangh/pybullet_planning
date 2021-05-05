@@ -53,7 +53,6 @@ Getting Started
 
     On Windows, you may need to install `Microsoft Visual C++ 14.0 <https://www.scivision.co/python-windows-visual-c++-14-required/>`_, if pybullet installation fails.
 
-
 Once the installation is completed, you can verify your setup.
 Start Python from the command prompt and run the following:
 
