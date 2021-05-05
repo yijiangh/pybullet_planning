@@ -51,9 +51,7 @@ Getting Started
 
 .. note::
 
-    On Windows, you may need to install
-    `Microsoft Visual C++ 14.0 <https://www.scivision.co/python-windows-visual-c++-14-required/>`_,
-    if pybullet installation fails.
+    On Windows, you may need to install `Microsoft Visual C++ 14.0 <https://www.scivision.co/python-windows-visual-c++-14-required/>`_, if pybullet installation fails.
 
 
 Once the installation is completed, you can verify your setup.
@@ -68,6 +66,18 @@ First Steps
 ---------------
 
 * `Documentation <https://pybullet-planning.readthedocs.io>`_
+
+Examples can be found at the `unit tests <https://github.com/yijiangh/pybullet_planning/tree/dev/tests>`_.
+You will be need to install ``pytest`` to run these tests (``pip install pytest``).
+
+Then, individual tests can be run by using their `pytest markers <https://docs.pytest.org/en/stable/example/markers.html>`_ by:
+
+::
+
+    pytest -s -m collision_fn --viewer
+    pytest -s -m motion_planning_2D --viewer
+
+Additional pytest-free examples can be found at `pybullet_planning_tutorials <https://github.com/yijiangh/pybullet_planning_tutorials>`_.
 
 Contributing
 ------------

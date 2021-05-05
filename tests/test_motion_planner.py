@@ -14,7 +14,7 @@ from planner_2D_utils import create_aabb_box, get_aabb_center, draw_environment
 
 ##################################################
 
-@pytest.mark.motion_planning
+@pytest.mark.motion_planning_2D
 @pytest.mark.parametrize("algorithm",[
     ('prm'),
     ('lazy_prm'),

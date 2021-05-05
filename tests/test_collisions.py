@@ -51,6 +51,7 @@ def convex_collision_objects():
     link_4_collider = os.path.join(test_dir, 'link_4_collider.obj')
     return link_4_group, link_4_export, link_4_unified, link_4_collider
 
+@pytest.mark.collision_fn
 def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_path, obstacle_obj_path):
     connect(use_gui=viewer)
     with HideOutput():
@@ -287,6 +288,7 @@ def test_collision_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_pa
     assert not collision_fn_disable(conf, diagnosis=has_gui())
     print('\n')
 
+@pytest.mark.floatting_collision_fn
 def test_floating_collsion_fn(viewer, robot_path, ee_path, workspace_path, attach_obj_path, obstacle_obj_path):
     connect(use_gui=viewer)
     with HideOutput():

@@ -47,7 +47,6 @@ RRT-Connect (BiRRT)
 
     rrt_connect
     birrt
-    direct_path
 
 Smoothing
 ---------------------------
