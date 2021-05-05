@@ -1,3 +1,5 @@
+# This file attemps to port Caelan's tkinker example for motion-planners to pybullet:
+# https://github.com/caelan/motion-planners/tree/master/motion_planners/tkinter
 import numpy as np
 import math
 
@@ -163,8 +165,9 @@ def add_roadmap(roadmap, **kwargs):
             pp.add_line(np.hstack([line[0], [DRAW_Z]]), np.hstack([line[1], [DRAW_Z]]), **kwargs)
 
 def draw_roadmap(roadmap, obstacles, regions):
-    draw_environment(obstacles, regions)
-    add_roadmap(roadmap)
+    with pp.LockRenderer():
+        draw_environment(obstacles, regions)
+        add_roadmap(roadmap)
 
 def add_points(points, **kwargs):
     for sample in points:

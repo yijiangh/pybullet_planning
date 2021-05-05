@@ -27,7 +27,9 @@ pybullet_planning
 
 .. Write project description
 
-**pybullet_planning** is a suite of utility functions to facilitate robotic planning related research on the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine. Planning research made easy.
+**pybullet_planning** is a suite of utility functions to facilitate robotic planning related research on
+the `pybullet <https://github.com/bulletphysics/bullet3>`_ physics simulation engine.
+Planning research made easy.
 
 
 Main features
@@ -50,7 +52,8 @@ Getting Started
 .. note::
 
     On Windows, you may need to install
-    `Microsoft Visual C++ 14.0 <https://www.scivision.co/python-windows-visual-c++-14-required/>`_.
+    `Microsoft Visual C++ 14.0 <https://www.scivision.co/python-windows-visual-c++-14-required/>`_,
+    if pybullet installation fails.
 
 
 Once the installation is completed, you can verify your setup.
@@ -58,7 +61,7 @@ Start Python from the command prompt and run the following:
 
 ::
 
-    >>> import pybullet_planning
+    >>> import pybullet_planning as pp
 
 
 First Steps
@@ -69,31 +72,7 @@ First Steps
 Contributing
 ------------
 
-We love contributions!
-
-Check the `Contributor's Guide <./CONTRIBUTING.rst>`_
-for more details.
-
-Releasing this project
-----------------------
-
-Ready to release a new version of **pybullet_planning**? Here's how to do it:
-
-* We use `semver <https://semver.org/>`_, i.e. we bump versions as follows:
-
-  * ``patch``: bugfixes.
-  * ``minor``: backwards-compatible features added.
-  * ``major``: backwards-incompatible changes.
-
-* Update the ``CHANGELOG.rst`` with all novelty!
-* Ready? Release everything in one command:
-
-::
-
-    invoke release [patch|minor|major]
-    # with -b to bump version
-
-* Celebrate! 💃
+Check the `Contributor's Guide <./CONTRIBUTING.rst>`_ for more details.
 
 PyBullet Resources
 -------------------
@@ -104,6 +83,7 @@ PyBullet Resources
 * Wordpress - https://pybullet.org/wordpress/
 * Examples - https://github.com/bulletphysics/bullet3/tree/master/examples/pybullet/examples
 * Bindings - https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/pybullet.c
+* Predecessors - `pybullet-planning`_, `motion-planners`_.
 
 Credits
 -------------
@@ -113,6 +93,12 @@ Credits
 This package was initiated and maintained by Caelan Garrett `@caelan <https://github.com/caelan>`_
 and other `contributors <https://github.com/yijiangh/pybullet_planning/blob/dev/AUTHORS.rst>`_.
 
-This repo is a stable and documented fork of Caelan's `pybullet-planning <https://github.com/caelan/pybullet-planning>`_
-(previously called `ss-pybullet`) and `motion-planners <https://github.com/caelan/motion-planners>`_.
+History
+-------------
+
+This repo is a stable and documented fork of Caelan's `pybullet-planning`_
+(previously called `ss-pybullet`) and `motion-planners`_.
 New features will continue to be introduced first through these separate repos, and integrated into the current package later.
+
+.. _pybullet-planning: https://github.com/caelan/pybullet-planning
+.. _motion-planners: https://github.com/caelan/motion-planners

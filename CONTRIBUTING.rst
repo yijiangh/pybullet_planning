@@ -43,6 +43,26 @@ command line to ease recurring operations:
 * ``invoke test``: Run all tests and checks in one swift command.
 * ``invoke``: Show available tasks.
 
+Releasing this project
+----------------------
+
+Ready to release a new version of **pybullet_planning**? Here's how to do it:
+
+* We use `semver <https://semver.org/>`_, i.e. we bump versions as follows:
+
+  * ``patch``: bugfixes.
+  * ``minor``: backwards-compatible features added.
+  * ``major``: backwards-incompatible changes.
+
+* Update the ``CHANGELOG.rst`` with all novelty!
+* Ready? Release everything in one command:
+
+::
+
+    invoke release [patch|minor|major]
+    # with -b to bump version
+
+* Celebrate! 💃
 
 Documentation improvements
 --------------------------
