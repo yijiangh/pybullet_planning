@@ -11,11 +11,9 @@ Unreleased
 ----------
 
 **Added**
-------------
 - Added `distance_threshold` to `pairwise_link_collision_info` and `pairwise_link_collision` to allow collision checking given a penetration threshold
 
 **Changed**
-------------
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
 
 0.5.1

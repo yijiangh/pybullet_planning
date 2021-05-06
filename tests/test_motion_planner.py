@@ -17,8 +17,8 @@ from planner_2D_utils import create_aabb_box, get_aabb_center, draw_environment
 @pytest.mark.motion_planning_2D
 @pytest.mark.parametrize("algorithm",[
     # ('prm'),
-    ('lazy_prm'),
-    # ('rrt'),
+    # ('lazy_prm'),
+    ('rrt'),
     # ('rrt_connect'),
     # ('birrt'),
     # ('rrt_star'),
@@ -102,7 +102,7 @@ def test_motion_planner(viewer, algorithm):
 
         print('Solutions ({}): {} | Time: {:.3f}'.format(len(paths), [(len(path), round(compute_path_cost(
             path, distance_fn), 3)) for path in paths], pp.elapsed_time(start_time)))
-        assert len(paths) > 0
+        assert len(paths) > 0, 'No plan found!'
 
         if viewer:
             with LockRenderer():
