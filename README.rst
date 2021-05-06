@@ -9,9 +9,9 @@ pybullet_planning
     :alt: Documentation Status
 
 
-.. image:: https://travis-ci.com/yijiangh/pybullet_planning.svg?branch=dev
-    :target: https://travis-ci.com/yijiangh/pybullet_planning
-    :alt: Travis CI
+.. image:: https://github.com/yijiangh/pybullet_planning/workflows/integration/badge.svg
+    :target: https://github.com/yijiangh/pybullet_planning/actions
+    :alt: Github Actions Integration Status
 
 
 .. image:: https://coveralls.io/repos/github/yijiangh/pybullet_planning/badge.svg?branch=dev
