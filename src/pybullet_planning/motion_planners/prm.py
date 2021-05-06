@@ -3,11 +3,12 @@ from heapq import heappop, heappush
 import operator
 import time
 
-from .utils import INF, pairs, merge_dicts, flatten
+from .utils import INF, get_pairs, merge_dicts, flatten
 
 __all__ = [
     'prm',
     ]
+
 # TODO - Visibility-PRM, PRM*
 
 class Vertex(object):
@@ -20,7 +21,7 @@ class Vertex(object):
     def clear(self):
         self._handle = None
 
-    def draw(self, env, color=(1, 0, 0, .5)):
+    def draw(self, env, color=apply_alpha(RED, alpha=0.5)):
         # https://github.mit.edu/caelan/lis-openrave
         from manipulation.primitives.display import draw_node
         self._handle = draw_node(env, self.q, color=color)
@@ -64,17 +65,20 @@ class Edge(object):
         #self._handle = None
         self._handles = []
 
-    def draw(self, env, color=(1, 0, 0, .5)):
+    def draw(self, env, color=apply_alpha(RED, alpha=0.5)):
         if self._path is None:
             return
+        # https://github.mit.edu/caelan/lis-openrave
         from manipulation.primitives.display import draw_edge
         #self._handle = draw_edge(env, self.v1.q, self.v2.q, color=color)
-        for q1, q2 in pairs(self.configs()):
+        for q1, q2 in get_pairs(self.configs()):
             self._handles.append(draw_edge(env, q1, q2, color=color))
 
     def __str__(self):
         return 'Edge(' + str(self.v1.q) + ' - ' + str(self.v2.q) + ')'
     __repr__ = __str__
+
+##################################################
 
 SearchNode = namedtuple('SearchNode', ['cost', 'parent'])
 

@@ -32,6 +32,7 @@ def link_info():
     return ee_link_name, robot_base_link_name
 
 @pytest.mark.cart_plan
+@pytest.mark.skip("not fully developed.")
 def test_cartesian(viewer, robot_path, link_info):
     connect(use_gui=viewer)
     with HideOutput():
@@ -153,16 +154,17 @@ def test_cartesian(viewer, robot_path, link_info):
 
     path, cost = plan_cartesian_motion_lg(robot, ik_joints, ee_poses, sample_ik_fn, collision_fn, sample_ee_fn=ee_sample_fn)
 
-    # the ladder graph cost is just summation of all adjacent joint difference
-    # so the following assertion should be true
-    conf_array = np.array(path)
-    conf_diff = np.abs(conf_array[:-1,:] - conf_array[1:,:])
-    np_cost = np.sum(conf_diff)
-    assert np.allclose(np_cost, cost), '{} - {}'.format(np_cost, cost)
-
     if path is None:
         cprint('ladder graph (releasing EE z dof) cartesian planning cannot find a plan!', 'red')
+        assert path is not None
     else:
+        # the ladder graph cost is just summation of all adjacent joint difference
+        # so the following assertion should be true
+        conf_array = np.array(path)
+        conf_diff = np.abs(conf_array[:-1,:] - conf_array[1:,:])
+        np_cost = np.sum(conf_diff)
+        assert np.allclose(np_cost, cost), '{} - {}'.format(np_cost, cost)
+
         cprint('ladder graph (releasing EE z dof) cartesian planning find a plan!', 'cyan')
         cprint('Cost: {}'.format(cost), 'yellow')
         time_step = 0.03

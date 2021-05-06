@@ -37,7 +37,7 @@ def argmin(function, sequence):
     return values[scores.index(min(scores))]
 
 
-def pairs(lst):
+def get_pairs(lst):
     return zip(lst[:-1], lst[1:])
 
 
@@ -115,7 +115,7 @@ def compute_path_cost(path, cost_fn):
     """
     if path is None:
         return INF
-    return sum(cost_fn(*pair) for pair in pairs(path))
+    return sum(cost_fn(*pair) for pair in get_pairs(path))
 
 
 def remove_redundant(path, tolerance=1e-3):

@@ -44,6 +44,9 @@ def dijkstra(start_v, neighbors_fn, cost_fn=unit_cost_fn):
 
 def wastar_search(start_v, end_v, neighbors_fn, cost_fn=unit_cost_fn,
                   heuristic_fn=zero_heuristic_fn, w=1, max_cost=INF, max_time=INF):
+    """WA* uses evaluation function f(n) = g(n) + W*h(n).
+    See: https://www.cs.cmu.edu/~aplatzer/orbital/Orbital-doc/api/orbital/algorithm/template/WAStar.html
+    """
     # TODO: lazy wastar to get different paths
     #heuristic_fn = lambda v: cost_fn(v, end_v)
     priority_fn = lambda g, h: g + w*h
@@ -71,6 +74,8 @@ def wastar_search(start_v, end_v, neighbors_fn, cost_fn=unit_cost_fn,
 ##################################################
 
 def get_embed_fn(weights):
+    """get embedding function handle that apply dot(weights, q)
+    """
     return lambda q: weights * q
 
 def get_distance_fn(weights, p_norm=2):
@@ -103,6 +108,30 @@ def check_path(path, colliding_vertices, colliding_edges, samples, extend_fn, co
 ##################################################
 
 def compute_graph(samples, weights=None, p_norm=2, max_degree=10, max_distance=INF, approximate_eps=0.):
+    """Build a graph based on samples. We use ``scipy.spatial.kdtree.KDTree`` for now.
+
+    Parameters
+    ----------
+    samples : list
+        list of sampled configurations
+    weights : list, optional
+        joint weights, by default None, using np.ones(dimension)
+    p_norm : int, optional
+        p norm used for computing distance, by default 2
+    max_degree : int, optional
+        max vertex degree in the graph, by default 10
+    max_distance : [type], optional
+        [description], by default INF
+    approximate_eps : [type], optional
+        [description], by default 0.
+
+    Returns
+    -------
+    vertices : list
+        list of graph vertex indices
+    edges : list
+        list of graph edges (vertex index pairs)
+    """
     vertices = list(range(len(samples)))
     edges = set()
     if not vertices:

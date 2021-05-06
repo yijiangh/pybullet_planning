@@ -15,6 +15,7 @@ Unreleased
 
 **Changed**
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
+- ``motion_planners`` module up-to-date with `commit e6f23053e<https://github.com/caelan/motion-planners/commit/e6f23053e441af091b898b7f56c6fee48223be48>`_.
 
 0.5.1
 ----------
