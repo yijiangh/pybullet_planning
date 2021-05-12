@@ -36,6 +36,10 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, 
     repeat for a given number of iterations. ``default_selecter`` (bisect) is performed upon configurations sampled by
     the ``extension_fn`` on the two shortcutting end points to check collision.
 
+    See also:
+    - Geraerts R, Overmars MH. Creating High-quality Paths for Motion Planning. IJRR. 2007;26(8):845-863. doi:10.1177/0278364907079280
+    - https://github.com/personalrobotics/or_parabolicsmoother
+
     Parameters
     ----------
     extend_fn : function handle
