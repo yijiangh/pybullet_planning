@@ -28,6 +28,7 @@ requirements = [
     'recordclass',
     'psutil',
     'meshio>=4.3.11',
+    'termcolor',
 ]
 keywords_list = ['robotic planning', 'pybullet']
 

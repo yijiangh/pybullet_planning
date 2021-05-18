@@ -25,8 +25,10 @@ SHAPE_TYPES = {
     # p.GEOM_FORCE_CONCAVE_TRIMESH
 }
 
-# object_unique_id and linkIndex seem to be noise
-CollisionShapeData = namedtuple('CollisionShapeData', ['object_unique_id', 'linkIndex',
+# In most cases, objectUniqueId and linkIndex correspond to the parent body index and corresponding link index
+# objectUniqueId and linkIndex seem to be noise when multiple meshes are attached to the same link in an URDF
+# See ``test_test_geom_data_index`` in ``test_body.py`` for details.
+CollisionShapeData = namedtuple('CollisionShapeData', ['objectUniqueId', 'linkIndex',
                                                        'geometry_type', 'dimensions', 'filename',
                                                        'local_frame_pos', 'local_frame_orn'])
 
@@ -244,6 +246,26 @@ def create_plane(normal=[0, 0, 1], mass=STATIC_MASS, color=BLACK):
 
 
 def create_obj(path, scale=1., mass=STATIC_MASS, collision=True, color=GREY):
+    """Create a body from a given mesh file. Only `.obj` and `.stl` formats are supported.
+
+    Parameters
+    ----------
+    path : str
+        absolute file path.
+    scale : float, optional
+        mesh scale, by default 1.
+    mass : [type], optional
+        [description], by default STATIC_MASS
+    collision : bool, optional
+        [description], by default True
+    color : [type], optional
+        [description], by default GREY
+
+    Returns
+    -------
+    int
+        body index
+    """
     collision_id, visual_id = create_shape(get_mesh_geometry(path, scale=scale), collision=collision, color=color)
     body = create_body(collision_id, visual_id, mass=mass)
     fixed_base = (mass == STATIC_MASS)
@@ -293,6 +315,24 @@ def create_flying_body(group, collision_id=NULL_ID, visual_id=NULL_ID, mass=STAT
 #####################################
 
 def vertices_from_data(data):
+    """Get vertices in an object's local coordinate from its geometric data.
+
+    Parameters
+    ----------
+    data : CollisionShapeData or VisualShapeData
+        geometric data, see ``get_collision_data`` and ``get_visual_data``
+
+    Returns
+    -------
+    list of vertices
+
+    Raises
+    ------
+    RuntimeError
+        if an unknown mesh format is encountered, we only support ``.obj`` and ``.stl`` now.
+    NotImplementedError
+        if an unknown pybullet geometric type is encountered. See ``SHAPE_TYPES``.
+    """
     from pybullet_planning.interfaces.env_manager.pose_transformation import apply_affine
     from pybullet_planning.interfaces.env_manager.shape_creation import get_data_type, get_data_extents, get_data_radius, get_data_height, \
         get_data_filename, get_data_scale, get_collision_data, get_data_pose
@@ -318,22 +358,17 @@ def vertices_from_data(data):
         aabb = AABB(-half_extents, +half_extents)
         vertices = get_aabb_vertices(aabb)
     elif geometry_type == p.GEOM_MESH:
-        from pybullet_planning.interfaces.geometry.mesh import Mesh, read_obj
-        import meshio
-        filename, scale = get_data_filename(data), get_data_scale(data)
-        if filename != UNKNOWN_FILE:
-            mio_mesh = meshio.read(filename)
-            mesh = Mesh(list(mio_mesh.points), list([list(cell_group.data) for cell_group in mio_mesh.cells]))
-            # mesh = read_obj(filename, decompose=False)
-            vertices = [scale*np.array(vertex) for vertex in mesh.vertices]
-        else:
-            raise RuntimeError('Unknown file from data {}'.format(data))
+        # from pybullet_planning.interfaces.geometry.mesh import Mesh #, read_obj
+        # import meshio
+        # filename, scale = get_data_filename(data), get_data_scale(data)
+        # if filename != UNKNOWN_FILE:
+        #     mio_mesh = meshio.read(filename)
+        #     vertices = [scale*np.array(vertex) for vertex in mio_mesh.points]
+        # else:
+        #     raise RuntimeError('Unknown file from data {}'.format(data))
+        mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex, collisionShapeIndex=data.objectUniqueId,
+            flags=p.MESH_DATA_SIMULATION_MESH)
         # TODO: could compute AABB here for improved speed at the cost of being conservative
-
-        # mesh_data = p.getMeshData(data.object_unique_id, data.linkIndex, collisionShapeIndex=data.object_unique_id,
-        #     flags=p.MESH_DATA_SIMULATION_MESH)
-        # vertices = mesh_data[1]
-
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]
     else:

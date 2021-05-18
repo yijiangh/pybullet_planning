@@ -11,5 +11,5 @@ pytest-cov
 python-coveralls
 isort
 twine
-termcolor # well, just to protect my eyes from digging info from the terminal
+# ikfast_pybind # used by tests
 -e .

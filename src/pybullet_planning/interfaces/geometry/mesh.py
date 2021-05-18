@@ -68,6 +68,10 @@ def get_connected_components(vertices, edges):
 def read_obj(path, decompose=True):
     """Read meshes from an obj file.
 
+    Note: We read `o group_name` for a new group in the mesh.
+    This differs from `meshio`, which uses `g group_name` for new group lines.
+    https://github.com/nschloe/meshio/blob/main/src/meshio/obj/_obj.py#L59-L60
+
     Parameters
     ----------
     path : string
