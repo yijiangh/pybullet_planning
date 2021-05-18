@@ -17,6 +17,9 @@ Unreleased
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
 - ``motion_planners`` module up-to-date with `commit e6f23053e<https://github.com/caelan/motion-planners/commit/e6f23053e441af091b898b7f56c6fee48223be48>`_.
 
+**Fixed**
+- Fixed `read_obj` returns empty dict if obj file does not start with objects (``o object_name``)
+
 0.5.1
 ----------
 

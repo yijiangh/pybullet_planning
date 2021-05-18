@@ -3,6 +3,7 @@ import sys
 import pytest
 import pybullet
 import warnings
+import pybullet_planning as pp
 from pybullet_planning import load_pybullet, connect, wait_for_user, LockRenderer, has_gui, WorldSaver, HideOutput, \
     reset_simulation, disconnect, set_camera_pose, has_gui, wait_if_gui
 from pybullet_planning import create_obj, create_attachment, Attachment
@@ -124,3 +125,38 @@ def test_clone_body(viewer, workspace_path, ee_path):
         set_pose(c_ee_c, move_pose)
 
     wait_if_gui()
+
+@pytest.mark.create_body
+@pytest.mark.parametrize("file_format",[
+    ('obj'),
+    ('stl'),
+    # ('dae'),
+    # ('ply'),
+    ]
+)
+def test_create_body(viewer, file_format):
+    here = os.path.dirname(__file__)
+    path = os.path.join(here, 'test_data', 'link_4.' + file_format)
+    connect(use_gui=viewer)
+    try:
+        with HideOutput():
+            body = create_obj(path)
+        wait_if_gui('Body created.')
+    finally:
+        disconnect()
+
+
+@pytest.mark.read_obj
+def test_create_body(viewer):
+    here = os.path.dirname(__file__)
+    path = os.path.join(here, 'test_data', 'box_obstacle.obj')
+    connect(use_gui=viewer)
+    try:
+        mesh = pp.read_obj(path, decompose=False)
+        assert(len(mesh.vertices)==48)
+        assert(len(mesh.faces)==6)
+        meshes = pp.read_obj(path, decompose=True)
+        assert(len(meshes[None].vertices)==48)
+        assert(len(meshes[None].faces)==6)
+    finally:
+        disconnect()

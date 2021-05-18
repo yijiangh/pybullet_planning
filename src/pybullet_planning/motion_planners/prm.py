@@ -3,6 +3,8 @@ from heapq import heappop, heappush
 import operator
 import time
 
+from ..utils.shared_const import RED
+from ..interfaces.geometry.camera import apply_alpha
 from .utils import INF, get_pairs, merge_dicts, flatten
 
 __all__ = [

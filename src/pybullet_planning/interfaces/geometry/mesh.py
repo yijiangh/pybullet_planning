@@ -65,9 +65,21 @@ def get_connected_components(vertices, edges):
             clusters.append(frozenset(cluster))
     return clusters
 
-# TODO consider using: https://github.com/nschloe/meshio ?
-# ! doesn't work if there's no line starts with 'o'
 def read_obj(path, decompose=True):
+    """Read meshes from an obj file.
+
+    Parameters
+    ----------
+    path : string
+        file path to the obj file
+    decompose : bool, optional
+        read meshes as separate component or not, by default True
+
+    Returns
+    -------
+    ``Mesh`` or dict(group name : Mesh)
+        return dict if decompose = True
+    """
     mesh = Mesh([], [])
     meshes = {}
     vertices = []
@@ -77,6 +89,7 @@ def read_obj(path, decompose=True):
         if not tokens:
             continue
         if tokens[0] == 'o':
+            # separate different components (groups)
             name = tokens[1]
             mesh = Mesh([], [])
             meshes[name] = mesh
@@ -91,9 +104,8 @@ def read_obj(path, decompose=True):
             mesh.faces.append(face)
     if not decompose:
         return Mesh(vertices, faces)
-    #if not meshes:
-    #    # TODO: ensure this still works if no objects
-    #    meshes[None] = mesh
+    if not meshes:
+       meshes[None] = mesh
     #new_meshes = {}
     # TODO: make each triangle a separate object
     for name, mesh in meshes.items():
