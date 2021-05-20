@@ -285,7 +285,8 @@ def vertices_from_link2(body, link=BASE_LINK):
             flags=p.MESH_DATA_SIMULATION_MESH)
         # print('data: ', data)
         # print('meshdata: ', mesh_data)
-        vertices.extend(apply_affine(get_data_pose(data), mesh_data[1]))
+        # vertices.extend(apply_affine(get_data_pose(data), mesh_data[1]))
+        vertices.extend(mesh_data[1])
     return vertices
 
 def vertices_from_rigid(body, link=BASE_LINK):

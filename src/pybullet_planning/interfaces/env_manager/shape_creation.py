@@ -368,6 +368,7 @@ def vertices_from_data(data):
         #     raise RuntimeError('Unknown file from data {}'.format(data))
         mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex, collisionShapeIndex=data.objectUniqueId,
             flags=p.MESH_DATA_SIMULATION_MESH)
+        vertices = mesh_data[1]
         # TODO: could compute AABB here for improved speed at the cost of being conservative
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]
