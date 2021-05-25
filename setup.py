@@ -22,7 +22,7 @@ def read(*names, **kwargs):
 requirements = [
     'numpy',
     'scipy',
-    'pybullet>=3.1.0',
+    'pybullet>=3.1.7',
     'imageio',
     'ghalton',
     'recordclass',

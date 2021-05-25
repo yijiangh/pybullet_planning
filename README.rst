@@ -23,6 +23,10 @@ pybullet_planning
     :target: https://github.com/yijiangh/pybullet_planning/blob/dev/LICENSE
     :alt: License MIT
 
+.. image:: https://img.shields.io/badge/pybullet->=3.1.7-ff69b4
+    :target: https://github.com/bulletphysics/bullet3
+    :alt: pybullet version
+
 .. end-badges
 
 .. Write project description

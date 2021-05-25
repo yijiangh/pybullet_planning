@@ -263,32 +263,6 @@ def vertices_from_link(body, link, collision=True):
         vertices.extend(vertices_from_data(data))
     return vertices
 
-def vertices_from_link2(body, link=BASE_LINK):
-    """Experimental: get body link vertices using pybullet's ``getMeshData``.
-    (``getMeshData`` is an experimental undocumented pybullet API to return mesh information (vertices, indices) of triangle meshes.)
-
-    Parameters
-    ----------
-    body : int
-    link : int, optional
-        by default BASE_LINK
-
-    Returns
-    -------
-    list of vertices
-    """
-    from pybullet_planning.interfaces.env_manager.shape_creation import get_data_pose
-    vertices = []
-    for data in get_collision_data(body, link):
-        # this will return the convexified objects
-        mesh_data = p.getMeshData(body, link, collisionShapeIndex=data.objectUniqueId,
-            flags=p.MESH_DATA_SIMULATION_MESH)
-        # print('data: ', data)
-        # print('meshdata: ', mesh_data)
-        # vertices.extend(apply_affine(get_data_pose(data), mesh_data[1]))
-        vertices.extend(mesh_data[1])
-    return vertices
-
 def vertices_from_rigid(body, link=BASE_LINK):
     """get all vertices of given body (collision body) in its local frame.
 
@@ -304,27 +278,24 @@ def vertices_from_rigid(body, link=BASE_LINK):
     list of three-float lists
         body vertices
     """
-    # import os
-    # from pybullet_planning.interfaces.env_manager.pose_transformation import get_pose
-    # from pybullet_planning.interfaces.env_manager import get_model_info
-    # from pybullet_planning.interfaces.geometry.mesh import read_obj
+    import os
+    from pybullet_planning.interfaces.geometry.mesh import read_obj
+    from pybullet_planning.interfaces.env_manager import get_model_info
     # from pybullet_planning.interfaces.robots.link import get_num_links
     # assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
     try:
         vertices = vertices_from_link(body, link)
     except RuntimeError:
-        vertices = vertices_from_link2(body, link)
-        # ! archived method for getting vertices from the mesh_cache
-        # info = get_model_info(body)
-        # assert info is not None
-        # _, ext = os.path.splitext(info.path)
-        # if ext == '.obj':
-        #     if info.path not in OBJ_MESH_CACHE:
-        #         OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
-        #     mesh = OBJ_MESH_CACHE[info.path]
-        #     vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
-        # else:
-        #     raise NotImplementedError(ext)
+        info = get_model_info(body)
+        assert info is not None
+        _, ext = os.path.splitext(info.path)
+        if ext == '.obj':
+            if info.path not in OBJ_MESH_CACHE:
+                OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
+            mesh = OBJ_MESH_CACHE[info.path]
+            vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
+        else:
+            raise NotImplementedError(ext)
     return vertices
 
 def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):

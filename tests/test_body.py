@@ -3,6 +3,7 @@ import sys
 import random
 import pytest
 import pybullet as pb
+import numpy as np
 import warnings
 import pybullet_planning as pp
 from pybullet_planning import load_pybullet, connect, wait_for_user, LockRenderer, has_gui, WorldSaver, HideOutput, \
@@ -154,76 +155,92 @@ def test_create_body(viewer, file_format):
 def test_read_obj(viewer):
     here = os.path.dirname(__file__)
     path = os.path.join(here, 'test_data', 'box_obstacle.obj')
+    path2 = os.path.join(here, 'test_data', 'link_4.obj')
     connect(use_gui=viewer)
     try:
+        # obj without `o group_name`
         mesh = pp.read_obj(path, decompose=False)
         assert(len(mesh.vertices)==48)
         assert(len(mesh.faces)==6)
         meshes = pp.read_obj(path, decompose=True)
         assert(len(meshes[None].vertices)==48)
         assert(len(meshes[None].faces)==6)
+
+        # obj with multiple `o group_name`
+        meshes2 = pp.read_obj(path2, decompose=True)
+        assert(len(meshes2)==5)
+        assert(len(meshes2['convex_0'].vertices)==60)
+        assert(len(meshes2['convex_1'].faces)==124)
+        assert(len(meshes2['convex_4'].vertices)==27)
     finally:
         disconnect()
 
 
+@pytest.mark.parametrize("urdf_path",[
+    os.path.join(os.path.dirname(__file__), 'test_data', 'mit_3-412_workspace', 'urdf', 'mit_3-412_workspace.urdf'),
+    os.path.join(os.path.dirname(__file__), 'test_data', 'c1', 'urdf', 'c1.urdf'),
+    os.path.join(os.path.dirname(__file__), 'test_data', 'link_4.obj'),
+    os.path.join(os.path.dirname(__file__), 'test_data', 'link_4.stl'),
+])
 @pytest.mark.vertices_from_link
-def test_vertices_from_link(viewer, workspace_path):
-    here = os.path.dirname(__file__)
-    backwall_path = os.path.join(here, 'test_data', 'mit_3-412_workspace', 'meshes', 'mit_3-412_workspace', \
-        'collision', 'MIT_3-412_right_corner_piece.stl')
+def test_vertices_from_link(viewer, urdf_path):
+    eps = 1e-6
     connect(use_gui=viewer)
     with HideOutput():
-        body = load_pybullet(workspace_path, fixed_base=False)
-        link_body = create_obj(backwall_path)
-    link = link_from_name(body, 'MIT_3412_right_corner_piece')
-
-    # ! before setting pose
-    body_vertices = pp.vertices_from_rigid(body, link)
-    body_vertices1 = pp.vertices_from_link2(body, link)
-
-    link_body_vertices = pp.vertices_from_rigid(link_body)
-    link_body_vertices1 = pp.vertices_from_link2(link_body)
-
-    for v1, v2 in zip(body_vertices, link_body_vertices):
-        # assert pp.get_distance(v1, v2) < 1e-6
-        # print('{} | {}'.format(v1, v2))
-        pp.draw_point(v1, color=pp.BLUE, size=0.1)
-        pp.draw_point(v2, color=pp.RED, size=0.1)
-
-    wait_if_gui()
-    pp.remove_all_debug()
-
-    for v1, v2 in zip(body_vertices1, link_body_vertices1):
-        assert pp.get_distance(v1, v2) < 1e-6
-        pp.draw_point(v1, color=pp.GREEN, size=0.1)
-        pp.draw_point(v2, color=pp.BLACK, size=0.1)
-
+        if urdf_path.endswith('.urdf'):
+            body = load_pybullet(urdf_path, fixed_base=False)
+        else:
+            body = create_obj(urdf_path)
     wait_if_gui()
 
-    print('====')
-    set_pose(body, Pose(point=(0, 3, 0)))
-    pp.step_simulation()
+    _, body_links = pp.expand_links(body)
+    body_name = pp.get_body_name(body)
 
-    # # # ! after setting pose
-    # new_body_vertices = pp.vertices_from_rigid(body, link)
-    # new_body_vertices1 = pp.vertices_from_link2(body, link)
+    vertices_from_link = {}
+    for attempt in range(3):
+        for body_link in body_links:
+            local_from_vertices = pp.vertices_from_rigid(body, body_link)
+            if attempt == 0:
+                vertices_from_link[body_link] = local_from_vertices
+            cprint('#V {} at {} link {}'.format(len(local_from_vertices), body_name, pp.get_link_name(body, body_link)), 'cyan')
 
-    # new_link_body_vertices = pp.vertices_from_rigid(link_body)
-    # new_link_body_vertices1 = pp.vertices_from_link2(link_body)
+            #  ! `pybullet.getMeshData` fails randomly if multiple meshes are attached to the same link
+            # so we can't guarantee it returns the same number of vertices in that case
+            # if body_name != 'c1':
+            assert len(vertices_from_link[body_link]) == len(local_from_vertices), \
+                'unequal num of vertics at link {}'.format(pp.get_link_name(body, body_link))
+            for v1, v2 in zip(local_from_vertices, vertices_from_link[body_link]):
+                assert pp.get_distance(v1, v2) < eps
 
-    # for v1, v2 in zip(body_vertices, link_body_vertices):
-    #     assert pp.get_distance(v1, v2) < 1e-6
-    #     pp.draw_point(v1, color=pp.BLUE, size=0.1)
+            with LockRenderer():
+                for v in local_from_vertices:
+                    pp.draw_point(v, size=0.05)
+        print('====')
+        wait_if_gui()
+        pp.remove_all_debug()
 
-    # for v1, v2 in zip(body_vertices1, link_body_vertices1):
-    #     assert pp.get_distance(v1, v2) < 1e-6
-    #     pp.draw_point(v1, color=pp.GREEN, size=0.1)
+    for attempt in range(3):
+        set_pose(body, Pose(point=np.random.random(3)*3.0))
+        pp.step_simulation()
+        for body_link in body_links:
+            local_from_vertices = pp.vertices_from_rigid(body, body_link)
+            cprint('#V {} at {} link {}'.format(len(local_from_vertices), body_name,
+                pp.get_link_name(body, body_link)), 'cyan')
 
-    # for v1, v2 in zip(vertices, backwall_mesh.points):
-    #     # assert pp.get_distance(v1, v2) < 1e-6
-    #     print('{} | {}'.format(v1, v2))
+            # if body_name != 'c1':
+            assert len(vertices_from_link[body_link]) == len(local_from_vertices), \
+                'unequal num of vertics at link {}'.format(pp.get_link_name(body, body_link))
+            for v1, v2 in zip(local_from_vertices, vertices_from_link[body_link]):
+                assert pp.get_distance(v1, v2) < eps
 
-    wait_if_gui()
+            with LockRenderer():
+                for v in local_from_vertices:
+                    pp.draw_point(v, size=0.05)
+        print('====')
+        wait_if_gui()
+        pp.remove_all_debug()
+
+    pp.disconnect()
 
 
 @pytest.mark.vertices_from_link_geom
@@ -247,20 +264,11 @@ def test_vertices_from_link_geometry(viewer):
 
     for body, geom_type in zip(bodies, types):
         cprint(pp.SHAPE_TYPES[geom_type], 'cyan')
-        body_vertices1 = pp.vertices_from_link(body, pp.BASE_LINK)
-        body_vertices2 = pp.vertices_from_link2(body, pp.BASE_LINK)
-        if geom_type == pb.GEOM_MESH:
-            assert len(body_vertices2) > 0 and len(body_vertices1) > 0
-            # pybullet uses a convexified mesh, which should have less number of vertices compared to the original mesh
-            assert len(body_vertices2) <= len(body_vertices1)
-        else:
-            # pb.getMeshData will return an empty mesh if the geometric type is not pb.GEOM_MESH
-            assert len(body_vertices2) == 0
+        body_vertices = pp.vertices_from_link(body, pp.BASE_LINK)
+        assert len(body_vertices) > 0
         with LockRenderer():
-            for v1 in body_vertices1:
+            for v1 in body_vertices:
                 pp.draw_point(v1, color=pp.BLUE, size=0.1)
-            for v1 in body_vertices2:
-                pp.draw_point(v1, color=pp.BLACK, size=0.1)
         wait_if_gui()
         pp.remove_all_debug()
 

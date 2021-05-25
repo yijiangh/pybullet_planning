@@ -358,17 +358,24 @@ def vertices_from_data(data):
         aabb = AABB(-half_extents, +half_extents)
         vertices = get_aabb_vertices(aabb)
     elif geometry_type == p.GEOM_MESH:
-        # from pybullet_planning.interfaces.geometry.mesh import Mesh #, read_obj
-        # import meshio
-        # filename, scale = get_data_filename(data), get_data_scale(data)
-        # if filename != UNKNOWN_FILE:
-        #     mio_mesh = meshio.read(filename)
-        #     vertices = [scale*np.array(vertex) for vertex in mio_mesh.points]
-        # else:
-        #     raise RuntimeError('Unknown file from data {}'.format(data))
-        mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex, collisionShapeIndex=data.objectUniqueId,
-            flags=p.MESH_DATA_SIMULATION_MESH)
-        vertices = mesh_data[1]
+        import meshio
+        from pybullet_planning.interfaces.geometry.mesh import read_obj
+        filename, scale = get_data_filename(data), get_data_scale(data)
+        if filename != UNKNOWN_FILE:
+            if filename.endswith('.obj'):
+                mesh = read_obj(filename, decompose=False)
+                vertices = [[v[i]*scale for i in range(3)] for v in mesh.vertices]
+            else:
+                mio_mesh = meshio.read(filename)
+                vertices = [scale*np.array(vertex) for vertex in mio_mesh.points]
+        else:
+            try:
+                #  ! this fails randomly if multiple meshes are attached to the same link
+                mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex, collisionShapeIndex=data.objectUniqueId,
+                    flags=p.MESH_DATA_SIMULATION_MESH)
+                vertices = mesh_data[1]
+            except p.error:
+                raise RuntimeError('Unknown file from data {}'.format(data))
         # TODO: could compute AABB here for improved speed at the cost of being conservative
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]
