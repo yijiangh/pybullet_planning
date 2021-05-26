@@ -126,7 +126,7 @@ def sub_inverse_kinematics(robot, first_joint, target_link, target_pose, **kwarg
 MAX_SAMPLE_ITER = int(1e4)
 
 def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, collision_fn=None, sample_ee_fn=None,
-    max_sample_ee_iter=MAX_SAMPLE_ITER, jump_threshold=None, **kwargs):
+    max_sample_ee_iter=MAX_SAMPLE_ITER, jump_threshold=None, enforce_start_conf=True, **kwargs):
     """ladder graph cartesian planning, better leveraging ikfast for sample_ik_fn
 
     Parameters
@@ -237,21 +237,25 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         graph.assign_edges(i, edges)
 
     # * use current conf in the env as start_conf
-    start_conf = get_joint_positions(robot, joints)
-    st_graph = LadderGraph(graph.dof)
-    st_graph.resize(1)
-    st_graph.assign_rung(0, [start_conf])
-    unified_graph = append_ladder_graph(st_graph, graph, jump_threshold=joint_jump_threshold)
-    if unified_graph is None:
-        return None, None
+    if enforce_start_conf:
+        start_conf = get_joint_positions(robot, joints)
+        st_graph = LadderGraph(graph.dof)
+        st_graph.resize(1)
+        st_graph.assign_rung(0, [start_conf])
+        unified_graph = append_ladder_graph(st_graph, graph, jump_threshold=joint_jump_threshold)
+        if unified_graph is None:
+            return None, None
+    else:
+        unified_graph = graph
 
     # perform DAG search
     dag_search = DAGSearch(unified_graph)
     min_cost = dag_search.run()
     # list of confs
     path = dag_search.shortest_path()
-    # delete the start conf
-    del path[0]
+    if enforce_start_conf:
+        # delete the start conf
+        del path[0]
 
     assert len(path) == len(waypoint_poses)
     if len(path) == 0 or min_cost == np.inf:
