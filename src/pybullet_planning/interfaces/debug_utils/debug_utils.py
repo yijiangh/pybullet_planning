@@ -345,3 +345,10 @@ def draw_ray_result_diagnosis(ray, ray_result, b1=None, l1=None, point_color=BLA
             set_color(b2, apply_alpha(WHITE, 0.5))
     else:
         wait_for_user('Ray collision diagnosis. Press Enter to continue.')
+
+
+def camera_focus_on_body(body, camera_ray=np.array([0.1, 0, 0.05])):
+    from pybullet_planning.interfaces.env_manager.pose_transformation import get_pose
+    camera_base_pt, _ = get_pose(body)
+    camera_pt = np.array(camera_base_pt) + camera_ray
+    set_camera_pose(tuple(camera_pt), camera_base_pt)
