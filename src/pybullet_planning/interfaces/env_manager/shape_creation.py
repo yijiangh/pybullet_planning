@@ -165,7 +165,7 @@ def create_body(collision_id=NULL_ID, visual_id=NULL_ID, mass=STATIC_MASS):
                              baseVisualShapeIndex=visual_id, physicsClientId=CLIENT)
 
 
-def create_box(w, l, h, mass=STATIC_MASS, color=RED):
+def create_box(w, l, h, mass=STATIC_MASS, color=RED, collision=True):
     """create a box body
 
     .. image:: ../images/box.png
@@ -184,19 +184,21 @@ def create_box(w, l, h, mass=STATIC_MASS, color=RED):
         by static_mass (0) assumes the body has infinite mass and will not be affected by gravity, by default STATIC_MASS
     color : tuple, optional
         [description], by default RED
+    collision : bool, optional
+        flag to include collision object, by default True
 
     Returns
     -------
     int
         box body index
     """
-    collision_id, visual_id = create_shape(get_box_geometry(w, l, h), color=color)
+    collision_id, visual_id = create_shape(get_box_geometry(w, l, h), color=color, collision=collision)
     return create_body(collision_id, visual_id, mass=mass)
     # basePosition | baseOrientation
     # linkCollisionShapeIndices | linkVisualShapeIndices
 
 
-def create_cylinder(radius, height, mass=STATIC_MASS, color=BLUE):
+def create_cylinder(radius, height, mass=STATIC_MASS, color=BLUE, collision=True):
     """create a cylinder body
 
     .. image:: ../images/cylinder.png
@@ -213,30 +215,32 @@ def create_cylinder(radius, height, mass=STATIC_MASS, color=BLUE):
         [description], by default STATIC_MASS
     color : tuple, optional
         [description], by default BLUE
+    collision : bool, optional
+        flag to include collision object, by default True
 
     Returns
     -------
     [type]
         [description]
     """
-    collision_id, visual_id = create_shape(get_cylinder_geometry(radius, height), color=color)
+    collision_id, visual_id = create_shape(get_cylinder_geometry(radius, height), color=color, collision=collision)
     return create_body(collision_id, visual_id, mass=mass)
 
 
-def create_capsule(radius, height, mass=STATIC_MASS, color=BLUE):
-    collision_id, visual_id = create_shape(get_capsule_geometry(radius, height), color=color)
+def create_capsule(radius, height, mass=STATIC_MASS, color=BLUE, collision=True):
+    collision_id, visual_id = create_shape(get_capsule_geometry(radius, height), color=color, collision=collision)
     return create_body(collision_id, visual_id, mass=mass)
 
 
-def create_sphere(radius, mass=STATIC_MASS, color=BLUE):
-    collision_id, visual_id = create_shape(get_sphere_geometry(radius), color=color)
+def create_sphere(radius, mass=STATIC_MASS, color=BLUE, collision=True):
+    collision_id, visual_id = create_shape(get_sphere_geometry(radius), color=color, collision=collision)
     return create_body(collision_id, visual_id, mass=mass)
 
 
-def create_plane(normal=[0, 0, 1], mass=STATIC_MASS, color=BLACK):
+def create_plane(normal=[0, 0, 1], mass=STATIC_MASS, color=BLACK, collision=True):
     from pybullet_planning.interfaces.robots.body import set_texture, set_color
     # color seems to be ignored in favor of a texture
-    collision_id, visual_id = create_shape(get_plane_geometry(normal), color=color)
+    collision_id, visual_id = create_shape(get_plane_geometry(normal), color=color, collision=collision)
     body = create_body(collision_id, visual_id, mass=mass)
     set_texture(body, texture=None) # otherwise 'plane.urdf'
     set_color(body, color=color) # must perform after set_texture
