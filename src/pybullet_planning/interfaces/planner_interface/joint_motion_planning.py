@@ -3,7 +3,7 @@ import numpy as np
 from itertools import product
 
 from pybullet_planning.utils import CIRCULAR_LIMITS, DEFAULT_RESOLUTION, MAX_DISTANCE
-from pybullet_planning.interfaces.env_manager.pose_transformation import circular_difference, get_unit_vector
+from pybullet_planning.interfaces.env_manager.pose_transformation import circular_difference, get_unit_vector, convex_combination
 
 from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
 from pybullet_planning.interfaces.debug_utils import add_line
@@ -41,11 +41,10 @@ def unit_generator(d, use_halton=False):
 
 def interval_generator(lower, upper, **kwargs):
     assert len(lower) == len(upper)
-    assert np.less(lower, upper).all() # TODO: equality
-    extents = np.array(upper) - np.array(lower)
-    for scale in unit_generator(len(lower), **kwargs):
-        point = np.array(lower) + scale*extents
-        yield point
+    assert np.less_equal(lower, upper).all()
+    if np.equal(lower, upper).all():
+        return iter([lower])
+    return (convex_combination(lower, upper, w=weights) for weights in unit_generator(d=len(lower), **kwargs))
 
 def get_sample_fn(body, joints, custom_limits={}, **kwargs):
     lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits, circular_limits=CIRCULAR_LIMITS)

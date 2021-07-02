@@ -89,7 +89,7 @@ def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
             path1, path2 = last1.retrace(), last2.retrace()
             if swap:
                 path1, path2 = path2, path1
-            #print('{} iterations, {} nodes'.format(iteration, len(nodes1) + len(nodes2)))
+            # print('RRT connect: {} iterations, {} nodes'.format(iteration, len(nodes1) + len(nodes2)))
             return configs(path1[:-1] + path2[::-1])
     return None
 

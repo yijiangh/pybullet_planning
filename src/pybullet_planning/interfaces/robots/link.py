@@ -124,6 +124,10 @@ def get_link_ancestors(body, link):
         return []
     return get_link_ancestors(body, parent) + [parent]
 
+def get_ordered_ancestors(robot, link):
+    #return prune_fixed_joints(robot, get_link_ancestors(robot, link)[1:] + [link])
+    return get_link_ancestors(robot, link)[1:] + [link]
+
 def get_joint_ancestors(body, joint):
     link = child_link_from_joint(joint)
     return get_link_ancestors(body, link) + [link]

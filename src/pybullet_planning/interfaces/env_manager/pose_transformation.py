@@ -240,6 +240,9 @@ def all_between(lower_limits, values, upper_limits):
     return np.less_equal(lower_limits, values).all() and \
            np.less_equal(values, upper_limits).all()
 
+def convex_combination(x, y, w=0.5):
+    return (1-w)*np.array(x) + w*np.array(y)
+
 def tform_point(affine, point):
     """transform a given point
 
