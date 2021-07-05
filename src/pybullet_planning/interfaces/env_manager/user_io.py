@@ -32,11 +32,11 @@ class HideOutput(object):
         if enable is None:
             enable = self.DEFAULT_ENABLE
 
-        # ! Pytest interferes with file descriptor capture.
-        called_from_test = 'pytest' in sys.modules
-        # ! jupyter notebook (ipython) raises UnsupportedOperation on fileno(): https://github.com/ipython/ipython/pull/3072/
-        called_from_ipykernel = 'ipykernel' in sys.modules
-        enable = False if called_from_test or called_from_ipykernel else enable
+        # # ! Pytest interferes with file descriptor capture.
+        # called_from_test = 'pytest' in sys.modules
+        # # ! jupyter notebook (ipython) raises UnsupportedOperation on fileno(): https://github.com/ipython/ipython/pull/3072/
+        # called_from_ipykernel = 'ipykernel' in sys.modules
+        # enable = False if called_from_test or called_from_ipykernel else enable
 
         self.enable = enable
         if not self.enable:
