@@ -41,8 +41,8 @@ class HideOutput(object):
         self.enable = enable
         if not self.enable:
             return
-        sys.stdout.flush()
         try:
+            sys.stdout.flush()
             self._origstdout = sys.stdout
             self._oldstdout_fno = os.dup(sys.stdout.fileno())
             self._devnull = os.open(os.devnull, os.O_WRONLY)
