@@ -334,7 +334,6 @@ def link_pairs_collision_info(body1, links1, body2, links2=None, **kwargs):
     return False
 
 # TODO offer return distance and detailed collision info options
-# TODO
 def get_collision_fn(body, joints, obstacles=[],
                     attachments=[], self_collisions=True,
                     disabled_collisions={},
@@ -342,9 +341,17 @@ def get_collision_fn(body, joints, obstacles=[],
                     custom_limits={},
                     body_name_from_id=None, **kwargs):
     """get collision checking function collision_fn(joint_values) -> bool.
+    The collision is checked among:
+        1. robot self-collision (if `self_collisions=True`), ignored robot link pairs can be specified in `disabled_collisions`
+        2. between (robot links) and (attached objects)
+        3. between (robot links, attached objects) and obstacles
+    Ignored collisions for (2) and (3) can be specified in `extra_disabled_collisions`.
+
+    Note that:
+        - collisions among attached objects are not checked
 
     * Note: This function might be one of the most heavily used function in this suite and
-    is very important for planning applications. Backward compatibility (for Caelan's PDDLStream)
+    is very important for planning applications. Backward compatibility (for Caelan's pybullet-planning (called ss-pybullet before))
     is definitely on top priority.
 
     Parameters
