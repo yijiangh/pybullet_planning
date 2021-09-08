@@ -31,7 +31,7 @@ def refine_waypoints(waypoints, extend_fn):
     #    return waypoints
     return list(flatten(extend_fn(q1, q2) for q1, q2 in get_pairs(waypoints))) # [waypoints[0]] +
 
-def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, max_time=INF, verbose=False):
+def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, max_time=INF, verbose=False, frel_tol=1e-5):
     """Perform shortcutting by randomly choosing two segments in the path, check if they result in a shorter path cost, and
     repeat for a given number of iterations. ``default_selecter`` (bisect) is performed upon configurations sampled by
     the ``extension_fn`` on the two shortcutting end points to check collision.
@@ -68,9 +68,11 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, 
     if distance_fn is None:
         distance_fn = get_distance
     waypoints = waypoints_from_path(path)
+    prev_cost = compute_path_cost(path, cost_fn=distance_fn)
+    frel = INF
     for iteration in irange(iterations):
         #waypoints = waypoints_from_path(waypoints)
-        if (elapsed_time(start_time) > max_time) or (len(waypoints) <= 2):
+        if (elapsed_time(start_time) > max_time) or (len(waypoints) <= 2) or (frel < frel_tol):
             break
         # TODO: smoothing in the same linear segment when circular
 
@@ -79,8 +81,8 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, 
         distances = [distance_fn(waypoints[i], waypoints[j]) for i, j in segments]
         total_distance = sum(distances)
         if verbose:
-            print('Iteration: {} | Waypoints: {} | Distance: {:.3f} | Time: {:.3f}'.format(
-                iteration, len(waypoints), total_distance, elapsed_time(start_time)))
+            print('Iteration: {} | Waypoints: {} | Distance: {:.3f} | frel: {:.3e} | Time: {:.3f}'.format(
+                iteration, len(waypoints), total_distance, frel, elapsed_time(start_time)))
         # longer segment has a larger probability to be chosen
         probabilities = np.array(distances) / total_distance
 
@@ -98,8 +100,11 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, 
         i, _ = segment1
         _, j = segment2
         new_waypoints = waypoints[:i+1] + [point1, point2] + waypoints[j:] # TODO: reuse computation
-        if compute_path_cost(new_waypoints, cost_fn=distance_fn) >= total_distance:
+        new_cost = compute_path_cost(new_waypoints, cost_fn=distance_fn)
+        if new_cost >= total_distance:
             continue
+        frel = abs(new_cost-prev_cost)/prev_cost
+        prev_cost = new_cost
         if all(not collision_fn(q) for q in default_selector(extend_fn(point1, point2))):
             waypoints = new_waypoints
     #return waypoints
