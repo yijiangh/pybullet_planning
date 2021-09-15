@@ -31,7 +31,7 @@ def refine_waypoints(waypoints, extend_fn):
     #    return waypoints
     return list(flatten(extend_fn(q1, q2) for q1, q2 in get_pairs(waypoints))) # [waypoints[0]] +
 
-def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, max_time=INF, verbose=False, frel_tol=1e-5):
+def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, max_time=INF, verbose=False): #, frel_tol=1e-5
     """Perform shortcutting by randomly choosing two segments in the path, check if they result in a shorter path cost, and
     repeat for a given number of iterations. ``default_selecter`` (bisect) is performed upon configurations sampled by
     the ``extension_fn`` on the two shortcutting end points to check collision.
@@ -72,7 +72,7 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, 
     frel = INF
     for iteration in irange(iterations):
         #waypoints = waypoints_from_path(waypoints)
-        if (elapsed_time(start_time) > max_time) or (len(waypoints) <= 2) or (frel < frel_tol):
+        if (elapsed_time(start_time) > max_time) or (len(waypoints) <= 2): # or (frel < frel_tol):
             break
         # TODO: smoothing in the same linear segment when circular
 
