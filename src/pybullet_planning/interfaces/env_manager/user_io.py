@@ -54,19 +54,28 @@ class HideOutput(object):
     def __enter__(self):
         if not self.enable:
             return
-        self._newstdout = os.dup(1)
-        os.dup2(self._devnull, 1)
-        os.close(self._devnull)
-        sys.stdout = os.fdopen(self._newstdout, 'w')
+        try:
+            self._newstdout = os.dup(1)
+            os.dup2(self._devnull, 1)
+            os.close(self._devnull)
+            sys.stdout = os.fdopen(self._newstdout, 'w')
+        except OSError:
+            # "OSError: [Errno 24] Too many open files"
+            self.enable = False
+            return
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if not self.enable:
             return
-        sys.stdout.close()
-        sys.stdout = self._origstdout
-        sys.stdout.flush()
-        os.dup2(self._oldstdout_fno, 1)
-        os.close(self._oldstdout_fno) # Added
+        try:
+            sys.stdout.close()
+            sys.stdout = self._origstdout
+            sys.stdout.flush()
+            os.dup2(self._oldstdout_fno, 1)
+            os.close(self._oldstdout_fno) # Added
+        except OSError:
+            # "OSError: [Errno 24] Too many open files"
+            return
 
 #####################################
 
