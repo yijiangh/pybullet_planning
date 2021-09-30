@@ -352,3 +352,8 @@ def camera_focus_on_body(body, camera_ray=np.array([0.1, 0, 0.05])):
     camera_base_pt, _ = get_pose(body)
     camera_pt = np.array(camera_base_pt) + camera_ray
     set_camera_pose(tuple(camera_pt), camera_base_pt)
+
+
+def camera_focus_on_point(point, camera_ray=np.array([0.1, 0, 0.05])):
+    camera_pt = np.array(point) + camera_ray
+    set_camera_pose(tuple(camera_pt), point)
