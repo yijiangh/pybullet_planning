@@ -86,7 +86,7 @@ def safe_path(sequence, collision):
 ##################################################
 
 def rrt_star(start, goal, distance_fn, sample_fn, extend_fn, collision_fn, radius,
-             max_time=INF, max_iterations=INF, goal_probability=.2, informed=True):
+             max_time=INF, max_iterations=INF, goal_probability=.2, informed=True, verbose=False):
     """
     :param start: Start configuration - conf
     :param goal: End configuration - conf
@@ -112,8 +112,9 @@ def rrt_star(start, goal, distance_fn, sample_fn, extend_fn, collision_fn, radiu
         if iteration % PRINT_FREQUENCY == 0:
             success = goal_n is not None
             cost = goal_n.cost if success else INF
-            print('Iteration: {} | Time: {:.3f} | Success: {} | {} | Cost: {:.3f}'.format(
-                iteration, elapsed_time(start_time), success, do_goal, cost))
+            if verbose:
+                print('Iteration: {} | Time: {:.3f} | Success: {} | {} | Cost: {:.3f}'.format(
+                    iteration, elapsed_time(start_time), success, do_goal, cost))
         iteration += 1
 
         nearest = argmin(lambda n: distance_fn(n.config, s), nodes)

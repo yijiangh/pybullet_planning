@@ -12,11 +12,6 @@ class TreeNode(object):
         self.config = config
         self.parent = parent
 
-    #def retrace(self):
-    #    if self.parent is None:
-    #        return [self]
-    #    return self.parent.retrace() + [self]
-
     def retrace(self):
         sequence = []
         node = self
@@ -29,13 +24,14 @@ class TreeNode(object):
         self.node_handle = None
         self.edge_handle = None
 
-    def draw(self, env, color=(1, 0, 0, .5)):
+    def draw(self, draw_fn):
+        draw_fn(self.config, [self.config, self.parent.config])
         # https://github.mit.edu/caelan/lis-openrave
-        from manipulation.primitives.display import draw_node, draw_edge
-        self.node_handle = draw_node(env, self.config, color=color)
-        if self.parent is not None:
-            self.edge_handle = draw_edge(
-                env, self.config, self.parent.config, color=color)
+        # from manipulation.primitives.display import draw_node, draw_edge
+        # self.node_handle = draw_node(env, self.config, color=color)
+        # if self.parent is not None:
+        #     self.edge_handle = draw_edge(
+        #         env, self.config, self.parent.config, color=color)
 
     def __str__(self):
         return 'TreeNode(' + str(self.config) + ')'

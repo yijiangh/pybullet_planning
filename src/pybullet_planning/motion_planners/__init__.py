@@ -71,6 +71,7 @@ from .rrt import *
 from .rrt_star import *
 from .lattice import *
 from .smoothing import *
+from .meta import *
 from .utils import *
 
 __all__ = [name for name in dir() if not name.startswith('_')]

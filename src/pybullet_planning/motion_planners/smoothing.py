@@ -31,7 +31,7 @@ def refine_waypoints(waypoints, extend_fn):
     #    return waypoints
     return list(flatten(extend_fn(q1, q2) for q1, q2 in get_pairs(waypoints))) # [waypoints[0]] +
 
-def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, max_time=INF, verbose=False): #, frel_tol=1e-5
+def smooth_path(path, extend_fn, collision_fn, distance_fn=None, max_iterations=50, max_time=INF, verbose=False): #, frel_tol=1e-5
     """Perform shortcutting by randomly choosing two segments in the path, check if they result in a shorter path cost, and
     repeat for a given number of iterations. ``default_selecter`` (bisect) is performed upon configurations sampled by
     the ``extension_fn`` on the two shortcutting end points to check collision.
@@ -63,14 +63,17 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, 
     """
     # TODO: makes an assumption on the distance_fn metric
     # TODO: smooth until convergence
-    assert (iterations < INF) or (max_time < INF)
+    if (path is None) or (max_iterations is None):
+        return path
+    assert (max_iterations < INF) or (max_time < INF)
     start_time = time.time()
     if distance_fn is None:
         distance_fn = get_distance
     waypoints = waypoints_from_path(path)
+
     prev_cost = compute_path_cost(path, cost_fn=distance_fn)
     frel = INF
-    for iteration in irange(iterations):
+    for iteration in irange(max_iterations):
         #waypoints = waypoints_from_path(waypoints)
         if (elapsed_time(start_time) > max_time) or (len(waypoints) <= 2): # or (frel < frel_tol):
             break
@@ -100,14 +103,16 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, iterations=50, 
         i, _ = segment1
         _, j = segment2
         new_waypoints = waypoints[:i+1] + [point1, point2] + waypoints[j:] # TODO: reuse computation
+
         new_cost = compute_path_cost(new_waypoints, cost_fn=distance_fn)
         if new_cost >= total_distance:
             continue
         frel = abs(new_cost-prev_cost)/prev_cost
         prev_cost = new_cost
+
         if all(not collision_fn(q) for q in default_selector(extend_fn(point1, point2))):
             waypoints = new_waypoints
-    #return waypoints
+
     return refine_waypoints(waypoints, extend_fn)
 
 #smooth_path = smooth_path_old

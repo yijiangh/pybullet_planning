@@ -5,7 +5,6 @@ from collections import namedtuple
 from pybullet_planning.utils.iter_utils import get_pairs
 from .utils import INF, elapsed_time
 from .utils import random_selector, default_selector
-from .meta import direct_path
 from .smoothing import smooth_path
 
 import time
@@ -230,6 +229,7 @@ def lazy_prm(start, goal, sample_fn, extend_fn, collision_fn, num_samples=100,
 def replan_loop(start_conf, end_conf, sample_fn, extend_fn, collision_fn, params_list=[100], smooth=0, **kwargs):
     if collision_fn(start_conf) or collision_fn(end_conf):
         return None
+    from .meta import direct_path
     path = direct_path(start_conf, end_conf, extend_fn, collision_fn)
     if path is not None:
         return path
@@ -237,5 +237,5 @@ def replan_loop(start_conf, end_conf, sample_fn, extend_fn, collision_fn, params
         path, _, _, _ = lazy_prm(start_conf, end_conf, sample_fn, extend_fn, collision_fn,
                         num_samples=num_samples, **kwargs)
         if path is not None:
-            return smooth_path(path, extend_fn, collision_fn, iterations=smooth)
+            return smooth_path(path, extend_fn, collision_fn, max_iterations=smooth)
     return None
