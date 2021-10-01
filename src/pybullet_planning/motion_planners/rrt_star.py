@@ -62,13 +62,15 @@ class OptimalNode(object):
         self.node_handle = None
         self.edge_handle = None
 
-    # def draw(self, env):
-    #     from manipulation.primitives.display import draw_node, draw_edge
-    #     color = (0, 0, 1, .5) if self.solution else (1, 0, 0, .5)
-    #     self.node_handle = draw_node(env, self.config, color=color)
-    #     if self.parent is not None:
-    #         self.edge_handle = draw_edge(
-    #             env, self.config, self.parent.config, color=color)
+    def draw(self, draw_fn, valid=True, remove_all=False):
+        segment = [] if self.parent is None else [self.config, self.parent.config]
+        draw_fn(self.config, segment, valid, valid, remove_all)
+        # from manipulation.primitives.display import draw_node, draw_edge
+        # color = (0, 0, 1, .5) if self.solution else (1, 0, 0, .5)
+        # self.node_handle = draw_node(env, self.config, color=color)
+        # if self.parent is not None:
+        #     self.edge_handle = draw_edge(
+        #         env, self.config, self.parent.config, color=color)
 
     def __str__(self):
         return self.__class__.__name__ + '(' + str(self.config) + ')'
@@ -86,7 +88,7 @@ def safe_path(sequence, collision):
 ##################################################
 
 def rrt_star(start, goal, distance_fn, sample_fn, extend_fn, collision_fn, radius,
-             max_time=INF, max_iterations=INF, goal_probability=.2, informed=True, verbose=False):
+             max_time=INF, max_iterations=INF, goal_probability=.2, informed=True, verbose=False, draw_fn=None):
     """
     :param start: Start configuration - conf
     :param goal: End configuration - conf
@@ -144,6 +146,12 @@ def rrt_star(start, goal, distance_fn, sample_fn, extend_fn, collision_fn, radiu
                 path = safe_path(extend_fn(new.config, n.config), collision_fn)
                 if (len(path) != 0) and (distance_fn(n.config, path[-1]) < EPSILON):
                     n.rewire(new, d, path[:-1], iteration=iteration)
+
+        if draw_fn:
+            nodes[0].draw(draw_fn, remove_all=True)
+            for n in nodes[1:]:
+                n.draw(draw_fn, remove_all=False)
+
     if goal_n is None:
         return None
     return goal_n.retrace()

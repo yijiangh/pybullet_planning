@@ -24,8 +24,9 @@ class TreeNode(object):
         self.node_handle = None
         self.edge_handle = None
 
-    def draw(self, draw_fn):
-        draw_fn(self.config, [self.config, self.parent.config])
+    def draw(self, draw_fn, valid=True):
+        segment = [] if self.parent is None else [self.config, self.parent.config]
+        draw_fn(self.config, segment, valid, valid)
         # https://github.mit.edu/caelan/lis-openrave
         # from manipulation.primitives.display import draw_node, draw_edge
         # self.node_handle = draw_node(env, self.config, color=color)
@@ -45,14 +46,14 @@ def configs(nodes):
 
 
 def rrt(start, goal_sample, distance_fn, sample_fn, extend_fn, collision_fn,
-        goal_test=lambda q: False, iterations=RRT_ITERATIONS, goal_probability=.2, max_time=INF):
+        goal_test=lambda q: False, max_iterations=RRT_ITERATIONS, goal_probability=.2, max_time=INF, draw_fn=None):
     if collision_fn(start):
         return None
     if not callable(goal_sample):
         g = goal_sample
         goal_sample = lambda: g
     nodes = [TreeNode(start)]
-    for i in irange(iterations):
+    for i in irange(max_iterations):
         goal = random() < goal_probability or i == 0
         s = goal_sample() if goal else sample_fn()
 
@@ -62,6 +63,8 @@ def rrt(start, goal_sample, distance_fn, sample_fn, extend_fn, collision_fn,
                 break
             last = TreeNode(q, parent=last)
             nodes.append(last)
+            if draw_fn:
+                last.draw(draw_fn)
             if goal_test(last.config):
                 return configs(last.retrace())
         else:

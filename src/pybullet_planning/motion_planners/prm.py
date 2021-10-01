@@ -23,10 +23,11 @@ class Vertex(object):
     def clear(self):
         self._handle = None
 
-    def draw(self, env, color=apply_alpha(RED, alpha=0.5)):
-        # https://github.mit.edu/caelan/lis-openrave
-        from manipulation.primitives.display import draw_node
-        self._handle = draw_node(env, self.q, color=color)
+    def draw(self, draw_fn):
+        # # https://github.mit.edu/caelan/lis-openrave
+        # from manipulation.primitives.display import draw_node
+        # self._handle = draw_node(env, self.q, color=color)
+        draw_fn(self.q, [])
 
     def __str__(self):
         return 'Vertex(' + str(self.q) + ')'
@@ -67,14 +68,16 @@ class Edge(object):
         #self._handle = None
         self._handles = []
 
-    def draw(self, env, color=apply_alpha(RED, alpha=0.5)):
-        if self._path is None:
-            return
-        # https://github.mit.edu/caelan/lis-openrave
-        from manipulation.primitives.display import draw_edge
-        #self._handle = draw_edge(env, self.v1.q, self.v2.q, color=color)
+    def draw(self, draw_fn):
+        # if self._path is None:
+        #     return
         for q1, q2 in get_pairs(self.configs()):
-            self._handles.append(draw_edge(env, q1, q2, color=color))
+            draw_fn(None, [q1, q2])
+        # # https://github.mit.edu/caelan/lis-openrave
+        # from manipulation.primitives.display import draw_edge
+        # #self._handle = draw_edge(env, self.v1.q, self.v2.q, color=color)
+        # for q1, q2 in get_pairs(self.configs()):
+        #     self._handles.append(draw_edge(env, q1, q2, color=color))
 
     def __str__(self):
         return 'Edge(' + str(self.v1.q) + ' - ' + str(self.v2.q) + ')'
@@ -87,10 +90,11 @@ SearchNode = namedtuple('SearchNode', ['cost', 'parent'])
 
 class Roadmap(Mapping, object):
 
-    def __init__(self, samples=[]):
+    def __init__(self, samples=[], draw_fn=None):
         self.vertices = {}
         self.edges = []
         self.add(samples)
+        self.draw_fn = draw_fn
 
     def __getitem__(self, q):
         return self.vertices[q]
@@ -139,6 +143,8 @@ class Roadmap(Mapping, object):
     def connect(self, v1, v2, path=None):
         if v1 not in v2.edges:  # TODO - what about parallel edges?
             edge = Edge(v1, v2, path)
+            if self.draw_fn:
+                edge.draw(self.draw_fn)
             self.edges.append(edge)
             return edge
         return None
@@ -149,11 +155,11 @@ class Roadmap(Mapping, object):
         for e in self.edges:
             e.clear()
 
-    def draw(self, env):
+    def draw(self):
         for v in self.vertices.values():
-            v.draw(env)
+            v.draw(self.draw_fn)
         for e in self.edges:
-            e.draw(env)
+            e.draw(self.draw_fn)
 
     @staticmethod
     def merge(*roadmaps):
@@ -167,8 +173,8 @@ class Roadmap(Mapping, object):
 
 class PRM(Roadmap):
 
-    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[]):
-        super(PRM, self).__init__()
+    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[], draw_fn=None):
+        super(PRM, self).__init__(draw_fn=draw_fn)
         self.distance_fn = distance_fn
         self.extend = extend_fn
         self.collision = collision_fn
@@ -209,10 +215,10 @@ class PRM(Roadmap):
 
 class DistancePRM(PRM):
 
-    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[], connect_distance=.5):
+    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[], connect_distance=.5, draw_fn=None):
         self.connect_distance = connect_distance
         super(self.__class__, self).__init__(
-            distance_fn, extend_fn, collision_fn, samples=samples)
+            distance_fn, extend_fn, collision_fn, samples=samples, draw_fn=draw_fn)
 
     def grow(self, samples):
         old_vertices, new_vertices = self.vertices.keys(), self.add(samples)
@@ -227,11 +233,11 @@ class DistancePRM(PRM):
 
 class DegreePRM(PRM):
 
-    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[], target_degree=4, connect_distance=INF):
+    def __init__(self, distance_fn, extend_fn, collision_fn, samples=[], target_degree=4, connect_distance=INF, draw_fn=None):
         self.target_degree = target_degree
         self.connect_distance = connect_distance
         super(self.__class__, self).__init__(
-            distance_fn, extend_fn, collision_fn, samples=samples)
+            distance_fn, extend_fn, collision_fn, samples=samples, draw_fn=draw_fn)
 
     def grow(self, samples):
         # TODO: do sorted edges version
@@ -257,7 +263,7 @@ class DegreePRM(PRM):
 ##################################################
 
 def prm(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-        target_degree=4, connect_distance=INF, num_samples=100): #, max_time=INF):
+        target_degree=4, connect_distance=INF, num_samples=100, draw_fn=None): #, max_time=INF):
     """
     :param start: Start configuration - conf
     :param goal: End configuration - conf
@@ -274,8 +280,8 @@ def prm(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
     samples = [start, goal] + [tuple(sample_fn()) for _ in range(num_samples)]
     if target_degree is None:
         roadmap = DistancePRM(distance_fn, extend_fn, collision_fn, samples=samples,
-                              connect_distance=connect_distance)
+                              connect_distance=connect_distance, draw_fn=draw_fn)
     else:
         roadmap = DegreePRM(distance_fn, extend_fn, collision_fn, samples=samples,
-                            target_degree=target_degree, connect_distance=connect_distance)
+                            target_degree=target_degree, connect_distance=connect_distance, draw_fn=draw_fn)
     return roadmap(start, goal)

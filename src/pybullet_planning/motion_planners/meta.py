@@ -142,9 +142,9 @@ def solve_motion_plan(start, goal, distance_fn, sample_fn, extend_fn, collision_
                      max_iterations=max_iterations, max_time=max_time, smooth=None, **kwargs) # restarts=2
     elif algorithm == 'rrt_star':
         path = rrt_star(start, goal, distance_fn, sample_fn, extend_fn, collision_fn, radius=1,
-                        max_iterations=max_iterations, max_time=max_time)
+                        max_iterations=max_iterations, max_time=max_time, **kwargs)
     elif algorithm == 'lattice':
-        path = lattice(start, goal, extend_fn, collision_fn, distance_fn=distance_fn, max_time=INF)
+        path = lattice(start, goal, extend_fn, collision_fn, distance_fn=distance_fn, max_time=INF, **kwargs)
     else:
         raise NotImplementedError(algorithm)
     return smooth_path(path, extend_fn, collision_fn, max_iterations=smooth, max_time=max_time-elapsed_time(start_time))

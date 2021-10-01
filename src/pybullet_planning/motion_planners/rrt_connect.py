@@ -10,7 +10,8 @@ __all__ = [
     ]
 
 def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
-                max_iterations=RRT_ITERATIONS, max_time=INF, verbose=False, draw_fn=None, **kwargs):
+                max_iterations=RRT_ITERATIONS, max_time=INF, verbose=False,
+                draw_fn=None, enforce_alternate=False, **kwargs):
     """RRT connect algorithm: http://www.kuffner.org/james/papers/kuffner_icra2000.pdf
 
     Parameters
@@ -54,16 +55,30 @@ def rrt_connect(q1, q2, distance_fn, sample_fn, extend_fn, collision_fn,
     for iteration in irange(max_iterations):
         if max_time <= elapsed_time(start_time):
             break
-        swap = len(nodes1) > len(nodes2)
+        if enforce_alternate:
+            swap = iteration % 2
+        else:
+            swap = len(nodes1) > len(nodes2)
         tree1, tree2 = nodes1, nodes2
         if swap:
+            # keep tree1 as the smaller tree, trying to connect with the new sample
+            # tree 2 tries to connect with tree1
             tree1, tree2 = nodes2, nodes1
 
         target = sample_fn()
+        if draw_fn:
+            # draw samples
+            draw_fn(target, [])
+
         last1, _ = extend_towards(tree1, target, distance_fn, extend_fn, collision_fn,
                                   swap, **kwargs)
         last2, success = extend_towards(tree2, last1.config, distance_fn, extend_fn, collision_fn,
                                         not swap, **kwargs)
+
+        if draw_fn:
+            for sp1, sp2 in zip(tree1, tree2):
+                sp1.draw(draw_fn)
+                sp2.draw(draw_fn)
 
         if success:
             path1, path2 = last1.retrace(), last2.retrace()

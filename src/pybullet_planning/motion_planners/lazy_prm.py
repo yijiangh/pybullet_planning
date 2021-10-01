@@ -153,7 +153,7 @@ def compute_graph(samples, weights=None, p_norm=2, max_degree=10, max_distance=I
 ##################################################
 
 def lazy_prm(start, goal, sample_fn, extend_fn, collision_fn, num_samples=100,
-             weights=None, p_norm=2, lazy=False, max_cost=INF, max_time=INF, verbose=False, **kwargs): #, max_paths=INF):
+             weights=None, p_norm=2, lazy=False, max_cost=INF, max_time=INF, verbose=False, draw_fn=None, **kwargs): #, max_paths=INF):
     """
     :param start: Start configuration - conf
     :param goal: End configuration - conf
@@ -187,6 +187,8 @@ def lazy_prm(start, goal, sample_fn, extend_fn, collision_fn, num_samples=100,
     neighbors_from_index = {v: set() for v in vertices}
     for v1, v2 in edges:
         neighbors_from_index[v1].add(v2)
+    if draw_fn:
+        draw_fn(samples, edges)
 
     colliding_vertices, colliding_edges = {}, {}
     def neighbors_fn(v1):
