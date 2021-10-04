@@ -85,13 +85,13 @@ def connect(use_gui=True, shadows=True, color=None, width=None, height=None, mp4
         # options="--mp4=\"test.mp4\" --mp4fps=240"
         options = ''
         if color is not None:
-            options += '--background_color_red={} --background_color_green={} --background_color_blue={}'.format(*color)
+            options += ' --background_color_red={} --background_color_green={} --background_color_blue={}'.format(*color)
         if width is not None:
-            options += '--width={}'.format(width)
+            options += ' --width={}'.format(width)
         if height is not None:
-            options += '--height={}'.format(height)
+            options += ' --height={}'.format(height)
         if mp4 is not None:
-            options += '--mp4={}'.format(mp4)
+            options += ' --mp4={}'.format(mp4)
         sim_id = p.connect(method, options=options) # key=None,
         #sim_id = p.connect(p.GUI, options="--opengl2") if use_gui else p.connect(p.DIRECT)
     assert 0 <= sim_id
