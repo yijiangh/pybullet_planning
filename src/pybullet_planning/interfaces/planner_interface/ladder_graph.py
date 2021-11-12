@@ -121,20 +121,25 @@ class EdgeBuilder(object):
         #     for i in range(self.dof_):
         #         self.max_dtheta_[i] = joint_vel_limits[i]*upper_tm
 
-    def consider(self, st_jt, end_jt, index):
+    def consider(self, st_jt, end_jt, index, invalidate_jumps=True, edge_cost_fn=None):
         """index: to_id"""
         # TODO check delta joint val exceeds the joint_vel_limits
         # TODO: use preference_cost here
-        self.delta_jt_.fill(0)
-        for i in range(self.dof_):
-            self.delta_jt_[i] = abs(st_jt[i] - end_jt[i])
-            if self.delta_jt_[i] > self.max_dtheta_[i]:
-                # print('delta_j {}: {} | max delta: {}'.format(i, self.delta_jt_[i], self.max_dtheta_[i]))
-                # self.delta_jt_[i] = np.inf
-                return
-        cost = np.sum(self.delta_jt_) * self.preference_cost
+        if invalidate_jumps:
+            self.delta_jt_.fill(0)
+            for i in range(self.dof_):
+                self.delta_jt_[i] = abs(st_jt[i] - end_jt[i])
+                if self.delta_jt_[i] > self.max_dtheta_[i]:
+                    # print('delta_j {}: {} | max delta: {}'.format(i, self.delta_jt_[i], self.max_dtheta_[i]))
+                    # self.delta_jt_[i] = np.inf
+                    return
+        if edge_cost_fn is None:
+            cost = np.sum(self.delta_jt_)
+        else:
+            cost = edge_cost_fn(st_jt, end_jt)
+
         # assert(self.count_ < len(self.edge_scratch_))
-        edge = LadderGraphEdge(idx=index, cost=cost)
+        edge = LadderGraphEdge(idx=index, cost=cost * self.preference_cost)
         self.edge_scratch_.append(edge)
         # self.count_ += 1
 

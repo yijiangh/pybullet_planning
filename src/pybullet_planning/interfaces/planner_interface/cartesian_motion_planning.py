@@ -214,8 +214,7 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         # TODO: preference_cost using pose deviation
         # fully-connected ladder graph
         edge_builder = EdgeBuilder(st_size, end_size, dof,
-            jump_threshold=joint_jump_threshold,
-            preference_cost=1.0)
+            jump_threshold=joint_jump_threshold, **kwargs)
         for k in range(st_size):
             st_jt_id = k * dof
             for j in range(end_size):
