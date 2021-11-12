@@ -170,7 +170,7 @@ def get_body_from_pb_id(i):
     return p.getBodyUniqueId(i, physicsClientId=CLIENT)
 
 def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_color=BLACK, line_color=YELLOW, \
-    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None, viz_all=False):
+    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None, viz_all=False, distance_threshold=0.0, max_distance=0.0):
     """[summary]
 
     Parameters
@@ -192,6 +192,10 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         # for b in obstacles:
         #     set_color(b, (0,0,1,0.3))
     for u_cr in pb_closest_pt_output:
+        pen_dist = get_distance(u_cr[5], u_cr[6])
+        if pen_dist < distance_threshold:
+            continue
+
         handles = []
         b1 = get_body_from_pb_id(u_cr[1])
         b2 = get_body_from_pb_id(u_cr[2])
@@ -206,7 +210,7 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         print('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
             b1_name, l1_name, b2_name, l2_name))
         print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
-            get_distance(u_cr[5], u_cr[6]), *u_cr[5], *u_cr[6]))
+            pen_dist, *u_cr[5], *u_cr[6]))
 
         if has_gui():
             clone1_fail = False
