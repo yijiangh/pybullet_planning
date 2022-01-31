@@ -12,7 +12,7 @@ from pybullet_planning.interfaces.robots.joint import get_joint_positions, get_c
     get_configuration, get_custom_max_velocity
 from pybullet_planning.interfaces.robots.collision import get_collision_fn
 from pybullet_planning.interfaces.robots.body import clone_body, remove_body, get_link_pose
-from .ladder_graph import LadderGraph, EdgeBuilder, append_ladder_graph
+from .ladder_graph import LadderGraph, EdgeBuilder, append_ladder_graph, DEFAULT_DTHETA
 from .dag_search import DAGSearch
 
 #####################################
@@ -187,11 +187,13 @@ def plan_cartesian_motion_lg(robot, joints, waypoint_poses, sample_ik_fn=None, c
         graph.assign_rung(pt_id, ik_confs_pt)
 
     joint_jump_threshold = None
-    if jump_threshold:
+    if jump_threshold is not None:
         joint_jump_threshold = []
         for joint in joints:
             if joint in jump_threshold:
                 joint_jump_threshold.append(jump_threshold[joint])
+            else:
+                joint_jump_threshold.append(DEFAULT_DTHETA)
 
     # build edges within current pose family
     for i in range(graph.get_rungs_size()-1):

@@ -133,7 +133,7 @@ def get_distance(p1, p2, **kwargs):
     return get_length(get_difference(p1, p2), **kwargs)
 
 def angle_between(vec1, vec2):
-    return np.math.acos(np.dot(vec1, vec2) / (get_length(vec1) *  get_length(vec2)))
+    return np.math.acos(np.clip(np.dot(vec1, vec2) / (get_length(vec1) *  get_length(vec2)), -1.0, 1.0))
 
 def get_angle(q1, q2):
     dx, dy = np.array(q2[:2]) - np.array(q1[:2])
