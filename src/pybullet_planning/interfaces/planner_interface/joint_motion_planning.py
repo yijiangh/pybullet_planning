@@ -102,7 +102,7 @@ def get_extend_fn(body, joints, resolutions=None, norm=2):
     difference_fn = get_difference_fn(body, joints)
     def fn(q1, q2):
         #steps = int(np.max(np.abs(np.divide(difference_fn(q2, q1), resolutions))))
-        steps = int(np.linalg.norm(np.divide(difference_fn(q2, q1), resolutions), ord=norm))
+        steps = int(np.ceil(np.linalg.norm(np.divide(difference_fn(q2, q1), resolutions), ord=norm)))
         refine_fn = get_refine_fn(body, joints, num_steps=steps)
         return refine_fn(q1, q2)
     return fn
