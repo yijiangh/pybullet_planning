@@ -27,14 +27,15 @@ def extend_towards(tree, target, distance_fn, extend_fn, collision_fn, swap=Fals
     else:
         safe = []
         for q0, q1 in zip(extend[:-1], extend[1:]):
-            if (not collision_fn(q0)):
+            if not collision_fn(q0):
                 safe.append(q0)
-                if sweep_collision_fn(q0, q1): # , diagnosis=True
+                if sweep_collision_fn(q0, q1):
                     break
             else:
                 break
         else:
-            safe.append(extend[-1])
+            if not collision_fn(extend[-1]):
+                safe.append(extend[-1])
     for i, q in enumerate(safe):
         if (i % tree_frequency == 0) or (i == len(safe) - 1):
             last = TreeNode(q, parent=last)
