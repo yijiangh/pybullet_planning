@@ -13,13 +13,14 @@ from .utils import INF
 from .smoothing import smooth_path
 from .utils import RRT_RESTARTS, RRT_SMOOTHING, INF, irange, elapsed_time, compute_path_cost, default_selector
 
-def direct_path(start, goal, extend_fn, collision_fn):
+def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, **kwargs):
     """direct linear path connnecting start and goal using the extension fn.
 
     :param start: Start configuration - conf
     :param goal: End configuration - conf
     :param extend_fn: Extension function - extend_fn(q1, q2)->[q', ..., q"]
     :param collision_fn: Collision function - collision_fn(q)->bool
+    :param sweep_collision_fn (Optional): Sweep collision function - collision_fn(q0, q1)->bool
     :return: Path [q', ..., q"] or None if unable to find a solution
     """
     # TODO: version which checks whether the segment is valid
@@ -29,12 +30,15 @@ def direct_path(start, goal, extend_fn, collision_fn):
     path = [start] + path
     if any(collision_fn(q) for q in default_selector(path)):
         return None
+    if sweep_collision_fn is not None:
+        if any(sweep_collision_fn(q0, q1) for q0, q1 in default_selector(zip(path[:-1], path[1:]))):
+            return None
     return path
 
-def check_direct(start, goal, extend_fn, collision_fn):
+def check_direct(start, goal, extend_fn, collision_fn, **kwargs):
     if any(collision_fn(q) for q in [start, goal]):
         return False
-    return direct_path(start, goal, extend_fn, collision_fn)
+    return direct_path(start, goal, extend_fn, collision_fn, **kwargs)
 
 #################################################################
 
@@ -83,7 +87,7 @@ def random_restarts(solve_fn, start, goal, distance_fn, sample_fn, extend_fn, co
     """
     start_time = time.time()
     solutions = []
-    path = check_direct(start, goal, extend_fn, collision_fn)
+    path = check_direct(start, goal, extend_fn, collision_fn, **kwargs)
     if path is False:
         return None
     if path is not None:
@@ -120,10 +124,10 @@ def solve_motion_plan(start, goal, distance_fn, sample_fn, extend_fn, collision_
     # TODO: allow distance_fn to be skipped
     # TODO: return lambda function
     start_time = time.time()
-    path = check_direct(start, goal, extend_fn, collision_fn)
+    path = check_direct(start, goal, extend_fn, collision_fn, **kwargs)
     if path is not None:
         return path
-    #max_time -= elapsed_time(start_time)
+    max_time -= elapsed_time(start_time)
     if algorithm == 'prm':
         path = prm(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
                    num_samples=num_samples, **kwargs)

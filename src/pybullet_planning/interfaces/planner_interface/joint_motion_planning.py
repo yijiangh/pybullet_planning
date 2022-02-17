@@ -81,6 +81,7 @@ def get_refine_fn(body, joints, num_steps=0):
     num_steps = num_steps + 1
     def fn(q1, q2):
         q = q1
+        yield q1
         for i in range(num_steps):
             positions = (1. / (num_steps - i)) * np.array(difference_fn(q2, q)) + q
             q = tuple(positions)

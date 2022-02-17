@@ -12,6 +12,7 @@ Unreleased
 
 **Added**
 - Added `distance_threshold` to `pairwise_link_collision_info` and `pairwise_link_collision` to allow collision checking given a penetration threshold
+- Added `sweep_collision_fn` to `birrt` to allow sweep collision check in edge expansion
 
 **Changed**
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
@@ -20,6 +21,7 @@ Unreleased
 
 **Fixed**
 - Fixed `read_obj` returns empty dict if obj file does not start with objects (``o object_name``)
+- Fixed `get_extend_fn(q1,q2)` to include `q1` in its output path. This bug was causing incorrect planning result in birrt, because the two trees will have a gap in the middle that is unchecked.
 
 0.5.1
 ----------
