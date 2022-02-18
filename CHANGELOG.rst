@@ -13,11 +13,13 @@ Unreleased
 **Added**
 - Added `distance_threshold` to `pairwise_link_collision_info` and `pairwise_link_collision` to allow collision checking given a penetration threshold
 - Added `sweep_collision_fn` to `birrt` to allow sweep collision check in edge expansion
+- Added `coarse_waypoints` to the `smooth_path` function to give options for use refined shortcut to ensure collision-free results.
 
 **Changed**
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
 - ``motion_planners`` module up-to-date with `commit e6f23053e<https://github.com/caelan/motion-planners/commit/e6f23053e441af091b898b7f56c6fee48223be48>`_.
 - Changed the mesh reading procedure in `vertices_from_data` from `pp.read_obj` to `meshio.read`. This fixes #9.
+- `smooth_path`'s `max_iterations` argument changed to `max_smooth_iterations`
 
 **Fixed**
 - Fixed `read_obj` returns empty dict if obj file does not start with objects (``o object_name``)

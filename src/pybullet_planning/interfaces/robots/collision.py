@@ -29,7 +29,7 @@ ContactResult = namedtuple('ContactResult', ['contactFlag', 'bodyUniqueIdA', 'bo
                                          'contactNormalOnB', 'contactDistance', 'normalForce'])
 
 
-def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE, distance_threshold=0.0): # 10000
+def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_distance=MAX_DISTANCE, **kwargs): # 10000
     """check pairwise collision checking info between bodies
 
     See getClosestPoints in <pybullet documentation `https://docs.google.com/document/d/10sXEhzFRSnvFcl3XxNGhnD4N2SedqwdAvK3dsihxVUA/edit?usp=sharing`>_
@@ -50,9 +50,6 @@ def pairwise_link_collision_info(body1, link1, body2, link2=BASE_LINK, max_dista
     max_distance : float, optional
         If the distance between objects exceeds this maximum distance, no points may be returned.
         by default MAX_DISTANCE (set in pybullet_planning.utils.shared_const)
-    distance_threshold : float, optional
-        this argument here is not used but rather to make `**kwargs` working without overhauling too many functions.
-        See `pairwise_link_collision`'s `distance_threshold` argument for real usage.
 
     Returns
     -------

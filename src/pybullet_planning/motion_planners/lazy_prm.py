@@ -232,12 +232,12 @@ def replan_loop(start_conf, end_conf, sample_fn, extend_fn, collision_fn, params
     if collision_fn(start_conf) or collision_fn(end_conf):
         return None
     from .meta import direct_path
-    path = direct_path(start_conf, end_conf, extend_fn, collision_fn)
+    path = direct_path(start_conf, end_conf, extend_fn, collision_fn, **kwargs)
     if path is not None:
         return path
     for num_samples in params_list:
         path, _, _, _ = lazy_prm(start_conf, end_conf, sample_fn, extend_fn, collision_fn,
                         num_samples=num_samples, **kwargs)
         if path is not None:
-            return smooth_path(path, extend_fn, collision_fn, max_iterations=smooth)
+            return smooth_path(path, extend_fn, collision_fn, max_smooth_iterations=smooth, **kwargs)
     return None

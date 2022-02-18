@@ -33,7 +33,7 @@ def refine_waypoints(waypoints, extend_fn):
     return list(flatten(extend_fn(q1, q2) for q1, q2 in get_pairs(waypoints))) # [waypoints[0]] +
 
 def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, sample_fn=None, sweep_collision_fn=None,
-        max_iterations=50, max_time=INF, converge_time=INF, verbose=False):
+        max_smooth_iterations=50, max_time=INF, converge_time=INF, verbose=False, coarse_waypoints=True, **kwargs):
     """Perform shortcutting by randomly choosing two segments in the path, check if they result in a shorter path cost, and
     repeat for a given number of iterations. ``default_selecter`` (bisect) is performed upon configurations sampled by
     the ``extension_fn`` on the two shortcutting end points to check collision.
@@ -73,20 +73,24 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, s
     # TODO: smooth until convergence
     # TODO: dynamic expansion of the nearby graph
     start_time = last_time = time.time()
-    if (path is None) or (max_iterations is None):
+    if (path is None) or (max_smooth_iterations is None):
         return path
-    assert (max_iterations < INF) or (max_time < INF)
+    assert (max_smooth_iterations < INF) or (max_time < INF)
     start_time = time.time()
     if distance_fn is None:
         distance_fn = distance_fn_from_extend_fn(extend_fn)
     if cost_fn is None:
         cost_fn = distance_fn
     # TODO: use extend_fn to extract waypoints
-    waypoints = waypoints_from_path(path, difference_fn=None) # TODO: difference_fn
+    if coarse_waypoints:
+        waypoints = waypoints_from_path(path, difference_fn=None) # TODO: difference_fn
+    else:
+        waypoints = path
+
     cost = compute_path_cost(waypoints, cost_fn=cost_fn)
     #paths = [extend_fn(*pair) for pair in get_pairs(waypoints)] # TODO: update incrementally
     #costs = [cost_fn(*pair) for pair in get_pairs(waypoints)]
-    for iteration in irange(max_iterations):
+    for iteration in irange(max_smooth_iterations):
         if (elapsed_time(start_time) > max_time) or (elapsed_time(last_time) > converge_time) or (len(waypoints) <= 2):
             break
 
@@ -118,19 +122,23 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, s
         # if sample_fn is not None:
         #     shortcut = [point1, sample_fn(), point2]
         #shortcut_paths = [extend_fn(*pair) for pair in get_pairs(waypoints)]
-        new_waypoints = waypoints[:i+1] + shortcut + waypoints[j:] # TODO: reuse computation
+        refined_path = refine_waypoints(shortcut, extend_fn)
+        if coarse_waypoints:
+            new_waypoints = waypoints[:i+1] + shortcut + waypoints[j:] # TODO: reuse computation
+        else:
+            new_waypoints = waypoints[:i+1] + refined_path + waypoints[j:] # TODO: reuse computation
         new_cost = compute_path_cost(new_waypoints, cost_fn=cost_fn)
         if new_cost >= cost: # TODO: cost must have percent improvement above a threshold
             continue
-        if not any(collision_fn(q) for q in default_selector(refine_waypoints(shortcut, extend_fn))):
+        if not any(collision_fn(q) for q in default_selector(refined_path)):
             if sweep_collision_fn is not None:
-                refined_path = list(refine_waypoints(shortcut, extend_fn))
                 if any(sweep_collision_fn(q0, q1) for q0, q1 in default_selector(get_pairs(refined_path))):
                     continue
             waypoints = new_waypoints
             cost = new_cost
             last_time = time.time()
 
-    #return waypoints
-    return refine_waypoints(waypoints, extend_fn)
+    return waypoints
+    # ! this final refined is not guaranteed to be collision-free!
+    # return refine_waypoints(waypoints, extend_fn)
 #smooth_path = smooth_path_old

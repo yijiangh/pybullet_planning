@@ -11,7 +11,7 @@ from .rrt_star import rrt_star
 
 from .utils import INF
 from .smoothing import smooth_path
-from .utils import RRT_RESTARTS, RRT_SMOOTHING, INF, irange, elapsed_time, compute_path_cost, default_selector
+from .utils import RRT_RESTARTS, RRT_SMOOTHING, INF, irange, elapsed_time, compute_path_cost, default_selector, get_pairs
 
 def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, **kwargs):
     """direct linear path connnecting start and goal using the extension fn.
@@ -31,7 +31,7 @@ def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, *
     if any(collision_fn(q) for q in default_selector(path)):
         return None
     if sweep_collision_fn is not None:
-        if any(sweep_collision_fn(q0, q1) for q0, q1 in default_selector(zip(path[:-1], path[1:]))):
+        if any(sweep_collision_fn(q0, q1) for q0, q1 in default_selector(get_pairs(path))):
             return None
     return path
 
@@ -101,8 +101,8 @@ def random_restarts(solve_fn, start, goal, distance_fn, sample_fn, extend_fn, co
                         max_time=attempt_time, **kwargs)
         if path is None:
             continue
-        path = smooth_path(path, extend_fn, collision_fn, max_iterations=smooth,
-                           max_time=max_time-elapsed_time(start_time))
+        path = smooth_path(path, extend_fn, collision_fn, max_smooth_iterations=smooth,
+                           max_time=max_time-elapsed_time(start_time), **kwargs)
         solutions.append(path)
         if compute_path_cost(path, distance_fn) < success_cost:
             break
@@ -151,4 +151,4 @@ def solve_motion_plan(start, goal, distance_fn, sample_fn, extend_fn, collision_
         path = lattice(start, goal, extend_fn, collision_fn, distance_fn=distance_fn, max_time=INF, **kwargs)
     else:
         raise NotImplementedError(algorithm)
-    return smooth_path(path, extend_fn, collision_fn, max_iterations=smooth, max_time=max_time-elapsed_time(start_time))
+    return smooth_path(path, extend_fn, collision_fn, max_smooth_iterations=smooth, max_time=max_time-elapsed_time(start_time), **kwargs)

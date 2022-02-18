@@ -13,7 +13,7 @@ def asymmetric_extend(q1, q2, extend_fn, backward=False):
 
 
 def extend_towards(tree, target, distance_fn, extend_fn, collision_fn, swap=False, tree_frequency=1,
-        sweep_collision_fn=None):
+        sweep_collision_fn=None, **kwargs):
     """Takes current tree and extend it towards a new node (`target`).
     """
     assert tree_frequency >= 1

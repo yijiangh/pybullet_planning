@@ -119,7 +119,7 @@ def test_motion_planner(viewer, algorithm):
             for path in paths:
                 start_time = time.time()
                 extend_fn, roadmap = mp_utils.get_box_extend_fn(obstacles=obstacles)  # obstacles | []
-                smoothed = pp.smooth_path(path, extend_fn, collision_fn, iterations=INF, max_time=max_time)
+                smoothed = pp.smooth_path(path, extend_fn, collision_fn, max_smooth_iterations=INF, max_time=max_time)
                 print('Smoothed path cost: {:.3f} | Time: {:.3f}'.format(
                     compute_path_cost(smoothed, distance_fn), pp.elapsed_time(start_time)))
                 if viewer:
