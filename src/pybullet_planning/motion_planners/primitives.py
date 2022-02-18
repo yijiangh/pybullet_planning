@@ -1,7 +1,7 @@
 from itertools import takewhile
 
 from .rrt import TreeNode
-from .utils import argmin, negate
+from .utils import argmin, negate, get_pairs
 
 ASYMETRIC = True
 
@@ -26,7 +26,7 @@ def extend_towards(tree, target, distance_fn, extend_fn, collision_fn, swap=Fals
         safe = list(takewhile(negate(collision_fn), extend))
     else:
         safe = []
-        for q0, q1 in zip(extend[:-1], extend[1:]):
+        for q0, q1 in get_pairs(extend):
             if not collision_fn(q0):
                 safe.append(q0)
                 if sweep_collision_fn(q0, q1):

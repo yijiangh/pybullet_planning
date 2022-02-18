@@ -32,7 +32,8 @@ def refine_waypoints(waypoints, extend_fn):
     #    return waypoints
     return list(flatten(extend_fn(q1, q2) for q1, q2 in get_pairs(waypoints))) # [waypoints[0]] +
 
-def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, sample_fn=None, max_iterations=50, max_time=INF, converge_time=INF, verbose=False):
+def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, sample_fn=None, sweep_collision_fn=None,
+        max_iterations=50, max_time=INF, converge_time=INF, verbose=False):
     """Perform shortcutting by randomly choosing two segments in the path, check if they result in a shorter path cost, and
     repeat for a given number of iterations. ``default_selecter`` (bisect) is performed upon configurations sampled by
     the ``extension_fn`` on the two shortcutting end points to check collision.
@@ -50,6 +51,12 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, s
     distance_fn : function handle
         distance function - ``distance_fn(q1, q2)->float``, default to None, which will use
         the default euclidean distance.
+    sample_fn : function handle
+        sampling function - `sample_fn() -> q` for inserting a shortcut configuration between two conf points.
+        Default to None, where no intermediate point will be inserted in the chosen segment.
+    sweep_collision_fn : function handle
+        sweep (continuous) collision check function - `sweep_collision_fn(q1, q2)->bool` for checking the collision
+        in between two configurations. Defaults to None, which will ignore sweep collision checks.
     iterations : int
         Maximum number of iterations
     max_time: float
@@ -116,9 +123,14 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, s
         if new_cost >= cost: # TODO: cost must have percent improvement above a threshold
             continue
         if not any(collision_fn(q) for q in default_selector(refine_waypoints(shortcut, extend_fn))):
+            if sweep_collision_fn is not None:
+                refined_path = list(refine_waypoints(shortcut, extend_fn))
+                if any(sweep_collision_fn(q0, q1) for q0, q1 in default_selector(get_pairs(refined_path))):
+                    continue
             waypoints = new_waypoints
             cost = new_cost
             last_time = time.time()
+
     #return waypoints
     return refine_waypoints(waypoints, extend_fn)
 #smooth_path = smooth_path_old
