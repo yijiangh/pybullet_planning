@@ -3,7 +3,7 @@ from random import shuffle
 from itertools import islice
 from collections import deque
 import time
-from pybullet_planning.interfaces.env_manager.pose_transformation import get_unit_vector
+from pybullet_planning.interfaces.env_manager.pose_transformation import get_difference, get_unit_vector
 
 __all__ = [
     'compute_path_cost',
@@ -130,15 +130,13 @@ def remove_redundant(path, tolerance=1e-3):
     return new_path
 
 
-def waypoints_from_path(path, tolerance=1e-3):
+def waypoints_from_path(path, difference_fn=None, tolerance=1e-3):
     """Remove redundant waypoints in a given path if consecutive points are too close under L2 norm.
     """
+    difference_fn = difference_fn or get_difference
     path = remove_redundant(path, tolerance=tolerance)
     if len(path) < 2:
         return path
-    difference_fn = lambda q2, q1: np.array(q2) - np.array(q1)
-    #difference_fn = get_difference_fn(body, joints)
-
     waypoints = [path[0]]
     last_conf = path[1]
     last_difference = get_unit_vector(difference_fn(last_conf, waypoints[-1]))

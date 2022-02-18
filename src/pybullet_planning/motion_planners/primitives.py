@@ -18,8 +18,8 @@ def extend_towards(tree, target, distance_fn, extend_fn, collision_fn, swap=Fals
     """
     assert tree_frequency >= 1
     # the nearest node in the tree to the target
-    last = argmin(lambda n: distance_fn(n.config, target), tree)
     # the segments by connecting last to the target using the given extend fn
+    last = argmin(lambda n: distance_fn(n.config, target), tree)
     extend = list(asymmetric_extend(last.config, target, extend_fn, backward=swap))
     # check if the extended path collision-free, stop until find a collision
     if sweep_collision_fn is None:
@@ -42,3 +42,12 @@ def extend_towards(tree, target, distance_fn, extend_fn, collision_fn, swap=Fals
             tree.append(last)
     success = len(extend) == len(safe)
     return last, success
+
+##################################
+
+def distance_fn_from_extend_fn(extend_fn):
+    # TODO: can compute cost between waypoints from extend_fn
+    def distance_fn(q1, q2):
+        path = list(extend_fn(q1, q2)) # TODO: cache
+        return len(path) # TODO: subtract endpoints?
+    return distance_fn
