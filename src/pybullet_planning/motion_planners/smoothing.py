@@ -1,6 +1,6 @@
 from random import randint, random, choice
 from .utils import INF, elapsed_time, irange, waypoints_from_path, \
-    convex_combination, flatten, compute_path_cost, default_selector
+    convex_combination, flatten, compute_path_cost, default_selector, remove_redundant
 from pybullet_planning.utils.iter_utils import get_pairs
 from pybullet_planning.interfaces.env_manager.pose_transformation import get_distance
 from .primitives import distance_fn_from_extend_fn
@@ -99,6 +99,8 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, s
         paths = [list(extend_fn(*pair)) for pair in get_pairs(waypoints)]
         #weights = [len(paths[i]) for i, j in segments]
         probabilities = np.array(weights) / sum(weights)
+        if np.any(np.isnan(probabilities)):
+            continue
         if verbose:
             print('Iteration: {} | Waypoints: {} | Cost: {:.3f} | Elapsed: {:.3f} | Remaining: {:.3f}'.format(
                 iteration, len(waypoints), cost, elapsed_time(start_time), max_time-elapsed_time(start_time)))
@@ -138,7 +140,7 @@ def smooth_path(path, extend_fn, collision_fn, distance_fn=None, cost_fn=None, s
             cost = new_cost
             last_time = time.time()
 
-    return waypoints
+    return remove_redundant(waypoints)
     # ! this final refined is not guaranteed to be collision-free!
     # return refine_waypoints(waypoints, extend_fn)
 #smooth_path = smooth_path_old

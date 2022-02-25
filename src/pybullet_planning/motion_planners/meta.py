@@ -11,7 +11,8 @@ from .rrt_star import rrt_star
 
 from .utils import INF
 from .smoothing import smooth_path
-from .utils import RRT_RESTARTS, RRT_SMOOTHING, INF, irange, elapsed_time, compute_path_cost, default_selector, get_pairs
+from .utils import RRT_RESTARTS, RRT_SMOOTHING, INF, irange, elapsed_time, compute_path_cost, default_selector, get_pairs, \
+    remove_redundant
 
 def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, **kwargs):
     """direct linear path connnecting start and goal using the extension fn.
@@ -27,7 +28,6 @@ def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, *
     if collision_fn(start) or collision_fn(goal):
         return None
     path = list(extend_fn(start, goal))
-    path = [start] + path
     if any(collision_fn(q) for q in default_selector(path)):
         return None
     if sweep_collision_fn is not None:
@@ -151,4 +151,6 @@ def solve_motion_plan(start, goal, distance_fn, sample_fn, extend_fn, collision_
         path = lattice(start, goal, extend_fn, collision_fn, distance_fn=distance_fn, max_time=INF, **kwargs)
     else:
         raise NotImplementedError(algorithm)
+    if path:
+        path = remove_redundant(path)
     return smooth_path(path, extend_fn, collision_fn, max_smooth_iterations=smooth, max_time=max_time-elapsed_time(start_time), **kwargs)
