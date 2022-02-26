@@ -11,9 +11,8 @@ from pybullet_planning.interfaces.env_manager.shape_creation import get_collisio
 
 from pybullet_planning.interfaces.robots.dynamics import get_mass, get_dynamics_info, get_local_link_pose
 from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, is_circular, get_joint_limits, is_fixed, \
-    get_joint_info, get_joint_positions, get_joints, is_movable
-from pybullet_planning.interfaces.robots.link import get_links, parent_joint_from_link, get_link_name, get_link_parent, get_link_pose, \
-    get_link_subtree, get_all_links
+    get_joint_info, get_joint_positions, get_joints, is_movable, set_joint_positions, get_movable_joints
+from pybullet_planning.interfaces.robots.link import get_links, parent_joint_from_link, get_link_name, get_link_parent, get_link_pose
 
 #####################################
 # Bodies
@@ -241,6 +240,40 @@ def set_texture(body, texture=None, link=BASE_LINK, shape_index=NULL_ID):
     return p.changeVisualShape(body, link, shapeIndex=shape_index, textureUniqueId=texture,
                                physicsClientId=CLIENT)
 
+def get_body_collision_vertices(body):
+    """get body link collision body's vertices in its current configuration
+
+    Parameters
+    ----------
+    body : int
+
+    Returns
+    -------
+    dict
+        {link_id : list[point 3d position]}
+    """
+    from .collision import expand_links
+    body_vertices_from_link = {}
+    joints = get_movable_joints(body)
+    conf = get_joint_positions(body, joints)
+
+    try:
+        body_clone = clone_body(body, visual=False, collision=True)
+    except:
+        body_clone = body
+    _, body_links = expand_links(body_clone)
+    set_joint_positions(body_clone, get_movable_joints(body_clone), conf)
+
+    for body_link in body_links:
+        # ! for some reasons, pybullet cloned body only has collision shapes, and saves them as visual shapes
+        local_from_vertices = vertices_from_rigid(body_clone, body_link, collision=body == body_clone)
+        world_from_current_pose = get_link_pose(body_clone, body_link)
+        body_vertices_from_link[body_link] = apply_affine(world_from_current_pose, local_from_vertices)
+
+    if body_clone != body:
+        remove_body(body_clone)
+    return body_vertices_from_link
+
 def vertices_from_link(body, link, collision=True):
     """get body link geometry's vertices in local frame
 
@@ -259,11 +292,12 @@ def vertices_from_link(body, link, collision=True):
     vertices = []
     # ! PyBullet creates multiple collision elements (with unknown_file) when nonconvex
     get_data = get_collision_data if collision else get_visual_data
+    # TODO joint transformation if mutli-link body
     for data in get_data(body, link):
         vertices.extend(vertices_from_data(data))
     return vertices
 
-def vertices_from_rigid(body, link=BASE_LINK):
+def vertices_from_rigid(body, link=BASE_LINK, collision=True):
     """get all vertices of given body (collision body) in its local frame.
 
     Parameters
@@ -284,7 +318,8 @@ def vertices_from_rigid(body, link=BASE_LINK):
     # from pybullet_planning.interfaces.robots.link import get_num_links
     # assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
     try:
-        vertices = vertices_from_link(body, link)
+        # * entry point for bodies created from URDFs or STL mesh files
+        vertices = vertices_from_link(body, link, collision=collision)
     except RuntimeError:
         info = get_model_info(body)
         assert info is not None

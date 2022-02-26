@@ -5,10 +5,10 @@ import numpy as np
 import pybullet as p
 
 from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE, UNKNOWN_FILE
-from pybullet_planning.utils import get_client
 from pybullet_planning.interfaces.env_manager.user_io import step_simulation
 from pybullet_planning.interfaces.env_manager.pose_transformation import get_distance
-from pybullet_planning.interfaces.robots.body import get_all_links, get_bodies, get_links
+from .link import get_all_links
+from .body import get_bodies
 
 #####################################
 
