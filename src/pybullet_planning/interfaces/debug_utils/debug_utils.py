@@ -3,7 +3,7 @@ import numpy as np
 import pybullet as p
 from itertools import product, combinations
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID, YELLOW
+from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID, YELLOW, LOGGER
 
 from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, tform_point, unit_from_theta, get_distance
 from pybullet_planning.interfaces.geometry.bounding_box import get_aabb
@@ -206,10 +206,10 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         l1_name = get_link_name(b1, l1)
         l2_name = get_link_name(b2, l2)
 
-        print('*'*10)
-        print('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
+        LOGGER.debug('*'*10)
+        LOGGER.info('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
             b1_name, l1_name, b2_name, l2_name))
-        print('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
+        LOGGER.info('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
             pen_dist, *u_cr[5], *u_cr[6]))
 
         if has_gui():
@@ -261,8 +261,8 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
                 remove_body(cloned_body2)
             else:
                 set_color(b2, apply_alpha(WHITE, 0.5))
-        else:
-            wait_for_user('Collision diagnosis. Press Enter to continue.')
+        # else:
+        #     wait_for_user('Collision diagnosis. Press Enter to continue.')
 
         if not viz_all:
             return
@@ -294,10 +294,10 @@ def draw_ray_result_diagnosis(ray, ray_result, b1=None, l1=None, point_color=BLA
     b2_name = body_name_from_id[b2] if b2 in body_name_from_id else get_name(b2)
     l2_name = get_link_name(b2, l2)
 
-    print('*'*10)
-    print('ray collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
+    LOGGER.debug('*'*10)
+    LOGGER.info('ray collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
         b1_name, l1_name, b2_name, l2_name))
-    print('hit_fraction: {:.2f} | hit_position ({:.6f},{:.6f},{:.6f}) | hit_normal ({:.6f},{:.6f},{:.6f})'.format(
+    LOGGER.info('hit_fraction: {:.2f} | hit_position ({:.6f},{:.6f},{:.6f}) | hit_normal ({:.6f},{:.6f},{:.6f})'.format(
         ray_result.hit_fraction, *ray_result.hit_position, *ray_result.hit_normal))
 
     if has_gui():
@@ -347,8 +347,8 @@ def draw_ray_result_diagnosis(ray, ray_result, b1=None, l1=None, point_color=BLA
             remove_body(cloned_body2)
         else:
             set_color(b2, apply_alpha(WHITE, 0.5))
-    else:
-        wait_for_user('Ray collision diagnosis. Press Enter to continue.')
+    # else:
+    #     wait_for_user('Ray collision diagnosis. Press Enter to continue.')
 
 
 def camera_focus_on_body(body, camera_ray=np.array([0.1, 0, 0.05])):

@@ -12,7 +12,7 @@ from pybullet_planning.interfaces.env_manager.shape_creation import get_collisio
 from pybullet_planning.interfaces.robots.dynamics import get_mass, get_dynamics_info, get_local_link_pose
 from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, is_circular, get_joint_limits, is_fixed, \
     get_joint_info, get_joint_positions, get_joints, is_movable, set_joint_positions, get_movable_joints
-from pybullet_planning.interfaces.robots.link import get_links, parent_joint_from_link, get_link_name, get_link_parent, get_link_pose
+from pybullet_planning.interfaces.robots.link import get_links, parent_joint_from_link, get_link_name, get_link_parent, get_link_pose, get_all_links
 
 #####################################
 # Bodies
@@ -218,7 +218,7 @@ def clone_world(client=None, exclude=[]):
             mapping[body] = new_body
     return mapping
 
-def set_color(body, color, link=BASE_LINK, shape_index=NULL_ID):
+def set_color(body, color, link=None, shape_index=NULL_ID):
     """
     Experimental for internal use, recommended ignore shapeIndex or leave it NULL_ID.
     Intention was to let you pick a specific shape index to modify,
@@ -230,9 +230,13 @@ def set_color(body, color, link=BASE_LINK, shape_index=NULL_ID):
     :return:
     """
     # specularColor
-    return p.changeVisualShape(body, link, shapeIndex=shape_index, rgbaColor=color,
+    links = get_all_links(body) if link is None else [link]
+    return_flags = []
+    for body_link in links:
+        return_flags.append(p.changeVisualShape(body, body_link, shapeIndex=shape_index, rgbaColor=color,
                                #textureUniqueId=None, specularColor=None,
-                               physicsClientId=CLIENT)
+                               physicsClientId=CLIENT))
+    return all(return_flags)
 
 def set_texture(body, texture=None, link=BASE_LINK, shape_index=NULL_ID):
     if texture is None:
