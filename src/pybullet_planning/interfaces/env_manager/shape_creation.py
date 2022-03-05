@@ -7,7 +7,7 @@ from itertools import count
 from pybullet_planning.utils import CLIENT, DEFAULT_EXTENTS, DEFAULT_HEIGHT, DEFAULT_RADIUS, \
     DEFAULT_MESH, DEFAULT_SCALE, DEFAULT_NORMAL, BASE_LINK, INFO_FROM_BODY, STATIC_MASS, UNKNOWN_FILE, BASE_LINK, NULL_ID, \
     RED, GREEN, BLUE, BLACK, GREY, CARTESIAN_TYPES
-from pybullet_planning.utils import get_client
+from pybullet_planning.utils import get_client, LOGGER
 from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, multiply, unit_point, unit_quat
 
 #####################################
@@ -360,14 +360,14 @@ def vertices_from_data(data):
     elif geometry_type == p.GEOM_MESH:
         import meshio
         from pybullet_planning.interfaces.geometry.mesh import read_obj
-        filename, scale = get_data_filename(data), get_data_scale(data)
+        filename, scale = get_data_filename2(data), get_data_scale(data)
         if filename != UNKNOWN_FILE:
             if filename.endswith('.obj'):
                 mesh = read_obj(filename, decompose=False)
-                vertices = [[v[i]*scale for i in range(3)] for v in mesh.vertices]
+                vertices = [np.array(scale)*np.array(vertex) for vertex in mesh.vertices]
             else:
                 mio_mesh = meshio.read(filename)
-                vertices = [scale*np.array(vertex) for vertex in mio_mesh.points]
+                vertices = [np.array(scale)*np.array(vertex) for vertex in mio_mesh.points]
         else:
             try:
                 #  ! this fails randomly if multiple meshes are attached to the same link
@@ -388,8 +388,11 @@ def vertices_from_data(data):
 
 def visual_shape_from_data(data, client=None):
     client = get_client(client)
-    if (data.visualGeometryType == p.GEOM_MESH) and (data.meshAssetFileName == UNKNOWN_FILE):
+    file_name = get_data_filename2(data)
+    if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
+        LOGGER.warning('Visual shape creation from data fails due to no filename data stored in {}'.format(data))
         return NULL_ID
+
     # visualFramePosition: translational offset of the visual shape with respect to the link
     # visualFrameOrientation: rotational offset (quaternion x,y,z,w) of the visual shape with respect to the link frame
     #inertial_pose = get_joint_inertial_pose(data.objectUniqueId, data.linkIndex)
@@ -399,7 +402,7 @@ def visual_shape_from_data(data, client=None):
                                radius=get_data_radius(data),
                                halfExtents=np.array(get_data_extents(data))/2,
                                length=get_data_height(data),  # TODO: pybullet bug
-                               fileName=get_data_filename(data),
+                               fileName=file_name,
                                meshScale=get_data_scale(data),
                                planeNormal=get_data_normal(data),
                                rgbaColor=data.rgbaColor,
@@ -426,29 +429,60 @@ def clone_visual_shape(body, link, client=None):
 
 #####################################
 
-def collision_shape_from_data(data, body, link, client=None):
+def collision_shape_from_data(data_list, body, link, client=None):
     from pybullet_planning.interfaces.env_manager.pose_transformation import multiply
     from pybullet_planning.interfaces.robots.dynamics import get_joint_inertial_pose
 
     client = get_client(client)
-    if (data.geometry_type == p.GEOM_MESH) and (data.filename == UNKNOWN_FILE):
-        return NULL_ID
-    pose = multiply(get_joint_inertial_pose(body, link), get_data_pose(data))
-    point, quat = pose
-    # TODO: the visual data seems affected by the collision data
-    return p.createCollisionShape(shapeType=data.geometry_type,
-                                  radius=get_data_radius(data),
-                                  # halfExtents=get_data_extents(data.geometry_type, data.dimensions),
-                                  halfExtents=np.array(get_data_extents(data)) / 2,
-                                  height=get_data_height(data),
-                                  fileName=data.filename.decode(encoding='UTF-8'),
-                                  meshScale=get_data_scale(data),
-                                  planeNormal=get_data_normal(data),
-                                  flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
-                                  collisionFramePosition=point,
-                                  collisionFrameOrientation=quat,
-                                  physicsClientId=client)
-    # return p.createCollisionShapeArray()
+    if len(data_list) == 1:
+        data = data_list[0]
+        file_name = get_data_filename2(data)
+        if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
+            LOGGER.warning('Collision shape creation from body #{} fails due to no filename data stored in {}'.format(
+                body, link, data))
+            return NULL_ID
+
+        pose = multiply(get_joint_inertial_pose(body, link), get_data_pose(data))
+        point, quat = pose
+        # TODO: the visual data seems affected by the collision data
+        return p.createCollisionShape(shapeType=data.geometry_type,
+                                      radius=get_data_radius(data),
+                                      # halfExtents=get_data_extents(data.geometry_type, data.dimensions),
+                                      halfExtents=np.array(get_data_extents(data)) / 2,
+                                      height=get_data_height(data),
+                                      fileName=file_name,
+                                      meshScale=get_data_scale(data),
+                                      planeNormal=get_data_normal(data),
+                                      flags=p.GEOM_FORCE_CONCAVE_TRIMESH,
+                                      collisionFramePosition=point,
+                                      collisionFrameOrientation=quat,
+                                      physicsClientId=client)
+    else:
+        file_names = []
+        poses = []
+        half_extents = [[], []]
+        for data in data_list:
+            file_name = get_data_filename2(data)
+            if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
+                LOGGER.warning('Collision shape creation from body #{} fails due to no filename data stored in {}'.format(
+                    body, link, data))
+                file_name = NULL_ID
+            file_names.append(file_name)
+            poses.append(multiply(get_joint_inertial_pose(body, link), get_data_pose(data)))
+            data_half_extent = np.array(get_data_extents(data)) / 2
+            half_extents[0].append(data_half_extent[0])
+            half_extents[1].append(data_half_extent[1])
+        return p.createCollisionShapeArray(shapeTypes=[data.geometry_type for data in data_list],
+                                                       radii=[get_data_radius(data) for data in data_list],
+                                                       halfExtents=half_extents,
+                                                       lengths=[get_data_height(data) for data in data_list],
+                                                       fileNames=file_names,
+                                                       meshScales=[get_data_scale(data) for data in data_list],
+                                                       planeNormals=[get_data_normal(data) for data in data_list],
+                                                       flags=[p.GEOM_FORCE_CONCAVE_TRIMESH for _ in data_list],
+                                                       collisionFramePositions=[dpose[0] for dpose in poses],
+                                                       collisionFrameOrientations=[dpose[1] for dpose in poses],
+                                                       physicsClientId=client)
 
 def clone_collision_shape(body, link, client=None):
     from pybullet_planning.interfaces.env_manager.shape_creation import get_collision_data
@@ -456,9 +490,7 @@ def clone_collision_shape(body, link, client=None):
     collision_data = get_collision_data(body, link)
     if not collision_data:
         return NULL_ID
-    assert (len(collision_data) == 1)
-    # TODO: can do CollisionArray
-    return collision_shape_from_data(collision_data[0], body, link, client)
+    return collision_shape_from_data(collision_data, body, link, client)
 
 #####################################
 
@@ -472,6 +504,14 @@ def get_data_type(data):
 def get_data_filename(data):
     return (data.filename if isinstance(data, CollisionShapeData)
             else data.meshAssetFileName).decode(encoding='UTF-8')
+
+def get_data_filename2(data, body=None):
+    filename = get_data_filename(data)
+    if (get_data_type(data) == p.GEOM_MESH) and (filename == UNKNOWN_FILE):
+        info = get_model_info(body or data.objectUniqueId)
+        if info is not None and os.path.exists(info.path):
+            filename = info.path
+    return filename
 
 def get_data_pose(data):
     """Get the local frame pose of the original shape.
@@ -555,7 +595,7 @@ def get_data_geometry(data):
     elif geometry_type in (p.GEOM_CYLINDER, p.GEOM_CAPSULE):
         parameters = [get_data_height(data), get_data_radius(data)]
     elif geometry_type == p.GEOM_MESH:
-        parameters = [get_data_filename(data), get_data_scale(data)]
+        parameters = [get_data_filename2(data), get_data_scale(data)]
     elif geometry_type == p.GEOM_PLANE:
         parameters = [get_data_extents(data)]
     else:

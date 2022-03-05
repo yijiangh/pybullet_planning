@@ -171,18 +171,10 @@ def get_body_from_pb_id(i):
 
 def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_color=BLACK, line_color=YELLOW, \
     focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None, viz_all=False, distance_threshold=0.0, max_distance=0.0):
-    """[summary]
-
-    Parameters
-    ----------
-    pb_closest_pt_output : [type]
-        [description]
-    """
     from pybullet_planning.interfaces.env_manager.simulation import has_gui
-    from pybullet_planning.interfaces.env_manager.user_io import HideOutput
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration
-    from pybullet_planning.interfaces.robots.link import get_link_name, get_links
-    from pybullet_planning.interfaces.robots.body import set_color, remove_body, clone_body, get_name
+    from pybullet_planning.interfaces.robots.link import get_link_name
+    from pybullet_planning.interfaces.robots.body import set_color, get_name
     if not pb_closest_pt_output:
         return
 
@@ -206,32 +198,14 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         l1_name = get_link_name(b1, l1)
         l2_name = get_link_name(b2, l2)
 
-        LOGGER.debug('*'*10)
         LOGGER.info('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
             b1_name, l1_name, b2_name, l2_name))
         LOGGER.info('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
             pen_dist, *u_cr[5], *u_cr[6]))
 
         if has_gui():
-            clone1_fail = False
-            clone2_fail = False
-            try:
-                with HideOutput():
-                    cloned_body1 = clone_body(b1, links=[l1] if get_links(b1) else None, collision=True, visual=False)
-            except:
-                # print('cloning (body #{}, link #{}) fails.'.format(b1_name, l1_name))
-                clone1_fail = True
-                cloned_body1 = b1
-            try:
-                with HideOutput():
-                    cloned_body2 = clone_body(b2, links=[l2] if get_links(b2) else None, collision=True, visual=False)
-            except:
-                # print('cloning (body #{}, link #{}) fails.'.format(b2_name, l2_name))
-                clone2_fail = True
-                cloned_body2 = b2
-
-            set_color(cloned_body1, apply_alpha(RED, 0.2))
-            set_color(cloned_body2, apply_alpha(GREEN, 0.2))
+            set_color(b1, apply_alpha(RED, 0.2), link=l1)
+            set_color(b2, apply_alpha(GREEN, 0.2), link=l2)
 
             handles.append(add_body_name(b1, name=b1_name))
             handles.append(add_body_name(b2, name=b2_name))
@@ -251,77 +225,48 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
             else:
                 wait_for_duration(viz_last_duration)
 
-            # restore lines and colors
+            # * restore lines and colors
             remove_handles(handles)
-            if not clone1_fail :
-                remove_body(cloned_body1)
-            else:
-                set_color(b1, apply_alpha(WHITE, 0.5))
-            if not clone2_fail :
-                remove_body(cloned_body2)
-            else:
-                set_color(b2, apply_alpha(WHITE, 0.5))
+            # TODO cannot retrieve original color yet
+            set_color(b1, apply_alpha(WHITE, 0.5))
+            set_color(b2, apply_alpha(WHITE, 0.5))
         # else:
         #     wait_for_user('Collision diagnosis. Press Enter to continue.')
 
         if not viz_all:
             return
 
-def draw_ray_result_diagnosis(ray, ray_result, b1=None, l1=None, point_color=BLACK, line_color=YELLOW, \
-    focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None):
-    """[summary]
-
-    Parameters
-    ----------
-    pb_closest_pt_output : [type]
-        [description]
-    """
+def draw_ray_result_diagnosis(ray, ray_result, sweep_body=None, sweep_link=None,
+        point_color=BLACK, focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None):
     from pybullet_planning.interfaces.env_manager.simulation import has_gui
-    from pybullet_planning.interfaces.env_manager.user_io import HideOutput
-    from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration
-    from pybullet_planning.interfaces.robots.link import get_link_name, get_links
-    from pybullet_planning.interfaces.robots.body import set_color, remove_body, clone_body, get_name
+    from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
+    from pybullet_planning.interfaces.robots.link import get_link_name
+    from pybullet_planning.interfaces.robots.body import set_color, get_name
     if not ray_result:
         return
     body_name_from_id = body_name_from_id or {}
 
     handles = []
-    b1_name = body_name_from_id[b1] if b1 is not None and b1 in body_name_from_id else None
-    l1_name = get_link_name(b1, l1) if l1 is not None and b1 is not None else None
+    sweep_body_name = body_name_from_id[sweep_body] if sweep_body is not None and sweep_body in body_name_from_id else None
+    sweep_link_name = get_link_name(sweep_body, sweep_link) if sweep_link is not None and sweep_body is not None else None
 
     b2 = ray_result.objectUniqueId
     l2 = ray_result.linkIndex
     b2_name = body_name_from_id[b2] if b2 in body_name_from_id else get_name(b2)
     l2_name = get_link_name(b2, l2)
 
-    LOGGER.debug('*'*10)
-    LOGGER.info('ray collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
-        b1_name, l1_name, b2_name, l2_name))
+    LOGGER.info('ray collision: Sweeping (Body #{0}, Link #{1}) -> (Body #{2}, Link #{3})'.format(
+        sweep_body_name, sweep_link_name, b2_name, l2_name))
     LOGGER.info('hit_fraction: {:.2f} | hit_position ({:.6f},{:.6f},{:.6f}) | hit_normal ({:.6f},{:.6f},{:.6f})'.format(
         ray_result.hit_fraction, *ray_result.hit_position, *ray_result.hit_normal))
 
     if has_gui():
-        clone1_fail = False
-        if b1 is not None and l1 is not None:
-            try:
-                with HideOutput():
-                    cloned_body1 = clone_body(b1, links=[l1] if get_links(b1) else None, collision=True, visual=False)
-            except:
-                clone1_fail = True
-                cloned_body1 = b1
-        try:
-            with HideOutput():
-                cloned_body2 = clone_body(b2, links=[l2] if get_links(b2) else None, collision=True, visual=False)
-        except:
-            clone2_fail = True
-            cloned_body2 = b2
+        set_color(b2, apply_alpha(GREEN, 0.2), link=l2)
 
-        # set_color(cloned_body1, apply_alpha(RED, 0.2))
-        set_color(cloned_body2, apply_alpha(RED, 0.2))
-
-        if b1 is not None and l1 is not None:
-            handles.append(add_body_name(b1, name=b1_name))
-            handles.append(draw_link_name(b1, l1, name=l1_name))
+        if sweep_body is not None and sweep_link is not None:
+            set_color(sweep_body, apply_alpha(RED, 0.2), link=sweep_link)
+            handles.append(add_body_name(sweep_body, name=sweep_body_name))
+            handles.append(draw_link_name(sweep_body, sweep_link, name=sweep_link_name))
         handles.append(add_body_name(b2, name=b2_name))
         handles.append(draw_link_name(b2, l2, name=l2_name))
 
@@ -336,17 +281,11 @@ def draw_ray_result_diagnosis(ray, ray_result, b1=None, l1=None, point_color=BLA
 
         wait_for_user('Visualize collision. Press Enter to continue.')
 
-        # restore lines and colors
+        # * restore lines and colors
         remove_handles(handles)
-        if b1 is not None and l1 is not None:
-            if not clone1_fail :
-                remove_body(cloned_body1)
-            else:
-                set_color(b1, apply_alpha(WHITE, 0.5))
-        if not clone2_fail :
-            remove_body(cloned_body2)
-        else:
-            set_color(b2, apply_alpha(WHITE, 0.5))
+        if sweep_body is not None and sweep_link is not None:
+            set_color(sweep_body, apply_alpha(WHITE, 0.5), link=sweep_link)
+        set_color(b2, apply_alpha(WHITE, 0.5), link=l2)
     # else:
     #     wait_for_user('Ray collision diagnosis. Press Enter to continue.')
 

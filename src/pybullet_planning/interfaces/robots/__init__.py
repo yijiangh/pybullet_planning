@@ -14,8 +14,6 @@ Body
     :toctree: generated/
     :nosignatures:
 
-    vertices_from_rigid
-
 Collision checking
 --------------------
 

@@ -15,6 +15,7 @@ from pybullet_planning import dump_world, set_pose
 from pybullet_planning import clone_body, create_box, read_obj
 from pybullet_planning import Pose
 from termcolor import cprint
+from pybullet_planning import LOGGER
 
 
 @pytest.fixture
@@ -197,16 +198,13 @@ def test_vertices_from_link(viewer, urdf_path):
     body_name = pp.get_body_name(body)
 
     vertices_from_link = {}
-    for attempt in range(3):
+    for attempt in range(2):
         for body_link in body_links:
-            local_from_vertices = pp.vertices_from_rigid(body, body_link)
+            local_from_vertices = pp.vertices_from_link(body, body_link)
             if attempt == 0:
                 vertices_from_link[body_link] = local_from_vertices
-            cprint('#V {} at {} link {}'.format(len(local_from_vertices), body_name, pp.get_link_name(body, body_link)), 'cyan')
+            LOGGER.debug('#V {} at {} link {}'.format(len(local_from_vertices), body_name, pp.get_link_name(body, body_link)))
 
-            #  ! `pybullet.getMeshData` fails randomly if multiple meshes are attached to the same link
-            # so we can't guarantee it returns the same number of vertices in that case
-            # if body_name != 'c1':
             assert len(vertices_from_link[body_link]) == len(local_from_vertices), \
                 'unequal num of vertics at link {}'.format(pp.get_link_name(body, body_link))
             for v1, v2 in zip(local_from_vertices, vertices_from_link[body_link]):
@@ -215,19 +213,17 @@ def test_vertices_from_link(viewer, urdf_path):
             with LockRenderer():
                 for v in local_from_vertices:
                     pp.draw_point(v, size=0.05)
-        print('====')
         wait_if_gui()
         pp.remove_all_debug()
 
     for attempt in range(3):
         set_pose(body, Pose(point=np.random.random(3)*3.0))
-        pp.step_simulation()
+        # pp.step_simulation()
         for body_link in body_links:
-            local_from_vertices = pp.vertices_from_rigid(body, body_link)
-            cprint('#V {} at {} link {}'.format(len(local_from_vertices), body_name,
-                pp.get_link_name(body, body_link)), 'cyan')
+            local_from_vertices = pp.vertices_from_link(body, body_link)
+            LOGGER.debug('#V {} at {} link {}'.format(len(local_from_vertices), body_name,
+                pp.get_link_name(body, body_link)))
 
-            # if body_name != 'c1':
             assert len(vertices_from_link[body_link]) == len(local_from_vertices), \
                 'unequal num of vertics at link {}'.format(pp.get_link_name(body, body_link))
             for v1, v2 in zip(local_from_vertices, vertices_from_link[body_link]):
@@ -236,7 +232,6 @@ def test_vertices_from_link(viewer, urdf_path):
             with LockRenderer():
                 for v in local_from_vertices:
                     pp.draw_point(v, size=0.05)
-        print('====')
         wait_if_gui()
         pp.remove_all_debug()
 

@@ -261,21 +261,18 @@ def get_body_collision_vertices(body):
     joints = get_movable_joints(body)
     conf = get_joint_positions(body, joints)
 
-    try:
-        body_clone = clone_body(body, visual=False, collision=True)
-    except:
-        body_clone = body
+    body_clone = clone_body(body, visual=False, collision=True)
     _, body_links = expand_links(body_clone)
     set_joint_positions(body_clone, get_movable_joints(body_clone), conf)
 
     for body_link in body_links:
         # ! for some reasons, pybullet cloned body only has collision shapes, and saves them as visual shapes
-        local_from_vertices = vertices_from_rigid(body_clone, body_link, collision=body == body_clone)
+        local_from_vertices = vertices_from_link(body_clone, body_link, collision=body == body_clone)
         world_from_current_pose = get_link_pose(body_clone, body_link)
         body_vertices_from_link[body_link] = apply_affine(world_from_current_pose, local_from_vertices)
 
-    if body_clone != body:
-        remove_body(body_clone)
+    # if body_clone != body:
+    #     remove_body(body_clone)
     return body_vertices_from_link
 
 def vertices_from_link(body, link, collision=True):
@@ -301,42 +298,6 @@ def vertices_from_link(body, link, collision=True):
         vertices.extend(vertices_from_data(data))
     return vertices
 
-def vertices_from_rigid(body, link=BASE_LINK, collision=True):
-    """get all vertices of given body (collision body) in its local frame.
-
-    Parameters
-    ----------
-    body : int
-        [description]
-    link : [type], optional
-        if BASE_LINK, we assume the body is single-linked, by default BASE_LINK
-
-    Returns
-    -------
-    list of three-float lists
-        body vertices
-    """
-    import os
-    from pybullet_planning.interfaces.geometry.mesh import read_obj
-    from pybullet_planning.interfaces.env_manager import get_model_info
-    # from pybullet_planning.interfaces.robots.link import get_num_links
-    # assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
-    try:
-        # * entry point for bodies created from URDFs or STL mesh files
-        vertices = vertices_from_link(body, link, collision=collision)
-    except RuntimeError:
-        info = get_model_info(body)
-        assert info is not None
-        _, ext = os.path.splitext(info.path)
-        if ext == '.obj':
-            if info.path not in OBJ_MESH_CACHE:
-                OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
-            mesh = OBJ_MESH_CACHE[info.path]
-            vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
-        else:
-            raise NotImplementedError(ext)
-    return vertices
-
 def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
     """get the AABB bounding box of a body
 
@@ -356,7 +317,7 @@ def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
     """
     from pybullet_planning.interfaces.geometry.bounding_box import aabb_from_points, get_aabb_center, get_aabb_extent
     # TODO: make it just orientation
-    vertices = apply_affine(body_pose, vertices_from_rigid(body, **kwargs))
+    vertices = apply_affine(body_pose, vertices_from_link(body, **kwargs))
     aabb = aabb_from_points(vertices)
     return get_aabb_center(aabb), get_aabb_extent(aabb)
     #with PoseSaver(body):
