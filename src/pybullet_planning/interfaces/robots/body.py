@@ -10,7 +10,7 @@ from pybullet_planning.interfaces.env_manager.pose_transformation import euler_f
 from pybullet_planning.interfaces.env_manager.shape_creation import get_collision_data, clone_collision_shape, clone_visual_shape
 
 from pybullet_planning.interfaces.robots.dynamics import get_mass, get_dynamics_info, get_local_link_pose
-from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, is_circular, get_joint_limits, is_fixed, \
+from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, get_num_joints, is_circular, get_joint_limits, is_fixed, \
     get_joint_info, get_joint_positions, get_joints, is_movable, set_joint_positions, get_movable_joints
 from pybullet_planning.interfaces.robots.link import get_links, parent_joint_from_link, get_link_name, get_link_parent, get_link_pose, get_all_links
 
@@ -148,7 +148,7 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
     # parentFramePos: joint position in parent frame
     # parentFrameOrn: joint orientation in parent frame
     client = get_client(client) # client is the new client for the body
-    if links is None:
+    if links is None or get_num_joints(body) == 0:
         links = get_links(body)
     #movable_joints = [joint for joint in links if is_movable(body, joint)]
     new_from_original = {}

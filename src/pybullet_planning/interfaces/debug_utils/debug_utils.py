@@ -3,7 +3,7 @@ import numpy as np
 import pybullet as p
 from itertools import product, combinations
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID, YELLOW, LOGGER
+from pybullet_planning.utils import CLIENT, BASE_LINK, GREEN, RED, BLUE, BLACK, WHITE, NULL_ID, YELLOW, LOGGER, GREY
 
 from pybullet_planning.interfaces.env_manager.pose_transformation import unit_pose, tform_point, unit_from_theta, get_distance
 from pybullet_planning.interfaces.geometry.bounding_box import get_aabb
@@ -166,31 +166,24 @@ def draw_ray(ray, ray_result=None, visible_color=GREEN, occluded_color=RED, **kw
     ]
 
 
-def get_body_from_pb_id(i):
-    return p.getBodyUniqueId(i, physicsClientId=CLIENT)
-
 def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_color=BLACK, line_color=YELLOW, \
     focus_camera=True, camera_ray=np.array([0.1, 0, 0.05]), body_name_from_id=None, viz_all=False, distance_threshold=0.0, max_distance=0.0):
     from pybullet_planning.interfaces.env_manager.simulation import has_gui
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration
     from pybullet_planning.interfaces.robots.link import get_link_name
-    from pybullet_planning.interfaces.robots.body import set_color, get_name
+    from pybullet_planning.interfaces.robots.body import set_color, get_name, clone_body, remove_body
     if not pb_closest_pt_output:
         return
 
     body_name_from_id = body_name_from_id or {}
-    # if paint_all_others:
-    #     set_all_bodies_color()
-        # for b in obstacles:
-        #     set_color(b, (0,0,1,0.3))
     for u_cr in pb_closest_pt_output:
         pen_dist = get_distance(u_cr[5], u_cr[6])
         if pen_dist < distance_threshold:
             continue
 
         handles = []
-        b1 = get_body_from_pb_id(u_cr[1])
-        b2 = get_body_from_pb_id(u_cr[2])
+        b1 = u_cr[1]
+        b2 = u_cr[2]
         l1 = u_cr[3]
         l2 = u_cr[4]
         b1_name = body_name_from_id[b1] if b1 in body_name_from_id else get_name(b1)
@@ -198,14 +191,20 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
         l1_name = get_link_name(b1, l1)
         l2_name = get_link_name(b2, l2)
 
-        LOGGER.info('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
+        LOGGER.warning('pairwise link collision: (Body #{0}, Link #{1}) - (Body #{2}, Link #{3})'.format(
             b1_name, l1_name, b2_name, l2_name))
-        LOGGER.info('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
+        LOGGER.warning('Penetration depth: {:.6f} (m) | point1 ({:.6f},{:.6f},{:.6f}), point2 ({:.6f},{:.6f},{:.6f})'.format(
             pen_dist, *u_cr[5], *u_cr[6]))
 
         if has_gui():
-            set_color(b1, apply_alpha(RED, 0.2), link=l1)
-            set_color(b2, apply_alpha(GREEN, 0.2), link=l2)
+            # * to not obscure the cloned body color
+            set_color(b1, apply_alpha(WHITE, 0.2), link=l1)
+            set_color(b2, apply_alpha(WHITE, 0.2), link=l2)
+
+            cloned_b1 = clone_body(b1, links=[l1], collision=True, visual=False)
+            cloned_b2 = clone_body(b2, links=[l2], collision=True, visual=False)
+            set_color(cloned_b1, apply_alpha(RED, 0.2))
+            set_color(cloned_b2, apply_alpha(GREEN, 0.2))
 
             handles.append(add_body_name(b1, name=b1_name))
             handles.append(add_body_name(b2, name=b2_name))
@@ -227,9 +226,11 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
 
             # * restore lines and colors
             remove_handles(handles)
+            remove_body(cloned_b1)
+            remove_body(cloned_b2)
             # TODO cannot retrieve original color yet
-            set_color(b1, apply_alpha(WHITE, 0.5))
-            set_color(b2, apply_alpha(WHITE, 0.5))
+            set_color(b1, apply_alpha(GREY, 1), link=l1)
+            set_color(b2, apply_alpha(GREY, 1), link=l2)
         # else:
         #     wait_for_user('Collision diagnosis. Press Enter to continue.')
 
@@ -241,7 +242,7 @@ def draw_ray_result_diagnosis(ray, ray_result, sweep_body=None, sweep_link=None,
     from pybullet_planning.interfaces.env_manager.simulation import has_gui
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
     from pybullet_planning.interfaces.robots.link import get_link_name
-    from pybullet_planning.interfaces.robots.body import set_color, get_name
+    from pybullet_planning.interfaces.robots.body import set_color, get_name, clone_body, remove_body
     if not ray_result:
         return
     body_name_from_id = body_name_from_id or {}
@@ -261,10 +262,18 @@ def draw_ray_result_diagnosis(ray, ray_result, sweep_body=None, sweep_link=None,
         ray_result.hit_fraction, *ray_result.hit_position, *ray_result.hit_normal))
 
     if has_gui():
-        set_color(b2, apply_alpha(GREEN, 0.2), link=l2)
+        # to not obscure cloned body color
+        set_color(b2, apply_alpha(WHITE, 0.5), link=l2)
+
+        cloned_b2 = clone_body(b2, links=[l2], collision=True, visual=False)
+        set_color(cloned_b2, apply_alpha(GREEN, 0.2))
 
         if sweep_body is not None and sweep_link is not None:
-            set_color(sweep_body, apply_alpha(RED, 0.2), link=sweep_link)
+            # to not obscure the cloned body color
+            set_color(sweep_body, apply_alpha(WHITE, 0.5), link=sweep_link)
+
+            cloned_sweep_body = clone_body(sweep_body, links=[sweep_link], collision=True, visual=False)
+            set_color(cloned_sweep_body, apply_alpha(RED, 0.2))
             handles.append(add_body_name(sweep_body, name=sweep_body_name))
             handles.append(draw_link_name(sweep_body, sweep_link, name=sweep_link_name))
         handles.append(add_body_name(b2, name=b2_name))
@@ -284,8 +293,12 @@ def draw_ray_result_diagnosis(ray, ray_result, sweep_body=None, sweep_link=None,
         # * restore lines and colors
         remove_handles(handles)
         if sweep_body is not None and sweep_link is not None:
-            set_color(sweep_body, apply_alpha(WHITE, 0.5), link=sweep_link)
-        set_color(b2, apply_alpha(WHITE, 0.5), link=l2)
+            # set_color(sweep_body, apply_alpha(WHITE, 0.5), link=sweep_link)
+            remove_body(cloned_sweep_body)
+        remove_body(cloned_b2)
+
+        # TODO cannot retrieve original color yet
+        set_color(b2, apply_alpha(GREY, 1), link=l2)
     # else:
     #     wait_for_user('Ray collision diagnosis. Press Enter to continue.')
 

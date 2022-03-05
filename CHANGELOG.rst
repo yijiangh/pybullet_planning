@@ -24,12 +24,13 @@ Unreleased
 - Changed the mesh reading procedure in `vertices_from_data` from `pp.read_obj` to `meshio.read`. This fixes #9.
 - `smooth_path`'s `max_iterations` argument changed to `max_smooth_iterations`
 - 'set_color' defaulted to set the color of all the links of body.
-- Got rid of body cloning in `draw_collision_diagnosis` and `draw_ray_result_diagnosis`
+- ''
 
 **Fixed**
 - Fixed `read_obj` returns empty dict if obj file does not start with objects (``o object_name``)
 - Fixed `get_extend_fn(q1,q2)` to include `q1` in its output path. This bug was causing incorrect planning result in birrt, because the two trees will have a gap in the middle that is unchecked.
 - Fixed a minor mesh vertex scaling bug in `vertices_from_data`
+- catch `get_num_joints(body) == 0` when a rigid body without joint and link are passed to `clone_body`
 
 **Deleted**
 - Deleted `vertices_from_rigid` in the light of `get_filename2`, `vertices_from_link` can be used instead

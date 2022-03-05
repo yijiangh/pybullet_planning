@@ -4,7 +4,7 @@ from itertools import product
 import numpy as np
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE, UNKNOWN_FILE
+from pybullet_planning.utils import CLIENT, BASE_LINK, MAX_DISTANCE, LOGGER
 from pybullet_planning.interfaces.env_manager.user_io import step_simulation
 from pybullet_planning.interfaces.env_manager.pose_transformation import get_distance
 from .link import get_all_links
@@ -431,12 +431,12 @@ def get_collision_fn(body, joints, obstacles=[],
             if diagnosis:
                 # warnings.warn('joint limit violation!', UserWarning)
                 cr = np.less_equal(q, lower_limits), np.less_equal(upper_limits, q)
-                print('joint limit violation : {} / {}'.format(cr[0], cr[1]))
+                LOGGER.warning('joint limit violation : {} / {}'.format(cr[0], cr[1]))
                 for i, (cr_l, cr_u) in enumerate(zip(cr[0], cr[1])):
                     if cr_l:
-                        print('J{}: {} < lower limit {}'.format(i, q[i], lower_limits[i]))
+                        LOGGER.warning('J{}: {} < lower limit {}'.format(i, q[i], lower_limits[i]))
                     if cr_u:
-                        print('J{}: {} > upper limit {}'.format(i, q[i], upper_limits[i]))
+                        LOGGER.warning('J{}: {} > upper limit {}'.format(i, q[i], upper_limits[i]))
             return True
         # * set body & attachment positions
         set_joint_positions(body, joints, q)
