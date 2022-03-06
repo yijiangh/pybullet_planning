@@ -59,10 +59,10 @@ def test_flying_body(viewer):
             conf = np.concatenate([np.array(point), np.array(euler)])
             set_joint_positions(robot, joints, conf)
             set_pose(body, p)
-            draw_pose(p, length=0.1)
+            # draw_pose(p, length=0.1)
 
             link_pose = get_link_pose(robot, body_link)
-            draw_pose(link_pose, length=0.1)
+            # draw_pose(link_pose, length=0.1)
             assert LA.norm(np.array(point) - np.array(link_pose[0])) < 1e-6
             assert LA.norm(np.array(quat) - np.array(link_pose[1])) < 1e-6
             wait_if_gui()
@@ -100,12 +100,14 @@ def test_se3_planning(viewer, parameters):
     add_line(initial_point, final_point, color=GREEN)
 
     initial_conf = np.concatenate([initial_point, initial_euler])
+    resolutions = [0.01 for _ in range(3)] +  [np.pi/18 for _ in range(3)]
     final_conf = np.concatenate([final_point, initial_euler])
 
     set_joint_positions(robot, joints, initial_conf)
 
     path = plan_joint_motion(robot, joints, final_conf, obstacles=obstacles,
-                             self_collisions=False, custom_limits=custom_limits)
+                             self_collisions=True, custom_limits=custom_limits, resolutions=resolutions,
+                             coarse_waypoints=False)
     if path is None:
         disconnect()
         assert False, 'se3 planning fails!'

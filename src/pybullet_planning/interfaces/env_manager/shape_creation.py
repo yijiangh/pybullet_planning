@@ -1,3 +1,4 @@
+from copy import copy
 import os
 import numpy as np
 import pybullet as p
@@ -314,13 +315,15 @@ def create_flying_body(group, collision_id=NULL_ID, visual_id=NULL_ID, mass=STAT
 
 #####################################
 
-def vertices_from_data(data):
+def vertices_from_data(data, body=None):
     """Get vertices in an object's local coordinate from its geometric data.
 
     Parameters
     ----------
     data : CollisionShapeData or VisualShapeData
         geometric data, see ``get_collision_data`` and ``get_visual_data``
+    body : body index
+        body index to help recovering vertices when geom type is mesh
 
     Returns
     -------
@@ -360,8 +363,13 @@ def vertices_from_data(data):
     elif geometry_type == p.GEOM_MESH:
         import meshio
         from pybullet_planning.interfaces.geometry.mesh import read_obj
-        filename, scale = get_data_filename2(data), get_data_scale(data)
+        body_index = body if body is not None else data.objectUniqueId
+        filename, scale = get_data_filename(data), get_data_scale(data)
         if filename != UNKNOWN_FILE:
+            # * load scale from cache if exists
+            model_info = get_model_info(body_index)
+            if model_info:
+                scale = np.ones(3) * model_info.scale
             if filename.endswith('.obj'):
                 mesh = read_obj(filename, decompose=False)
                 vertices = [np.array(scale)*np.array(vertex) for vertex in mesh.vertices]
@@ -369,13 +377,13 @@ def vertices_from_data(data):
                 mio_mesh = meshio.read(filename)
                 vertices = [np.array(scale)*np.array(vertex) for vertex in mio_mesh.points]
         else:
-            try:
-                #  ! this fails randomly if multiple meshes are attached to the same link
-                mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex, collisionShapeIndex=data.objectUniqueId,
-                    flags=p.MESH_DATA_SIMULATION_MESH)
-                vertices = mesh_data[1]
-            except p.error:
-                raise RuntimeError('Unknown file from data {}'.format(data))
+            # try:
+            #     #  ! this fails randomly if multiple meshes are attached to the same link
+            #     mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex,
+            #         collisionShapeIndex=data.objectUniqueId, flags=p.MESH_DATA_SIMULATION_MESH)
+            #     vertices = mesh_data[1]
+            # except p.error as e:
+            raise RuntimeError('Unknown file from data {}'.format(data))
         # TODO: could compute AABB here for improved speed at the cost of being conservative
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]
@@ -388,7 +396,7 @@ def vertices_from_data(data):
 
 def visual_shape_from_data(data, client=None):
     client = get_client(client)
-    file_name = get_data_filename2(data)
+    file_name = get_data_filename(data)
     if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
         LOGGER.warning('Visual shape creation from data fails due to no filename data stored in {}'.format(data))
         return NULL_ID
@@ -462,11 +470,11 @@ def collision_shape_from_data(data_list, body, link, client=None):
         poses = []
         half_extents = [[], []]
         for data in data_list:
-            file_name = get_data_filename2(data)
+            file_name = get_data_filename(data)
             if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
                 LOGGER.warning('Collision shape creation from body #{} fails due to no filename data stored in {}'.format(
                     body, link, data))
-                file_name = NULL_ID
+                return NULL_ID
             file_names.append(file_name)
             poses.append(multiply(get_joint_inertial_pose(body, link), get_data_pose(data)))
             data_half_extent = np.array(get_data_extents(data)) / 2
@@ -497,6 +505,20 @@ def clone_collision_shape(body, link, client=None):
 def get_collision_data(body, link=BASE_LINK):
     # TODO: try catch
     return [CollisionShapeData(*tup) for tup in p.getCollisionShapeData(body, link, physicsClientId=CLIENT)]
+    # ? copy visual mesh when collision mesh is unknown
+    # collision_datas = []
+    # for i, tup in enumerate(p.getCollisionShapeData(body, link, physicsClientId=CLIENT)):
+    #     tup_ = list(copy(tup))
+    #     # * load scale from cache if exists
+    #     model_info = get_model_info(body)
+    #     if model_info:
+    #         scale = np.ones(3) * model_info.scale
+    #         tup_[3] = scale
+    #     if tup_[4].decode(encoding='UTF-8') == UNKNOWN_FILE:
+    #         tup_[4] = get_visual_data(body, link)[i].meshAssetFileName
+    #     collision_data = CollisionShapeData(*tup_)
+    #     collision_datas.append(collision_data)
+    # return collision_datas
 
 def get_data_type(data):
     return data.geometry_type if isinstance(data, CollisionShapeData) else data.visualGeometryType
@@ -506,6 +528,13 @@ def get_data_filename(data):
             else data.meshAssetFileName).decode(encoding='UTF-8')
 
 def get_data_filename2(data, body=None):
+    # ! when used together with `get_data_scale`, you should use `get_data_filename` to make sure it's loading
+    # the right scale. When loading nonconvex object, PyBullet creates a temporary obj files for VHAD and then
+    # throw them away. For example, if you load a conconvex mesh with scale=1e-3 and then use this function to
+    # get its filename for getting its vertices, you will load the original mesh, but `get_data_scale` will
+    # give you (1.0, 1.0, 1.0), so scaling of the loaded vertices will be incorrect.
+    # The correct mesh data is only stored in memory and scale unified to one.
+    # See `vertices_from_data` and `pybullet.getMeshData` for more information.
     filename = get_data_filename(data)
     if (get_data_type(data) == p.GEOM_MESH) and (filename == UNKNOWN_FILE):
         info = get_model_info(body or data.objectUniqueId)
@@ -595,7 +624,7 @@ def get_data_geometry(data):
     elif geometry_type in (p.GEOM_CYLINDER, p.GEOM_CAPSULE):
         parameters = [get_data_height(data), get_data_radius(data)]
     elif geometry_type == p.GEOM_MESH:
-        parameters = [get_data_filename2(data), get_data_scale(data)]
+        parameters = [get_data_filename(data), get_data_scale(data)]
     elif geometry_type == p.GEOM_PLANE:
         parameters = [get_data_extents(data)]
     else:

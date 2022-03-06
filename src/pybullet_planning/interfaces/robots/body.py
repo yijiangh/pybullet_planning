@@ -1,13 +1,13 @@
+from copy import copy
 import numpy as np
 from collections import namedtuple
 import pybullet as p
 
-from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, OBJ_MESH_CACHE, NULL_ID
-from pybullet_planning.utils import implies
+from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, NULL_ID, LOGGER, OBJ_MESH_CACHE
 from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, Point, Euler
 from pybullet_planning.interfaces.env_manager.pose_transformation import euler_from_quat, base_values_from_pose, \
     quat_from_euler, z_rotation, get_pose, set_pose, apply_affine, unit_pose
-from pybullet_planning.interfaces.env_manager.shape_creation import get_collision_data, clone_collision_shape, clone_visual_shape
+from pybullet_planning.interfaces.env_manager.shape_creation import get_collision_data, clone_collision_shape, clone_visual_shape, get_model_info
 
 from pybullet_planning.interfaces.robots.dynamics import get_mass, get_dynamics_info, get_local_link_pose
 from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, get_num_joints, is_circular, get_joint_limits, is_fixed, \
@@ -206,6 +206,10 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
     for joint, value in zip(range(len(links)), get_joint_positions(body, links)):
         # TODO: check if movable?
         p.resetJointState(new_body, joint, value, targetVelocity=0, physicsClientId=client)
+    # * cache when cloning from objects created from .obj mesh file
+    model_info = get_model_info(body)
+    if model_info is not None:
+        INFO_FROM_BODY[CLIENT, new_body] = copy(model_info)
     return new_body
 
 def clone_world(client=None, exclude=[]):
@@ -261,18 +265,21 @@ def get_body_collision_vertices(body):
     joints = get_movable_joints(body)
     conf = get_joint_positions(body, joints)
 
+    # cloned body links' positions work more as expected
     body_clone = clone_body(body, visual=False, collision=True)
     _, body_links = expand_links(body_clone)
     set_joint_positions(body_clone, get_movable_joints(body_clone), conf)
 
     for body_link in body_links:
-        # ! for some reasons, pybullet cloned body only has collision shapes, and saves them as visual shapes
-        local_from_vertices = vertices_from_link(body_clone, body_link, collision=body == body_clone)
+        # ! pybullet performs VHACD for stl meshes and delete those temporary meshes,
+        # which left the CollisionShapeData.filename = UNKNOWN_FILENAME
+        # cloned body only has collision shapes, and saves them as visual shapes
+        local_from_vertices = vertices_from_rigid(body_clone, body_link, collision=body == body_clone)
         world_from_current_pose = get_link_pose(body_clone, body_link)
         body_vertices_from_link[body_link] = apply_affine(world_from_current_pose, local_from_vertices)
 
-    # if body_clone != body:
-    #     remove_body(body_clone)
+    if body_clone != body:
+        remove_body(body_clone)
     return body_vertices_from_link
 
 def vertices_from_link(body, link, collision=True):
@@ -293,12 +300,52 @@ def vertices_from_link(body, link, collision=True):
     vertices = []
     # ! PyBullet creates multiple collision elements (with unknown_file) when nonconvex
     get_data = get_collision_data if collision else get_visual_data
-    # TODO joint transformation if mutli-link body
     for data in get_data(body, link):
-        vertices.extend(vertices_from_data(data))
+        vertices.extend(vertices_from_data(data, body))
     return vertices
 
-def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
+def vertices_from_rigid(body, link=BASE_LINK, collision=True):
+    """get all vertices of given body (collision body) in its local frame.
+    This is a more stable version compared to `vertices_from_link` when getting vertices from a rigid body
+    without joints.
+
+    PyBullet creates multiple collision elements (with unknown_file) when nonconvex and those objects does not
+    have `unknown` filename. This function has a catch for such cases by loading vertices directly from obj file.
+
+    Parameters
+    ----------
+    body : int
+        [description]
+    link : [type], optional
+        if BASE_LINK, we assume the body is single-linked, by default BASE_LINK
+
+    Returns
+    -------
+    list of three-float lists
+        body vertices
+    """
+    import os
+    from pybullet_planning.interfaces.geometry.mesh import read_obj
+    from pybullet_planning.interfaces.env_manager import get_model_info
+    # from pybullet_planning.interfaces.robots.link import get_num_links
+    # assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
+    try:
+        # ! sometimes pybullet attach random collision shape to the obj-loaded bodies
+        vertices = vertices_from_link(body, link, collision=collision)
+    except RuntimeError as e:
+        info = get_model_info(body)
+        assert info is not None
+        _, ext = os.path.splitext(info.path)
+        if ext == '.obj':
+            if info.path not in OBJ_MESH_CACHE:
+                OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
+            mesh = OBJ_MESH_CACHE[info.path]
+            vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
+        else:
+            raise e
+    return vertices
+
+def approximate_as_prism(body, body_pose=unit_pose(), link=BASE_LINK, **kwargs):
     """get the AABB bounding box of a body
 
     Note: the generated AABB is not truly axis-aligned, bounding box under world axis x, y
@@ -317,7 +364,7 @@ def approximate_as_prism(body, body_pose=unit_pose(), **kwargs):
     """
     from pybullet_planning.interfaces.geometry.bounding_box import aabb_from_points, get_aabb_center, get_aabb_extent
     # TODO: make it just orientation
-    vertices = apply_affine(body_pose, vertices_from_link(body, **kwargs))
+    vertices = apply_affine(body_pose, vertices_from_rigid(body, link=link, **kwargs))
     aabb = aabb_from_points(vertices)
     return get_aabb_center(aabb), get_aabb_extent(aabb)
     #with PoseSaver(body):

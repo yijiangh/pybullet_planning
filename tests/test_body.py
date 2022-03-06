@@ -11,7 +11,7 @@ from pybullet_planning import load_pybullet, connect, wait_for_user, LockRendere
 from pybullet_planning import create_obj, create_attachment, Attachment
 from pybullet_planning import link_from_name, get_link_pose, get_moving_links, get_link_name
 from pybullet_planning import get_num_joints, get_joint_names, get_movable_joints
-from pybullet_planning import dump_world, set_pose
+from pybullet_planning import dump_world, set_pose, set_color
 from pybullet_planning import clone_body, create_box, read_obj
 from pybullet_planning import Pose
 from termcolor import cprint
@@ -27,6 +27,11 @@ def robot_path():
 def workspace_path():
     here = os.path.dirname(__file__)
     return os.path.join(here, 'test_data', 'mit_3-412_workspace', 'urdf', 'mit_3-412_workspace.urdf')
+
+@pytest.fixture
+def clamp_urdf_path():
+    here = os.path.dirname(__file__)
+    return os.path.join(here, 'test_data', 'c1', 'urdf', 'c1.urdf')
 
 @pytest.fixture
 def ee_path():
@@ -91,44 +96,135 @@ def test_moving_links_joints(viewer, robot_path, workspace_path):
 
     if has_gui() : wait_for_user()
 
-@pytest.mark.clone
-def test_clone_body(viewer, workspace_path, ee_path):
+def inspect_data(body, original_aabb=None, collision_empty=False, visual_empty=False):
+    links = pp.get_all_links(body)
+    for i, link in enumerate(links):
+        collision_data = pp.get_collision_data(body, link)
+        visual_data = pp.get_visual_data(body, link)
+        LOGGER.debug(f'Link {i}')
+        LOGGER.debug('collsion: {}'.format(collision_data))
+        LOGGER.debug('visual: {}'.format(visual_data))
+        if collision_empty:
+            assert len(collision_data) == 0
+        if visual_empty:
+            assert len(visual_data) == 0
+    wait_if_gui()
+    if original_aabb:
+        orig_extent = pp.get_aabb_extent(original_aabb)
+        new_extent = pp.get_aabb_extent(pp.get_aabb(body))
+        pp.draw_aabb(original_aabb)
+        pp.draw_aabb(pp.get_aabb(body))
+        # ! pybullet's AABB is a bit noisy sometimes, with a safety margin added
+        assert np.allclose(new_extent, orig_extent, atol=np.max(orig_extent)/10)
+
+@pytest.mark.clone_body_single_obj
+@pytest.mark.parametrize("body_name",[
+    'obj',
+    'box',
+    ])
+def test_clone_body_single_obj(viewer, body_name, ee_path):
     connect(use_gui=viewer)
     with HideOutput():
-        workspace = load_pybullet(workspace_path, fixed_base=True)
-        ee_body = create_obj(ee_path)
-        box = create_box(0.5, 0.5, 0.5)
-        set_pose(box, Pose(point=[1,0,0]))
-    move_pose = Pose(point=[0, 3, 0])
-    box_pose = Pose(point=[1, 3, 0])
+        if body_name == 'obj':
+            body = create_obj(ee_path, scale=5.0)
+        elif body_name == 'box':
+            body = create_box(0.2, 0.2, 0.2)
+        set_color(body, pp.GREY)
 
-    print('*'*10)
-    print('clone workspace')
-    c_ws = clone_body(workspace, visual=False)
-    set_pose(c_ws, move_pose)
+    LOGGER.info('original body')
+    original_aabb = pp.get_aabb(body)
+    inspect_data(body, original_aabb)
 
-    print('*'*10)
-    print('clone visual box')
-    c_box_v = clone_body(box, visual=True, collision=False)
-    set_pose(c_box_v, box_pose)
+    spacing = 0.5
+    cloned_body = clone_body(body)
+    set_color(cloned_body, pp.GREEN)
+    set_pose(cloned_body, Pose(point=[0, 0, spacing]))
+    LOGGER.info('both cloned body')
+    inspect_data(cloned_body, original_aabb)
 
-    print('*'*10)
-    print('clone collision box')
-    c_box_c = clone_body(box, visual=False, collision=True)
-    set_pose(c_box_c, box_pose)
+    collision_body = clone_body(body, visual=False)
+    set_color(collision_body, pp.RED)
+    set_pose(collision_body, Pose(point=[0, 1*spacing, 0]))
+    LOGGER.info('collision cloned body')
+    inspect_data(collision_body, original_aabb)
 
-    print('*'*10)
-    print('clone visual ee from obj')
-    c_ee_v = clone_body(ee_body, visual=True, collision=False)
-    set_pose(c_ee_v, move_pose)
+    visual_body = clone_body(body, collision=False)
+    set_pose(visual_body, Pose(point=[0, 2*spacing, 0]))
+    set_color(visual_body, pp.BLUE)
+    LOGGER.info('visual cloned body')
+    inspect_data(visual_body)
 
-    print('clone collision ee from obj')
-    with pytest.raises(pb.error):
-        warnings.warn('Currently, we do not support clone bodies that are created from an obj file.')
-        c_ee_c = clone_body(ee_body, visual=False, collision=True)
-        set_pose(c_ee_c, move_pose)
+    double_collision_body = clone_body(collision_body)
+    set_pose(double_collision_body, Pose(point=[1*spacing, 1*spacing, 0]))
+    set_color(double_collision_body, pp.YELLOW)
+    LOGGER.info('double collision cloned body')
+    inspect_data(double_collision_body, original_aabb)
 
-    wait_if_gui()
+    double_visual_body = clone_body(visual_body)
+    set_pose(double_visual_body, Pose(point=[1*spacing, 2*spacing, 0]))
+    set_color(double_visual_body, pp.BROWN)
+    LOGGER.info('double visual cloned body')
+    inspect_data(double_visual_body)
+
+    pp.disconnect()
+
+@pytest.mark.clone_body_urdf
+@pytest.mark.parametrize("body_name",[
+    'workspace',
+    'robot',
+    # 'urdf_link_multi_mesh',
+    ])
+def test_clone_body_urdf(viewer, body_name, robot_path, clamp_urdf_path, workspace_path):
+    connect(use_gui=viewer)
+    with HideOutput():
+        if body_name == 'workspace':
+            body = load_pybullet(workspace_path, fixed_base=True, scale=0.5)
+        elif body_name == 'robot':
+            body = load_pybullet(robot_path, fixed_base=True)
+        elif body_name == 'urdf_link_multi_mesh':
+            body = load_pybullet(clamp_urdf_path, fixed_base=True)
+        set_color(body, pp.GREY)
+
+    # ! PyBullet does not return any VisualShapeData at all
+    LOGGER.info('original body')
+    original_aabb = pp.get_aabb(body)
+    inspect_data(body, original_aabb, visual_empty=True)
+
+    spacing = 1.5
+    # CollisionShapeData's mesh filename will be turned into `unknown file`
+    # with VisualShapeData pointing to collision mesh filename.
+    cloned_body = clone_body(body)
+    set_color(cloned_body, pp.GREEN)
+    set_pose(cloned_body, Pose(point=[0, 0, spacing]))
+    LOGGER.info('both cloned body')
+    inspect_data(cloned_body, original_aabb)
+
+    # ! both collision and visual data will be cloned, behavior same as with above,
+    # when `collision=True, visual=True`
+    collision_body = clone_body(body, visual=False)
+    set_color(collision_body, pp.RED)
+    set_pose(collision_body, Pose(point=[0, 1*spacing, 0]))
+    LOGGER.info('collision cloned body')
+    inspect_data(collision_body, original_aabb)
+
+    # ! both collison and visual data are empty here
+    visual_body = clone_body(body, collision=False)
+    set_pose(visual_body, Pose(point=[0, 2*spacing, 0]))
+    set_color(visual_body, pp.BLUE)
+    LOGGER.info('visual cloned body')
+    inspect_data(visual_body, visual_empty=True, collision_empty=True)
+
+    # ! Double cloning will fail because CollisionShapeData's filename is erased to `unknown file`
+    with pytest.raises(pb.error) as excinfo:
+        double_collision_body = clone_body(collision_body)
+    assert 'createCollisionShape failed' in str(excinfo)
+
+    # ! both collison and visual data are empty here
+    double_visual_body = clone_body(visual_body)
+    inspect_data(double_visual_body, visual_empty=True, collision_empty=True)
+
+    pp.disconnect()
+
 
 @pytest.mark.create_body
 @pytest.mark.parametrize("file_format",[
@@ -178,12 +274,12 @@ def test_read_obj(viewer):
 
 
 @pytest.mark.parametrize("urdf_path",[
-    os.path.join(os.path.dirname(__file__), 'test_data', 'mit_3-412_workspace', 'urdf', 'mit_3-412_workspace.urdf'),
-    os.path.join(os.path.dirname(__file__), 'test_data', 'c1', 'urdf', 'c1.urdf'),
+    # os.path.join(os.path.dirname(__file__), 'test_data', 'mit_3-412_workspace', 'urdf', 'mit_3-412_workspace.urdf'),
+    # os.path.join(os.path.dirname(__file__), 'test_data', 'c1', 'urdf', 'c1.urdf'),
     os.path.join(os.path.dirname(__file__), 'test_data', 'link_4.obj'),
-    os.path.join(os.path.dirname(__file__), 'test_data', 'link_4.stl'),
+    # os.path.join(os.path.dirname(__file__), 'test_data', 'link_4.stl'),
 ])
-@pytest.mark.vertices_from_link
+@pytest.mark.vertices_from_rigid
 def test_vertices_from_link(viewer, urdf_path):
     eps = 1e-6
     connect(use_gui=viewer)
@@ -192,41 +288,50 @@ def test_vertices_from_link(viewer, urdf_path):
             body = load_pybullet(urdf_path, fixed_base=False)
         else:
             body = create_obj(urdf_path)
-    wait_if_gui()
+    # wait_if_gui()
 
-    _, body_links = pp.expand_links(body)
+    # _, body_links = pp.expand_links(body)
+    body_links = pp.get_all_links(body)
+    LOGGER.info(f'body links {body_links}')
     body_name = pp.get_body_name(body)
 
-    vertices_from_link = {}
+    vertices_from_links = {}
     for attempt in range(2):
+        # LOGGER.debug(f'-- attempt {attempt}')
         for body_link in body_links:
-            local_from_vertices = pp.vertices_from_link(body, body_link)
+            # LOGGER.debug(f'\tlink {body_link}')
+            local_from_vertices = pp.vertices_from_rigid(body, body_link)
+            # assert len(local_from_vertices) > 0
             if attempt == 0:
-                vertices_from_link[body_link] = local_from_vertices
-            LOGGER.debug('#V {} at {} link {}'.format(len(local_from_vertices), body_name, pp.get_link_name(body, body_link)))
+                vertices_from_links[body_link] = local_from_vertices
+            # LOGGER.debug('#V {} at {} link {}'.format(len(local_from_vertices), body_name, pp.get_link_name(body, body_link)))
 
-            assert len(vertices_from_link[body_link]) == len(local_from_vertices), \
+            assert len(vertices_from_links[body_link]) == len(local_from_vertices), \
                 'unequal num of vertics at link {}'.format(pp.get_link_name(body, body_link))
-            for v1, v2 in zip(local_from_vertices, vertices_from_link[body_link]):
+            for v1, v2 in zip(local_from_vertices, vertices_from_links[body_link]):
                 assert pp.get_distance(v1, v2) < eps
 
             with LockRenderer():
                 for v in local_from_vertices:
                     pp.draw_point(v, size=0.05)
-        wait_if_gui()
+        # wait_if_gui()
         pp.remove_all_debug()
 
     for attempt in range(3):
-        set_pose(body, Pose(point=np.random.random(3)*3.0))
-        # pp.step_simulation()
-        for body_link in body_links:
-            local_from_vertices = pp.vertices_from_link(body, body_link)
-            LOGGER.debug('#V {} at {} link {}'.format(len(local_from_vertices), body_name,
-                pp.get_link_name(body, body_link)))
+        # LOGGER.debug(f'-- attempt {attempt}')
+        cloned_body = pp.clone_body(body)
+        cloned_body_links = pp.get_all_links(cloned_body)
+        set_pose(cloned_body, Pose(point=np.random.random(3)*3.0))
+        pp.set_color(cloned_body, pp.YELLOW)
+        wait_if_gui('Cloned body')
+        for body_link in cloned_body_links:
+            # LOGGER.debug(f'\tlink {body_link}')
+            local_from_vertices = pp.vertices_from_rigid(cloned_body, body_link)
+            LOGGER.debug('#V {} at {} link {}'.format(len(local_from_vertices), body_name, pp.get_link_name(cloned_body, body_link)))
 
-            assert len(vertices_from_link[body_link]) == len(local_from_vertices), \
-                'unequal num of vertics at link {}'.format(pp.get_link_name(body, body_link))
-            for v1, v2 in zip(local_from_vertices, vertices_from_link[body_link]):
+            assert len(vertices_from_links[body_link]) == len(local_from_vertices), \
+                'unequal num of vertics at link {}'.format(pp.get_link_name(cloned_body, body_link))
+            for v1, v2 in zip(local_from_vertices, vertices_from_links[body_link]):
                 assert pp.get_distance(v1, v2) < eps
 
             with LockRenderer():
@@ -239,34 +344,49 @@ def test_vertices_from_link(viewer, urdf_path):
 
 
 @pytest.mark.vertices_from_link_geom
-def test_vertices_from_link_geometry(viewer):
+def test_vertices_from_link_geometry(viewer, robot_path, clamp_urdf_path):
     here = os.path.dirname(__file__)
     mesh_path = os.path.join(here, 'test_data', 'duck.obj')
     connect(use_gui=viewer)
     with HideOutput():
-        bodies = []
-        types = []
-        bodies.append(pp.create_box(1,1,1, color=apply_alpha(pp.RED, 0.2)))
-        types.append(pb.GEOM_BOX)
-        bodies.append(pp.create_cylinder(0.5, 3, color=apply_alpha(pp.GREEN, 0.2)))
-        types.append(pb.GEOM_CYLINDER)
-        bodies.append(pp.create_capsule(0.5, 3, color=apply_alpha(pp.BLUE, 0.2)))
-        types.append(pb.GEOM_CAPSULE)
-        bodies.append(pp.create_sphere(0.5, color=apply_alpha(pp.TAN, 0.2)))
-        types.append(pb.GEOM_SPHERE)
-        bodies.append(pp.create_obj(mesh_path, color=apply_alpha(pp.TAN, 0.2), scale=0.01))
-        types.append(pb.GEOM_MESH)
+        bodies = {}
+        bodies['box'] = pp.create_box(1,1,1, color=apply_alpha(pp.RED, 0.2))
+        bodies['cylinder'] = pp.create_cylinder(0.5, 3, color=apply_alpha(pp.GREEN, 0.2))
+        bodies['capsule'] = pp.create_capsule(0.5, 3, color=apply_alpha(pp.BLUE, 0.2))
+        bodies['sphere'] = pp.create_sphere(0.5, color=apply_alpha(pp.TAN, 0.2))
+        bodies['duck'] = pp.create_obj(mesh_path, color=apply_alpha(pp.TAN, 0.2), scale=5e-3)
+        bodies['robot'] = load_pybullet(robot_path, fixed_base=True, scale=1.2)
+        bodies['clamp'] = load_pybullet(clamp_urdf_path, fixed_base=True, scale=1.5)
 
-    for body, geom_type in zip(bodies, types):
-        cprint(pp.SHAPE_TYPES[geom_type], 'cyan')
-        body_vertices = pp.vertices_from_link(body, pp.BASE_LINK)
-        assert len(body_vertices) > 0
-        with LockRenderer():
-            for v1 in body_vertices:
-                pp.draw_point(v1, color=pp.BLUE, size=0.1)
-        wait_if_gui()
-        pp.remove_all_debug()
-
+    count = 0
+    for name, orig_body in bodies.items():
+        LOGGER.debug(name)
+        count += 1
+        for i, body in enumerate([orig_body, clone_body(orig_body)]):
+            set_pose(body, Pose(point=[i*2,count*2,0]))
+            body_vertices_from_link = pp.get_body_collision_vertices(body)
+            body_aabb = pp.get_aabb(body)
+            pp.draw_aabb(body_aabb)
+            if name not in ['robot', 'clamp']:
+                assert len(body_vertices_from_link) > 0
+            with LockRenderer():
+                for link, verts in body_vertices_from_link.items():
+                    for v in verts:
+                        # * make sure mesh vertices are loaded in the right scale
+                        assert pp.aabb_contains_point(v, body_aabb)
+                        pp.draw_point(v, color=pp.BLUE, size=0.1)
+                    if verts:
+                        orig_extent = pp.get_aabb_extent(body_aabb)
+                        point_aabb = pp.aabb_from_points(verts)
+                        new_extent = pp.get_aabb_extent(point_aabb)
+                        pp.draw_aabb(point_aabb)
+                        # ! pybullet's AABB is a bit noisy sometimes, with a safety margin added
+                        print(np.abs(new_extent-orig_extent))
+                        # if name != 'capsule':
+                        #     # ! capsule's vertices do not contain the cap part
+                        #     assert np.allclose(new_extent, orig_extent, atol=np.max(orig_extent)/10)
+            wait_if_gui()
+            pp.remove_all_debug()
 
 @pytest.mark.geom_data_index
 def test_geom_data_index(viewer):

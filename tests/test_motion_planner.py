@@ -83,7 +83,7 @@ def test_motion_planner(viewer, algorithm):
                 #                 [200,300,400], max_time=max_time, verbose=True)[0]
             elif algorithm == 'rrt':
                 path = pp.rrt(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
-                           iterations=INF, max_time=max_time)
+                           max_iterations=INF, max_time=max_time)
             elif algorithm == 'rrt_connect':
                 path = pp.rrt_connect(start, goal, distance_fn, sample_fn, extend_fn, collision_fn,
                                    max_time=max_time)

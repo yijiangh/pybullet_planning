@@ -16,7 +16,7 @@ Unreleased
 - Added `coarse_waypoints` to the `smooth_path` function to give options for use refined shortcut to ensure collision-free results.
 - Added `get_body_collision_vertices` for getting body collision vertices in its current configuration.
 - `LOGGER` introduced to replace `print`
-- added `get_data_filename2` to include cached mesh filename from `get_model_info`
+- Added `get_data_filename2` to include cached mesh filename from `get_model_info`
 
 **Changed**
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
@@ -24,16 +24,12 @@ Unreleased
 - Changed the mesh reading procedure in `vertices_from_data` from `pp.read_obj` to `meshio.read`. This fixes #9.
 - `smooth_path`'s `max_iterations` argument changed to `max_smooth_iterations`
 - 'set_color' defaulted to set the color of all the links of body.
-- ''
 
 **Fixed**
 - Fixed `read_obj` returns empty dict if obj file does not start with objects (``o object_name``)
 - Fixed `get_extend_fn(q1,q2)` to include `q1` in its output path. This bug was causing incorrect planning result in birrt, because the two trees will have a gap in the middle that is unchecked.
 - Fixed a minor mesh vertex scaling bug in `vertices_from_data`
 - catch `get_num_joints(body) == 0` when a rigid body without joint and link are passed to `clone_body`
-
-**Deleted**
-- Deleted `vertices_from_rigid` in the light of `get_filename2`, `vertices_from_link` can be used instead
 
 0.5.1
 ----------
