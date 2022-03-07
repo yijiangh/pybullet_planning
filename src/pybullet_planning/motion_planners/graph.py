@@ -1,4 +1,5 @@
-from collections import namedtuple, Mapping
+from collections import namedtuple
+from collections.abc import Mapping
 from heapq import heappush, heappop
 
 

@@ -1,4 +1,4 @@
-from collections import Mapping
+from collections.abc import Mapping
 from random import random
 
 from .rrt import TreeNode, configs

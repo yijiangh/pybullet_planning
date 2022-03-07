@@ -1,4 +1,4 @@
-from collections import Mapping
+from collections.abc import Mapping
 
 #class StarRoadmap(Mapping, object):
 class StarRoadmap(Mapping, object):
