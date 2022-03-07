@@ -128,6 +128,9 @@ def disconnect():
     # TODO: change CLIENT?
     if CLIENT in CLIENTS:
         del CLIENTS[CLIENT]
+    for k in list(INFO_FROM_BODY.keys()):
+        if k[0] == CLIENT:
+            del INFO_FROM_BODY[k]
     with HideOutput():
         return p.disconnect(physicsClientId=CLIENT)
 
@@ -185,6 +188,9 @@ def reset_simulation():
     """resetSimulation will remove all objects from the world and reset the world to initial conditions.
     """
     p.resetSimulation(physicsClientId=CLIENT)
+    for k in list(INFO_FROM_BODY.keys()):
+        if k[0] == CLIENT:
+            del INFO_FROM_BODY[k]
 
 #####################################
 

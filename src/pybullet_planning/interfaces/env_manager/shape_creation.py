@@ -377,13 +377,13 @@ def vertices_from_data(data, body=None):
                 mio_mesh = meshio.read(filename)
                 vertices = [np.array(scale)*np.array(vertex) for vertex in mio_mesh.points]
         else:
-            # try:
-            #     #  ! this fails randomly if multiple meshes are attached to the same link
-            #     mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex,
-            #         collisionShapeIndex=data.objectUniqueId, flags=p.MESH_DATA_SIMULATION_MESH)
-            #     vertices = mesh_data[1]
-            # except p.error as e:
-            raise RuntimeError('Unknown file from data {}'.format(data))
+            try:
+                #  ! this fails randomly if multiple meshes are attached to the same link
+                mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex,
+                    collisionShapeIndex=data.objectUniqueId, flags=p.MESH_DATA_SIMULATION_MESH)
+                vertices = mesh_data[1]
+            except p.error as e:
+                raise RuntimeError('Unknown file from data {}'.format(data))
         # TODO: could compute AABB here for improved speed at the cost of being conservative
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]
@@ -394,30 +394,59 @@ def vertices_from_data(data, body=None):
 
 #####################################
 
-def visual_shape_from_data(data, client=None):
+def visual_shape_from_data(data_list, client=None):
     client = get_client(client)
-    file_name = get_data_filename(data)
-    if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
-        LOGGER.warning('Visual shape creation from data fails due to no filename data stored in {}'.format(data))
-        return NULL_ID
 
-    # visualFramePosition: translational offset of the visual shape with respect to the link
-    # visualFrameOrientation: rotational offset (quaternion x,y,z,w) of the visual shape with respect to the link frame
-    #inertial_pose = get_joint_inertial_pose(data.objectUniqueId, data.linkIndex)
-    #point, quat = multiply(invert(inertial_pose), pose)
-    point, quat = get_data_pose(data)
-    return p.createVisualShape(shapeType=data.visualGeometryType,
-                               radius=get_data_radius(data),
-                               halfExtents=np.array(get_data_extents(data))/2,
-                               length=get_data_height(data),  # TODO: pybullet bug
-                               fileName=file_name,
-                               meshScale=get_data_scale(data),
-                               planeNormal=get_data_normal(data),
-                               rgbaColor=data.rgbaColor,
-                               # specularColor=,
-                               visualFramePosition=point,
-                               visualFrameOrientation=quat,
-                               physicsClientId=client)
+    if len(data_list) == 1:
+        data = data_list[0]
+        # ! recover filename and height from data, but load from INFO_FROM_BODY when filename == UNKNOWN_FILE
+        file_name, length = get_data_filename_and_height(data)
+        if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
+            LOGGER.warning('Visual shape creation from data fails due to no filename data stored in {}'.format(data))
+            return NULL_ID
+
+        # visualFramePosition: translational offset of the visual shape with respect to the link
+        # visualFrameOrientation: rotational offset (quaternion x,y,z,w) of the visual shape with respect to the link frame
+        #inertial_pose = get_joint_inertial_pose(data.objectUniqueId, data.linkIndex)
+        #point, quat = multiply(invert(inertial_pose), pose)
+        point, quat = get_data_pose(data)
+        return p.createVisualShape(shapeType=data.visualGeometryType,
+                                   radius=get_data_radius(data),
+                                   halfExtents=np.array(get_data_extents(data))/2,
+                                   length=length,  # TODO: pybullet bug
+                                   fileName=file_name,
+                                   meshScale=get_data_scale(data),
+                                   planeNormal=get_data_normal(data),
+                                   rgbaColor=data.rgbaColor,
+                                   # specularColor=,
+                                   visualFramePosition=point,
+                                   visualFrameOrientation=quat,
+                                   physicsClientId=client)
+    else:
+        file_names = []
+        poses = []
+        half_extents = [[], []]
+        for data in data_list:
+            file_name = get_data_filename(data)
+            if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
+                LOGGER.warning('Visual shape creation from data fails due to no filename data stored in {}'.format(data))
+                return NULL_ID
+            file_names.append(file_name)
+            poses.append(get_data_pose(data))
+            data_half_extent = np.array(get_data_extents(data)) / 2
+            half_extents[0].append(data_half_extent[0])
+            half_extents[1].append(data_half_extent[1])
+        return p.createVisualShapeArray(shapeTypes=[data.visualGeometryType for data in data_list],
+                                        radii=[get_data_radius(data) for data in data_list],
+                                        halfExtents=half_extents,
+                                        lengths=[get_data_height(data) for data in data_list],
+                                        fileNames=file_names,
+                                        meshScales=[get_data_scale(data) for data in data_list],
+                                        planeNormals=[get_data_normal(data) for data in data_list],
+                                        flags=[p.GEOM_FORCE_CONCAVE_TRIMESH for _ in data_list],
+                                        visualFramePositions=[dpose[0] for dpose in poses],
+                                        visualFrameOrientations=[dpose[1] for dpose in poses],
+                                        physicsClientId=client)
 
 
 def get_visual_data(body, link=BASE_LINK):
@@ -432,8 +461,8 @@ def clone_visual_shape(body, link, client=None):
     visual_data = get_visual_data(body, link)
     if not visual_data:
         return NULL_ID
-    assert (len(visual_data) == 1)
-    return visual_shape_from_data(visual_data[0], client)
+    # assert (len(visual_data) == 1)
+    return visual_shape_from_data(visual_data, client)
 
 #####################################
 
@@ -444,7 +473,8 @@ def collision_shape_from_data(data_list, body, link, client=None):
     client = get_client(client)
     if len(data_list) == 1:
         data = data_list[0]
-        file_name = get_data_filename2(data)
+        # ! recover filename and height from data, but load from INFO_FROM_BODY when filename == UNKNOWN_FILE
+        file_name, height = get_data_filename_and_height(data)
         if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
             LOGGER.warning('Collision shape creation from body #{} fails due to no filename data stored in {}'.format(
                 body, link, data))
@@ -457,7 +487,7 @@ def collision_shape_from_data(data_list, body, link, client=None):
                                       radius=get_data_radius(data),
                                       # halfExtents=get_data_extents(data.geometry_type, data.dimensions),
                                       halfExtents=np.array(get_data_extents(data)) / 2,
-                                      height=get_data_height(data),
+                                      height=height,
                                       fileName=file_name,
                                       meshScale=get_data_scale(data),
                                       planeNormal=get_data_normal(data),
@@ -527,20 +557,14 @@ def get_data_filename(data):
     return (data.filename if isinstance(data, CollisionShapeData)
             else data.meshAssetFileName).decode(encoding='UTF-8')
 
-def get_data_filename2(data, body=None):
-    # ! when used together with `get_data_scale`, you should use `get_data_filename` to make sure it's loading
-    # the right scale. When loading nonconvex object, PyBullet creates a temporary obj files for VHAD and then
-    # throw them away. For example, if you load a conconvex mesh with scale=1e-3 and then use this function to
-    # get its filename for getting its vertices, you will load the original mesh, but `get_data_scale` will
-    # give you (1.0, 1.0, 1.0), so scaling of the loaded vertices will be incorrect.
-    # The correct mesh data is only stored in memory and scale unified to one.
-    # See `vertices_from_data` and `pybullet.getMeshData` for more information.
+def get_data_filename_and_height(data, body=None):
+    """load filename and scale from data, if filename is UNKNOWNFILE, we load filename and scale from the cached INFO_FROM_BODY"""
     filename = get_data_filename(data)
     if (get_data_type(data) == p.GEOM_MESH) and (filename == UNKNOWN_FILE):
         info = get_model_info(body or data.objectUniqueId)
         if info is not None and os.path.exists(info.path):
-            filename = info.path
-    return filename
+            return info.path, np.ones(3)*info.scale
+    return filename, get_data_height(data)
 
 def get_data_pose(data):
     """Get the local frame pose of the original shape.

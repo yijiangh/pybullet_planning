@@ -7,7 +7,7 @@ from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LI
 from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, Point, Euler
 from pybullet_planning.interfaces.env_manager.pose_transformation import euler_from_quat, base_values_from_pose, \
     quat_from_euler, z_rotation, get_pose, set_pose, apply_affine, unit_pose
-from pybullet_planning.interfaces.env_manager.shape_creation import get_collision_data, clone_collision_shape, clone_visual_shape, get_model_info
+from pybullet_planning.interfaces.env_manager.shape_creation import create_obj, get_collision_data, clone_collision_shape, clone_visual_shape, get_model_info
 
 from pybullet_planning.interfaces.robots.dynamics import get_mass, get_dynamics_info, get_local_link_pose
 from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, get_num_joints, is_circular, get_joint_limits, is_fixed, \
@@ -147,6 +147,13 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
     # localVisualFrame orientation: orientation of local visual frame relative to link/joint frame
     # parentFramePos: joint position in parent frame
     # parentFrameOrn: joint orientation in parent frame
+    # ! the following get around a bug when cloning from an object created from obj file with a non-one scale
+    model_info = get_model_info(body)
+    if model_info is not None and model_info.path.endswith('.obj'):
+        new_body = create_obj(model_info.path, scale=model_info.scale, collision=collision)
+        INFO_FROM_BODY[CLIENT, new_body] = copy(model_info)
+        return new_body
+
     client = get_client(client) # client is the new client for the body
     if links is None or get_num_joints(body) == 0:
         links = get_links(body)
@@ -274,7 +281,7 @@ def get_body_collision_vertices(body):
         # ! pybullet performs VHACD for stl meshes and delete those temporary meshes,
         # which left the CollisionShapeData.filename = UNKNOWN_FILENAME
         # cloned body only has collision shapes, and saves them as visual shapes
-        local_from_vertices = vertices_from_rigid(body_clone, body_link, collision=body == body_clone)
+        local_from_vertices = vertices_from_rigid(body_clone, body_link, collision=True) #body == body_clone)
         world_from_current_pose = get_link_pose(body_clone, body_link)
         body_vertices_from_link[body_link] = apply_affine(world_from_current_pose, local_from_vertices)
 
