@@ -10,12 +10,9 @@ from pybullet_planning.utils import implies
 #####################################
 # Bounding box
 
+# axis-aligned bounding box: https://en.wikipedia.org/wiki/Bounding_volume
+# Notice that the world-axis is used here. We don't have support for OOBB (using the object's local coordinate system)?
 AABB = namedtuple('AABB', ['lower', 'upper'])
-"""axis-aligned bounding box: https://en.wikipedia.org/wiki/Bounding_volume
-
-Notice that the world-axis is used here. We don't have support for OOBB (using the object's local coordinate system)?
-
-"""
 
 def aabb_from_points(points):
     return AABB(np.min(points, axis=0), np.max(points, axis=0))

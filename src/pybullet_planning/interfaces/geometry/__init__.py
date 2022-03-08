@@ -17,9 +17,7 @@ Main Types
     AABB
 
 Bounding box operations
------------------------
-
-.. currentmodule:: pybullet_planning.interfaces.geometry.bounding_box
+----------------------------------
 
 .. autosummary::
     :toctree: generated/
@@ -31,9 +29,11 @@ Bounding box operations
 
 """
 
+from __future__ import absolute_import
+
+from .bounding_box import *
 from .mesh import *
 from .polygon import *
-from .bounding_box import *
 from .pointcloud import *
 from .camera import *
 

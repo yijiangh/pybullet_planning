@@ -9,6 +9,7 @@ and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0
 
 Known Unresolved Issues
 -----------------------
+
 - `get_body_collision_vertices` does not support cloned body now. We don't have a good way to do catch-throw for this now.
 - Cloning body from an already cloned body introduces unexpected result (visual or collision data erased etc).
 
@@ -27,7 +28,7 @@ Unreleased
 
 **Changed**
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
-- ``motion_planners`` module up-to-date with `commit e6f23053e<https://github.com/caelan/motion-planners/commit/e6f23053e441af091b898b7f56c6fee48223be48>`_.
+- ``motion_planners`` module up-to-date with commit `e6f23053e <https://github.com/caelan/motion-planners/commit/e6f23053e441af091b898b7f56c6fee48223be48>`_.
 - Changed the mesh reading procedure in `vertices_from_data` from `pp.read_obj` to `meshio.read`. This fixes #9.
 - `smooth_path`'s `max_iterations` argument changed to `max_smooth_iterations`
 - 'set_color' defaulted to set the color of all the links of body.

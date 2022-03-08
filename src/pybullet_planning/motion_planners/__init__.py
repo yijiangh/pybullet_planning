@@ -10,8 +10,7 @@ Python implementations of several robotic motion planners. This is a fork of Cae
 to be flexible and independent of simulation platforms. `pybullet_planning` includes
 this package as a built-in component as it is frequently used.
 
-We are now up-to-date with commit `e6f23053e <https://github.com/caelan/motion-planners/commit/e6f23053e441af091b898b7f56c6fee48223be48>`_
-of ``motion-planners``.
+We are now up-to-date with commit `e6f23053e <https://github.com/caelan/motion-planners/commit/e6f23053e441af091b898b7f56c6fee48223be48>`_ of ``motion-planners``.
 
 Sampling-based:
 
