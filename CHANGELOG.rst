@@ -13,7 +13,7 @@ Known Unresolved Issues
 - `get_body_collision_vertices` does not support cloned body now. We don't have a good way to do catch-throw for this now.
 - Cloning body from an already cloned body introduces unexpected result (visual or collision data erased etc).
 
-Unreleased
+0.6.0
 ----------
 
 **Added**
