@@ -156,6 +156,7 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
     model_info = get_model_info(body)
     if model_info is not None and model_info.path.endswith('.obj'):
         new_body = create_obj(model_info.path, scale=model_info.scale, collision=collision)
+        set_pose(new_body, get_pose(body))
         INFO_FROM_BODY[CLIENT, new_body] = copy(model_info)
         return new_body
 

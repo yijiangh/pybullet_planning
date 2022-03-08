@@ -19,11 +19,11 @@ Unreleased
 - Added `distance_threshold` to `pairwise_link_collision_info` and `pairwise_link_collision` to allow collision checking given a penetration threshold
 - Added `sweep_collision_fn` to `birrt` to allow sweep collision check in edge expansion
 - Added `coarse_waypoints` to the `smooth_path` function to give options for use refined shortcut to ensure collision-free results.
-- Added `get_body_collision_vertices` for getting body collision vertices in its current configuration.
 - `LOGGER` introduced to replace `print`
 - Added `get_data_filename_and_height` to include cached mesh filename and scale from `get_model_info`
 - Added `CreateVisualArray` and `CreateCollisionArray` for `visual_shape_from_data` and `visual_shape_from_data`. We use the new `get_data_filename_and_height` when file_name is `UNKNOWN_FILE`.
 - Added `load_pybullet` support for `stl` files by `create_obj`.
+- Added `get_body_collision_vertices` for getting body collision vertices in its current configuration.
 
 **Changed**
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`

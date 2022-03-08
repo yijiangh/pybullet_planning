@@ -171,7 +171,7 @@ def draw_collision_diagnosis(pb_closest_pt_output, viz_last_duration=-1, point_c
     from pybullet_planning.interfaces.env_manager.simulation import has_gui
     from pybullet_planning.interfaces.env_manager.user_io import wait_for_user, wait_for_duration
     from pybullet_planning.interfaces.robots.link import get_link_name
-    from pybullet_planning.interfaces.robots.body import set_color, get_name, clone_body, remove_body
+    from pybullet_planning.interfaces.robots.body import set_color, get_name, clone_body, remove_body, set_pose
     if not pb_closest_pt_output:
         return
 
@@ -276,6 +276,7 @@ def draw_ray_result_diagnosis(ray, ray_result, sweep_body=None, sweep_link=None,
             set_color(cloned_sweep_body, apply_alpha(RED, 0.2))
             handles.append(add_body_name(sweep_body, name=sweep_body_name))
             handles.append(draw_link_name(sweep_body, sweep_link, name=sweep_link_name))
+
         handles.append(add_body_name(b2, name=b2_name))
         handles.append(draw_link_name(b2, l2, name=l2_name))
 
@@ -293,12 +294,12 @@ def draw_ray_result_diagnosis(ray, ray_result, sweep_body=None, sweep_link=None,
         # * restore lines and colors
         remove_handles(handles)
         if sweep_body is not None and sweep_link is not None:
-            # set_color(sweep_body, apply_alpha(WHITE, 0.5), link=sweep_link)
             remove_body(cloned_sweep_body)
+            set_color(sweep_body, apply_alpha(GREY, 1), link=sweep_link)
         remove_body(cloned_b2)
-
-        # TODO cannot retrieve original color yet
+        # # TODO cannot retrieve original color yet
         set_color(b2, apply_alpha(GREY, 1), link=l2)
+
     # else:
     #     wait_for_user('Ray collision diagnosis. Press Enter to continue.')
 
