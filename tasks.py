@@ -230,16 +230,16 @@ def release(ctx, release_type, bump_version=False):
     else:
         raise Exit('You need to manually revert the tag/commits created.')
 
-    # if confirm('You are about to upload the release to pypi.org. Are you sure? [y/N]'):
-    #     files = ['dist/*.whl', 'dist/*.gz', 'dist/*.zip']
-    #     dist_files = ' '.join([pattern for f in files for pattern in glob.glob(f)])
+    if confirm('You are about to upload the release to pypi.org. Are you sure? [y/N]'):
+        files = ['dist/*.whl', 'dist/*.gz', 'dist/*.zip']
+        dist_files = ' '.join([pattern for f in files for pattern in glob.glob(f)])
 
-    #     if len(dist_files):
-    #         ctx.run('twine upload --skip-existing %s' % dist_files)
-    #     else:
-    #         raise Exit('No files found to release')
-    # else:
-    #     raise Exit('Aborted release')
+        if len(dist_files):
+            ctx.run('twine upload --skip-existing %s' % dist_files)
+        else:
+            raise Exit('No files found to release')
+    else:
+        raise Exit('Aborted release')
 
 
 @contextlib.contextmanager
