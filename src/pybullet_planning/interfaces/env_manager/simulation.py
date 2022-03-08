@@ -209,7 +209,7 @@ def load_pybullet(filename, fixed_base=False, scale=1., **kwargs):
             body = p.loadMJCF(filename, physicsClientId=CLIENT)
         elif filename.endswith('.bullet'):
             body = p.loadBullet(filename, physicsClientId=CLIENT)
-        elif filename.endswith('.obj'):
+        elif filename.endswith('.obj') or filename.endswith('.stl'):
             # TODO: fixed_base => mass = 0?
             body = create_obj(filename, scale=scale, **kwargs)
         else:

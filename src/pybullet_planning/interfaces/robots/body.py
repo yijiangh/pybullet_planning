@@ -3,11 +3,16 @@ import numpy as np
 from collections import namedtuple
 import pybullet as p
 
+from pybullet_planning.interfaces.debug_utils.debug_utils import draw_pose, draw_point
+from pybullet_planning.interfaces.env_manager.simulation import LockRenderer
+from pybullet_planning.interfaces.env_manager.user_io import wait_for_user
+from pybullet_planning.utils import BLUE
+
 from pybullet_planning.utils import CLIENT, INFO_FROM_BODY, STATIC_MASS, BASE_LINK, NULL_ID, LOGGER, OBJ_MESH_CACHE
 from pybullet_planning.interfaces.env_manager.pose_transformation import Pose, Point, Euler
 from pybullet_planning.interfaces.env_manager.pose_transformation import euler_from_quat, base_values_from_pose, \
-    quat_from_euler, z_rotation, get_pose, set_pose, apply_affine, unit_pose
-from pybullet_planning.interfaces.env_manager.shape_creation import create_obj, get_collision_data, clone_collision_shape, clone_visual_shape, get_model_info
+    quat_from_euler, z_rotation, get_pose, set_pose, apply_affine, unit_pose, multiply, invert
+from pybullet_planning.interfaces.env_manager.shape_creation import create_obj, get_collision_data, clone_collision_shape, clone_visual_shape, get_model_info, get_data_pose
 
 from pybullet_planning.interfaces.robots.dynamics import get_mass, get_dynamics_info, get_local_link_pose
 from pybullet_planning.interfaces.robots.joint import JOINT_TYPES, get_joint_name, get_joint_type, get_num_joints, is_circular, get_joint_limits, is_fixed, \
@@ -267,26 +272,23 @@ def get_body_collision_vertices(body):
     dict
         {link_id : list[point 3d position]}
     """
-    from .collision import expand_links
+    from .link import get_com_pose
+
     body_vertices_from_link = {}
-    joints = get_movable_joints(body)
-    conf = get_joint_positions(body, joints)
-
-    # cloned body links' positions work more as expected
-    body_clone = clone_body(body, visual=False, collision=True)
-    _, body_links = expand_links(body_clone)
-    set_joint_positions(body_clone, get_movable_joints(body_clone), conf)
-
+    # joints = get_movable_joints(body)
+    # conf = get_joint_positions(body, joints)
+    # set_joint_positions(body, get_movable_joints(body), conf)
+    body_links = get_links(body)
+    # * get links except for BASE_LINK
     for body_link in body_links:
-        # ! pybullet performs VHACD for stl meshes and delete those temporary meshes,
-        # which left the CollisionShapeData.filename = UNKNOWN_FILENAME
-        # cloned body only has collision shapes, and saves them as visual shapes
-        local_from_vertices = vertices_from_rigid(body_clone, body_link, collision=True) #body == body_clone)
-        world_from_current_pose = get_link_pose(body_clone, body_link)
-        body_vertices_from_link[body_link] = apply_affine(world_from_current_pose, local_from_vertices)
+        local_from_vertices = vertices_from_rigid(body, body_link, collision=True)
+        world_from_com = get_com_pose(body, body_link)
+        body_vertices_from_link[body_link] = apply_affine(world_from_com, local_from_vertices)
+    # * base link handling
+    base_local_from_vertices = vertices_from_rigid(body, BASE_LINK, collision=True)
+    world_from_current_pose = get_link_pose(body, BASE_LINK)
+    body_vertices_from_link[BASE_LINK] = apply_affine(world_from_current_pose, base_local_from_vertices)
 
-    if body_clone != body:
-        remove_body(body_clone)
     return body_vertices_from_link
 
 def vertices_from_link(body, link, collision=True):
@@ -336,21 +338,22 @@ def vertices_from_rigid(body, link=BASE_LINK, collision=True):
     from pybullet_planning.interfaces.env_manager import get_model_info
     # from pybullet_planning.interfaces.robots.link import get_num_links
     # assert implies(link == BASE_LINK, get_num_links(body) == 0), 'body {} has links {}'.format(body, get_all_links(body))
-    try:
-        # ! sometimes pybullet attach random collision shape to the obj-loaded bodies
-        vertices = vertices_from_link(body, link, collision=collision)
-    except RuntimeError as e:
-        info = get_model_info(body)
-        assert info is not None
-        _, ext = os.path.splitext(info.path)
-        if ext == '.obj':
-            if info.path not in OBJ_MESH_CACHE:
-                OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
-            mesh = OBJ_MESH_CACHE[info.path]
-            vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
-        else:
-            raise e
-    return vertices
+    # try:
+    return vertices_from_link(body, link, collision=collision)
+    # except RuntimeError as e:
+    #     # ! this
+    #     info = get_model_info(body)
+    #     assert info is not None
+    #     _, ext = os.path.splitext(info.path)
+    #     if ext == '.obj':
+    #         if info.path not in OBJ_MESH_CACHE:
+    #             OBJ_MESH_CACHE[info.path] = read_obj(info.path, decompose=False)
+    #         mesh = OBJ_MESH_CACHE[info.path]
+    #         vertices = [[v[i]*info.scale for i in range(3)] for v in mesh.vertices]
+    #         # LOGGER.debug('cloned from obj in vertices_from_rigid')
+    #     else:
+    #         raise e
+    # return vertices
 
 def approximate_as_prism(body, body_pose=unit_pose(), link=BASE_LINK, **kwargs):
     """get the AABB bounding box of a body

@@ -365,25 +365,32 @@ def vertices_from_data(data, body=None):
         from pybullet_planning.interfaces.geometry.mesh import read_obj
         body_index = body if body is not None else data.objectUniqueId
         filename, scale = get_data_filename(data), get_data_scale(data)
+        # * load scale from cache if exists
+        model_info = get_model_info(body_index)
+        if model_info and not model_info.path.endswith('.urdf'):
+            # ! exception handling when the data is not a link of a body parsed from a URDF file
+            filename = model_info.path
+            scale = model_info.scale
         if filename != UNKNOWN_FILE:
-            # * load scale from cache if exists
-            model_info = get_model_info(body_index)
-            if model_info:
-                scale = np.ones(3) * model_info.scale
+            # LOGGER.debug(f'{filename}')
+            # LOGGER.debug(f'data scale {scale} info_from_body scale {model_info.scale}')
             if filename.endswith('.obj'):
                 mesh = read_obj(filename, decompose=False)
                 vertices = [np.array(scale)*np.array(vertex) for vertex in mesh.vertices]
+                # LOGGER.debug(f'cloned from obj inside vertices_from_data | #verts {len(vertices)}')
             else:
                 mio_mesh = meshio.read(filename)
                 vertices = [np.array(scale)*np.array(vertex) for vertex in mio_mesh.points]
+                # LOGGER.debug(f'cloned from stl inside vertices_from_data | #verts {len(vertices)}')
         else:
             try:
                 #  ! this fails randomly if multiple meshes are attached to the same link
                 mesh_data = p.getMeshData(data.objectUniqueId, data.linkIndex,
                     collisionShapeIndex=data.objectUniqueId, flags=p.MESH_DATA_SIMULATION_MESH)
                 vertices = mesh_data[1]
+                # LOGGER.debug('cloned from p.getMeshData')
             except p.error as e:
-                raise RuntimeError('Unknown file from data {}'.format(data))
+                raise RuntimeError('Unknown file from data {} | pybullet error {}'.format(data, e))
         # TODO: could compute AABB here for improved speed at the cost of being conservative
     #elif geometry_type == p.GEOM_PLANE:
     #   parameters = [get_data_extents(data)]
@@ -475,6 +482,7 @@ def collision_shape_from_data(data_list, body, link, client=None):
         data = data_list[0]
         # ! recover filename and height from data, but load from INFO_FROM_BODY when filename == UNKNOWN_FILE
         file_name, height = get_data_filename_and_height(data)
+        LOGGER.debug(f'{file_name}, {height}, {get_data_type(data)}')
         if (get_data_type(data) == p.GEOM_MESH) and (file_name == UNKNOWN_FILE):
             LOGGER.warning('Collision shape creation from body #{} fails due to no filename data stored in {}'.format(
                 body, link, data))

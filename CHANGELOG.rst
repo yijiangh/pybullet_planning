@@ -7,6 +7,11 @@ All notable changes to this project will be documented in this file.
 The format is based on `Keep a Changelog <https://keepachangelog.com/en/1.0.0/>`_
 and this project adheres to `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_.
 
+Known Unresolved Issues
+-----------------------
+- `get_body_collision_vertices` does not support cloned body now. We don't have a good way to do catch-throw for this now.
+- Cloning body from an already cloned body introduces unexpected result (visual or collision data erased etc).
+
 Unreleased
 ----------
 
@@ -16,8 +21,9 @@ Unreleased
 - Added `coarse_waypoints` to the `smooth_path` function to give options for use refined shortcut to ensure collision-free results.
 - Added `get_body_collision_vertices` for getting body collision vertices in its current configuration.
 - `LOGGER` introduced to replace `print`
-- Added `get_data_filename2` to include cached mesh filename from `get_model_info`
+- Added `get_data_filename_and_height` to include cached mesh filename and scale from `get_model_info`
 - Added `CreateVisualArray` and `CreateCollisionArray` for `visual_shape_from_data` and `visual_shape_from_data`. We use the new `get_data_filename_and_height` when file_name is `UNKNOWN_FILE`.
+- Added `load_pybullet` support for `stl` files by `create_obj`.
 
 **Changed**
 - Apply `HideOutput` to pybullet IK error printouts in `inverse_kinematics_helper`
@@ -25,6 +31,7 @@ Unreleased
 - Changed the mesh reading procedure in `vertices_from_data` from `pp.read_obj` to `meshio.read`. This fixes #9.
 - `smooth_path`'s `max_iterations` argument changed to `max_smooth_iterations`
 - 'set_color' defaulted to set the color of all the links of body.
+- `vertices_from_data` get filename and **scale** from cached `INFO_FROM_BODY` (through `get_data_filename_and_height`) if the data's filename does not end with `.urdf`
 
 **Fixed**
 - Fixed `read_obj` returns empty dict if obj file does not start with objects (``o object_name``)

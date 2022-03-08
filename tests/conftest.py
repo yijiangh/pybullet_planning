@@ -1,4 +1,8 @@
+import logging
 import pytest
+from pybullet_planning import LOGGER
+LOGGER.setLevel(logging.DEBUG)
+
 from fixtures import *
 
 def pytest_addoption(parser):
