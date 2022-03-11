@@ -15,6 +15,7 @@ Unreleased
 **Changed**
 
 **Fixed**
+* Fixed `clone_body` bug when input links contains `BASE_LINK`
 
 **Deprecated**
 

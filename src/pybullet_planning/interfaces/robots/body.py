@@ -145,6 +145,7 @@ def dump_world():
         print()
 
 def clone_body(body, links=None, collision=True, visual=True, client=None):
+    # ! links must be in a consecutive list of integers, so no input like `[link_2, link_4]`
     from pybullet_planning.utils import get_client
     # TODO: names are not retained
     # TODO: error with createMultiBody link poses on PR2
@@ -161,8 +162,11 @@ def clone_body(body, links=None, collision=True, visual=True, client=None):
         return new_body
 
     client = get_client(client) # client is the new client for the body
-    if links is None or get_num_joints(body) == 0:
+    if links is None:
         links = get_links(body)
+    if BASE_LINK in links:
+        # ! links should not include BASE_LINK, otherwise get_joint_info will fail
+        links.pop(links.index(BASE_LINK))
     #movable_joints = [joint for joint in links if is_movable(body, joint)]
     new_from_original = {}
     base_link = get_link_parent(body, links[0]) if links else BASE_LINK
