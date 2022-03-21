@@ -16,6 +16,7 @@ Unreleased
 
 **Fixed**
 * Fixed `clone_body` bug when input links contains `BASE_LINK`
+* Fixed `inverse_kinematics_helper` to use `target_quat` when `null_space` is used
 
 **Deprecated**
 

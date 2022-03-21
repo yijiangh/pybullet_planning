@@ -12,9 +12,12 @@ def inverse_kinematics_helper(robot, link, target_pose, null_space=None):
             assert target_quat is not None
             lower, upper, ranges, rest = null_space
 
-            kinematic_conf = p.calculateInverseKinematics(robot, link, target_point,
+            kinematic_conf = p.calculateInverseKinematics(robot, link, target_point, target_quat,
                                                           lowerLimits=lower, upperLimits=upper, jointRanges=ranges, restPoses=rest,
-                                                          physicsClientId=CLIENT)
+                                                          physicsClientId=CLIENT,
+                                                        #   maxNumIterations=1000,
+                                                        #   residualThreshold=1e-12,
+                                                          )
         elif target_quat is None:
             #ikSolver = p.IK_DLS or p.IK_SDLS
             kinematic_conf = p.calculateInverseKinematics(robot, link, target_point,
@@ -22,7 +25,12 @@ def inverse_kinematics_helper(robot, link, target_pose, null_space=None):
                                                           # solver=ikSolver, maxNumIterations=-1, residualThreshold=-1,
                                                           physicsClientId=CLIENT)
         else:
-            kinematic_conf = p.calculateInverseKinematics(robot, link, target_point, target_quat, physicsClientId=CLIENT)
+            # ! normal case
+            kinematic_conf = p.calculateInverseKinematics(robot, link, target_point, target_quat,
+                                                          physicsClientId=CLIENT,
+                                                        #   maxNumIterations=1000,
+                                                        #   residualThreshold=1e-12,
+                                                          )
     except p.error as e:
         kinematic_conf = None
     if (kinematic_conf is None) or any(map(math.isnan, kinematic_conf)):

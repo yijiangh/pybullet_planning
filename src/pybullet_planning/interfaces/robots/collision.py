@@ -383,9 +383,10 @@ def get_collision_fn(body, joints, obstacles=[],
         which link is colliding to which.
     """
     from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
-    from pybullet_planning.interfaces.robots.joint import set_joint_positions, get_custom_limits
+    from pybullet_planning.interfaces.robots.joint import set_joint_positions, get_custom_limits, get_joint_name
     from pybullet_planning.interfaces.robots.link import get_self_link_pairs, get_moving_links
     from pybullet_planning.interfaces.debug_utils.debug_utils import draw_collision_diagnosis
+
     moving_links = frozenset(get_moving_links(body, joints))
     attached_bodies = [attachment.child for attachment in attachments]
     moving_bodies = [(body, moving_links)] + attached_bodies
@@ -430,13 +431,13 @@ def get_collision_fn(body, joints, obstacles=[],
         if not all_between(lower_limits, q, upper_limits):
             if diagnosis:
                 # warnings.warn('joint limit violation!', UserWarning)
-                cr = np.less_equal(q, lower_limits), np.less_equal(upper_limits, q)
+                cr = np.less(q, lower_limits), np.less(upper_limits, q)
                 LOGGER.warning('joint limit violation : {} / {}'.format(cr[0], cr[1]))
                 for i, (cr_l, cr_u) in enumerate(zip(cr[0], cr[1])):
                     if cr_l:
-                        LOGGER.warning('J{}: {} < lower limit {}'.format(i, q[i], lower_limits[i]))
+                        LOGGER.warning('J{} ({}): {} < lower limit {}'.format(i, get_joint_name(body, joints[i]), q[i], lower_limits[i]))
                     if cr_u:
-                        LOGGER.warning('J{}: {} > upper limit {}'.format(i, q[i], upper_limits[i]))
+                        LOGGER.warning('J{} ({}): {} > upper limit {}'.format(i, get_joint_name(body, joints[i]), q[i], upper_limits[i]))
             return True
         # * set body & attachment positions
         set_joint_positions(body, joints, q)
