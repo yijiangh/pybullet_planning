@@ -14,7 +14,7 @@ from .smoothing import smooth_path
 from .utils import RRT_RESTARTS, RRT_SMOOTHING, INF, irange, elapsed_time, compute_path_cost, default_selector, get_pairs, \
     remove_redundant
 
-def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, **kwargs):
+def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, diagnosis=False, **kwargs):
     """direct linear path connnecting start and goal using the extension fn.
 
     :param start: Start configuration - conf
@@ -28,10 +28,10 @@ def direct_path(start, goal, extend_fn, collision_fn, sweep_collision_fn=None, *
     if collision_fn(start) or collision_fn(goal):
         return None
     path = list(extend_fn(start, goal))
-    if any(collision_fn(q) for q in default_selector(path)):
+    if any(collision_fn(q, diagnosis=diagnosis) for q in default_selector(path)):
         return None
     if sweep_collision_fn is not None:
-        if any(sweep_collision_fn(q0, q1) for q0, q1 in default_selector(get_pairs(path))):
+        if any(sweep_collision_fn(q0, q1, diagnosis=diagnosis) for q0, q1 in default_selector(get_pairs(path))):
             return None
     return path
 
