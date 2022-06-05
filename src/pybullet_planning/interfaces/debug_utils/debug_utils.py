@@ -256,9 +256,9 @@ def draw_ray_result_diagnosis(ray, ray_result, sweep_body=None, sweep_link=None,
     b2_name = body_name_from_id[b2] if b2 in body_name_from_id else get_name(b2)
     l2_name = get_link_name(b2, l2)
 
-    LOGGER.info('ray collision: Sweeping (Body #{0}, Link #{1}) -> (Body #{2}, Link #{3})'.format(
+    LOGGER.warning('ray collision: Sweeping (Body #{0}, Link #{1}) -> (Body #{2}, Link #{3})'.format(
         sweep_body_name, sweep_link_name, b2_name, l2_name))
-    LOGGER.info('hit_fraction: {:.2f} | hit_position ({:.6f},{:.6f},{:.6f}) | hit_normal ({:.6f},{:.6f},{:.6f})'.format(
+    LOGGER.warning('hit_fraction: {:.2f} | hit_position ({:.6f},{:.6f},{:.6f}) | hit_normal ({:.6f},{:.6f},{:.6f})'.format(
         ray_result.hit_fraction, *ray_result.hit_position, *ray_result.hit_normal))
 
     if has_gui():
