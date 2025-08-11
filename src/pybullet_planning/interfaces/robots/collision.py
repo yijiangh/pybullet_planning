@@ -390,6 +390,7 @@ def get_collision_fn(body, joints, obstacles=[],
     moving_links = frozenset(get_moving_links(body, joints))
     attached_bodies = [attachment.child for attachment in attachments]
     moving_bodies = [(body, moving_links)] + attached_bodies
+    all_links = get_all_links(body)
     # * main body self-collision link pairs
     self_check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions) if self_collisions else []
     # * main body link - attachment body pairs
@@ -403,7 +404,7 @@ def get_collision_fn(body, joints, obstacles=[],
         # TODO add attached object's link might not be BASE_LINK (i.e. actuated tool)
         # get_all_links
         at_check_links = []
-        for ml in moving_links:
+        for ml in all_links:
             if ml != attached.parent_link and \
                 ((body, ml), (attached.child, BASE_LINK)) not in extra_disabled_collisions and \
                 ((attached.child, BASE_LINK), (body, ml)) not in extra_disabled_collisions:
