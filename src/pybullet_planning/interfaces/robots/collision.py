@@ -384,15 +384,18 @@ def get_collision_fn(body, joints, obstacles=[],
     """
     from pybullet_planning.interfaces.env_manager.pose_transformation import all_between
     from pybullet_planning.interfaces.robots.joint import set_joint_positions, get_custom_limits, get_joint_name
-    from pybullet_planning.interfaces.robots.link import get_self_link_pairs, get_moving_links
+    from pybullet_planning.interfaces.robots.link import get_self_link_pairs, get_moving_links, get_link_name, get_all_links
     from pybullet_planning.interfaces.debug_utils.debug_utils import draw_collision_diagnosis
+    from pybullet_planning.interfaces.robots.body import get_body_name
 
     moving_links = frozenset(get_moving_links(body, joints))
     attached_bodies = [attachment.child for attachment in attachments]
     moving_bodies = [(body, moving_links)] + attached_bodies
     all_links = get_all_links(body)
+
     # * main body self-collision link pairs
     self_check_link_pairs = get_self_link_pairs(body, joints, disabled_collisions) if self_collisions else []
+
     # * main body link - attachment body pairs
     attach_check_pairs = []
     for attached in attachments:
@@ -410,6 +413,7 @@ def get_collision_fn(body, joints, obstacles=[],
                 ((attached.child, BASE_LINK), (body, ml)) not in extra_disabled_collisions:
                 at_check_links.append(ml)
         attach_check_pairs.append((at_check_links, attached.child))
+
     # * body pairs
     check_body_pairs = list(product(moving_bodies, obstacles))  # + list(combinations(moving_bodies, 2))
     check_body_link_pairs = []
@@ -423,8 +427,43 @@ def get_collision_fn(body, joints, obstacles=[],
             bbll_pair = ((body1, bb_links[0]), (body2, bb_links[1]))
             if bbll_pair not in extra_disabled_collisions and bbll_pair[::-1] not in extra_disabled_collisions:
                 check_body_link_pairs.append(bbll_pair)
+
+    if len(attachments) > 1:
+        for i in range(len(attachments)):
+            for j in range(i+1, len(attachments)):
+                att_i = attachments[i]
+                att_j = attachments[j]
+                pair = ((att_i.child, BASE_LINK), (att_j.child, BASE_LINK))
+                if pair not in extra_disabled_collisions and pair[::-1] not in extra_disabled_collisions:
+                    # This will be checked as a body-body collision later, but for completeness, add to attach_check_pairs
+                    check_body_link_pairs.append(((att_i.child, BASE_LINK), (att_j.child, BASE_LINK)))
+
     # * joint limits
     lower_limits, upper_limits = get_custom_limits(body, joints, custom_limits)
+
+    # print("==== Collision Debug Info ====")
+    # print("Main body self-collision link pairs:")
+    # for link1, link2 in self_check_link_pairs:
+    #     print("  [{}:{}] <-> [{}:{}]".format(
+    #         get_body_name(body), get_link_name(body, link1),
+    #         get_body_name(body), get_link_name(body, link2)
+    #     ))
+
+    # print("Main body link - attachment body pairs:")
+    # for at_check_links, attached_body in attach_check_pairs:
+    #     for ml in at_check_links:
+    #         print("  [{}:{}] <-> [{}:{}]".format(
+    #             get_body_name(body), get_link_name(body, ml),
+    #             get_body_name(attached_body), get_link_name(attached_body, BASE_LINK)
+    #         ))
+
+    # print("Body-body collision link pairs:")
+    # for (body1, link1), (body2, link2) in check_body_link_pairs:
+    #     print("  [{}:{}] <-> [{}:{}]".format(
+    #         get_body_name(body1), get_link_name(body1, link1),
+    #         get_body_name(body2), get_link_name(body2, link2)
+    #     ))
+    # print("==== End Collision Debug Info ====")
 
     # TODO: maybe prune the link adjacent to the robot
     def collision_fn(q, diagnosis=False):
