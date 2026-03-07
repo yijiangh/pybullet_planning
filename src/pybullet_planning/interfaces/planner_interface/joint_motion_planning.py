@@ -20,23 +20,41 @@ def uniform_generator(d):
     while True:
         yield np.random.uniform(size=d)
 
+def _first_primes(n):
+    primes = []
+    candidate = 2
+    while len(primes) < n:
+        is_prime = True
+        for p in primes:
+            if candidate % p == 0:
+                is_prime = False
+                break
+            if p * p > candidate:
+                break
+        if is_prime:
+            primes.append(candidate)
+        candidate += 1
+    return primes
+
+def _radical_inverse(index, base):
+    value = 0.0
+    f = 1.0 / base
+    i = index
+    while i > 0:
+        value += f * (i % base)
+        i //= base
+        f /= base
+    return value
+
 def halton_generator(d):
-    import ghalton
-    seed = random.randint(0, 1000)
-    #sequencer = ghalton.Halton(d)
-    sequencer = ghalton.GeneralizedHalton(d, seed)
-    #sequencer.reset()
+    start_index = random.randint(1, 1000)
+    bases = _first_primes(d)
+    index = start_index
     while True:
-        [weights] = sequencer.get(1)
-        yield np.array(weights)
+        yield np.array([_radical_inverse(index, base) for base in bases])
+        index += 1
 
 def unit_generator(d, use_halton=False):
-    if use_halton:
-        try:
-            import ghalton
-        except ImportError:
-            print('ghalton is not installed (https://pypi.org/project/ghalton/)')
-            use_halton = False
     return halton_generator(d) if use_halton else uniform_generator(d)
 
 def interval_generator(lower, upper, **kwargs):

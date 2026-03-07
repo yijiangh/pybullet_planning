@@ -21,6 +21,7 @@ Unreleased
 **Deprecated**
 
 **Removed**
+* Removed dependency on ``ghalton``. Joint-space Halton sampling now uses an internal implementation to avoid install failures from the unmaintained package.
 
 Known Unresolved Issues
 -----------------------
@@ -136,4 +137,3 @@ Known Unresolved Issues
 * Initial version
 * Divide the original `utils.py` file into separate modules
 * Modules cycle dependency resolved.
-
