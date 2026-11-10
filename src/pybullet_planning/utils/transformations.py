@@ -184,7 +184,7 @@ def translation_from_matrix(matrix):
     >>> numpy.allclose(v0, v1)
     True
     """
-    return numpy.array(matrix, copy=False)[:3, 3].copy()
+    return numpy.asarray(matrix)[:3, 3].copy()
 
 
 def reflection_matrix(point, normal):
@@ -221,7 +221,7 @@ def reflection_from_matrix(matrix):
     >>> is_same_transform(M0, M1)
     True
     """
-    M = numpy.array(matrix, dtype=numpy.float64, copy=False)
+    M = numpy.asarray(matrix, dtype=numpy.float64)
     # normal: unit eigenvector corresponding to eigenvalue -1
     l, V = numpy.linalg.eig(M[:3, :3])
     i = numpy.where(abs(numpy.real(l) + 1.0) < 1e-8)[0]
@@ -275,7 +275,7 @@ def rotation_matrix(angle, direction, point=None):
     M[:3, :3] = R
     if point is not None:
         # rotation not around origin
-        point = numpy.array(point[:3], dtype=numpy.float64, copy=False)
+        point = numpy.asarray(point[:3], dtype=numpy.float64)
         M[:3, 3] = point - numpy.dot(R, point)
     return M
 
@@ -291,7 +291,7 @@ def rotation_from_matrix(matrix):
     >>> is_same_transform(R0, R1)
     True
     """
-    R = numpy.array(matrix, dtype=numpy.float64, copy=False)
+    R = numpy.asarray(matrix, dtype=numpy.float64)
     R33 = R[:3, :3]
     # direction: unit eigenvector of R33 corresponding to eigenvalue of 1
     l, W = numpy.linalg.eig(R33.T)
@@ -368,7 +368,7 @@ def scale_from_matrix(matrix):
     >>> is_same_transform(S0, S1)
     True
     """
-    M = numpy.array(matrix, dtype=numpy.float64, copy=False)
+    M = numpy.asarray(matrix, dtype=numpy.float64)
     M33 = M[:3, :3]
     factor = numpy.trace(M33) - 2.0
     try:
@@ -420,12 +420,11 @@ def projection_matrix(point, normal, direction=None,
     True
     """
     M = numpy.identity(4)
-    point = numpy.array(point[:3], dtype=numpy.float64, copy=False)
+    point = numpy.asarray(point[:3], dtype=numpy.float64)
     normal = unit_vector(normal[:3])
     if perspective is not None:
         # perspective projection
-        perspective = numpy.array(perspective[:3], dtype=numpy.float64,
-                                  copy=False)
+        perspective = numpy.asarray(perspective[:3], dtype=numpy.float64)
         M[0, 0] = M[1, 1] = M[2, 2] = numpy.dot(perspective-point, normal)
         M[:3, :3] -= numpy.outer(perspective, normal)
         if pseudo:
@@ -438,7 +437,7 @@ def projection_matrix(point, normal, direction=None,
         M[3, 3] = numpy.dot(perspective, normal)
     elif direction is not None:
         # parallel projection
-        direction = numpy.array(direction[:3], dtype=numpy.float64, copy=False)
+        direction = numpy.asarray(direction[:3], dtype=numpy.float64)
         scale = numpy.dot(direction, normal)
         M[:3, :3] -= numpy.outer(direction, normal) / scale
         M[:3, 3] = direction * (numpy.dot(point, normal) / scale)
@@ -478,7 +477,7 @@ def projection_from_matrix(matrix, pseudo=False):
     >>> is_same_transform(P0, P1)
     True
     """
-    M = numpy.array(matrix, dtype=numpy.float64, copy=False)
+    M = numpy.asarray(matrix, dtype=numpy.float64)
     M33 = M[:3, :3]
     l, V = numpy.linalg.eig(M)
     i = numpy.where(abs(numpy.real(l) - 1.0) < 1e-8)[0]
@@ -604,7 +603,7 @@ def shear_from_matrix(matrix):
     >>> is_same_transform(S0, S1)
     True
     """
-    M = numpy.array(matrix, dtype=numpy.float64, copy=False)
+    M = numpy.asarray(matrix, dtype=numpy.float64)
     M33 = M[:3, :3]
     # normal: cross independent eigenvectors corresponding to the eigenvalue 1
     l, V = numpy.linalg.eig(M33)
@@ -830,8 +829,8 @@ def superimposition_matrix(v0, v1, scaling=False, usesvd=True):
     >>> numpy.allclose(v1, numpy.dot(M, v[:, :, 0]))
     True
     """
-    v0 = numpy.array(v0, dtype=numpy.float64, copy=False)[:3]
-    v1 = numpy.array(v1, dtype=numpy.float64, copy=False)[:3]
+    v0 = numpy.asarray(v0, dtype=numpy.float64)[:3]
+    v1 = numpy.asarray(v1, dtype=numpy.float64)[:3]
 
     if v0.shape != v1.shape or v0.shape[1] < 3:
         raise ValueError("Vector sets are of wrong shape or type.")
@@ -970,7 +969,7 @@ def euler_from_matrix(matrix, axes='sxyz'):
     j = _NEXT_AXIS[i+parity]
     k = _NEXT_AXIS[i-parity+1]
 
-    M = numpy.array(matrix, dtype=numpy.float64, copy=False)[:3, :3]
+    M = numpy.asarray(matrix, dtype=numpy.float64)[:3, :3]
     if repetition:
         sy = math.sqrt(M[i, j]*M[i, j] + M[i, k]*M[i, k])
         if sy > _EPS:
@@ -1105,7 +1104,7 @@ def quaternion_from_matrix(matrix):
     True
     """
     q = numpy.empty((4, ), dtype=numpy.float64)
-    M = numpy.array(matrix, dtype=numpy.float64, copy=False)[:4, :4]
+    M = numpy.asarray(matrix, dtype=numpy.float64)[:4, :4]
     t = numpy.trace(M)
     if t > M[3, 3]:
         q[3] = t
@@ -1382,7 +1381,7 @@ def arcball_constrain_to_axis(point, axis):
 
 def arcball_nearest_axis(point, axes):
     """Return axis, which arc is nearest to point."""
-    point = numpy.array(point, dtype=numpy.float64, copy=False)
+    point = numpy.asarray(point, dtype=numpy.float64)
     nearest = None
     mx = -1.0
     for axis in axes:
@@ -1482,7 +1481,7 @@ def unit_vector(data, axis=None, out=None):
             return data
     else:
         if out is not data:
-            out[:] = numpy.array(data, copy=False)
+            out[:] = numpy.asarray(data)
         data = out
     length = numpy.atleast_1d(numpy.sum(data*data, axis))
     numpy.sqrt(length, length)
