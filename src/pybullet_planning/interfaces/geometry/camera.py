@@ -16,11 +16,11 @@ def set_camera(yaw, pitch, distance, target_position=np.zeros(3)):
 
 def get_pitch(point):
     dx, dy, dz = point
-    return np.math.atan2(dz, np.sqrt(dx ** 2 + dy ** 2))
+    return math.atan2(dz, np.sqrt(dx ** 2 + dy ** 2))
 
 def get_yaw(point):
     dx, dy, dz = point
-    return np.math.atan2(dy, dx)
+    return math.atan2(dy, dx)
 
 def set_camera_pose(camera_point, target_point=np.zeros(3)):
     delta_point = np.array(target_point) - np.array(camera_point)
